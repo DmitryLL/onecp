@@ -48,3 +48,19 @@ NGINX
 ln -sf /etc/nginx/sites-available/onecp /etc/nginx/sites-enabled/onecp
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx || systemctl start nginx
+
+# Nginx log rotation (keep 7 days, max 50MB each)
+cat > /etc/logrotate.d/nginx-onecp <<'LOGROTATE'
+/var/log/nginx/*.log {
+    daily
+    rotate 7
+    missingok
+    notifempty
+    compress
+    delaycompress
+    maxsize 50M
+    postrotate
+        [ -f /var/run/nginx.pid ] && kill -USR1 $(cat /var/run/nginx.pid) 2>/dev/null || true
+    endscript
+}
+LOGROTATE
