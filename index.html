@@ -1132,9 +1132,9 @@
             <input type="text" id="orderComment" placeholder="Комментарий к заказу">
             <!-- Step 1: phone + consent -->
             <div id="orderStep1">
-                <div style="display:flex;align-items:center;gap:0;margin-bottom:8px;">
-                    <span style="padding:10px 12px;background:var(--beige-dark);border:1.5px solid var(--beige-dark);border-right:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-size:1rem;font-weight:600;color:var(--text);white-space:nowrap;">+7</span>
-                    <input type="tel" id="orderPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')" style="flex:1;border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;">
+                <div style="display:flex;align-items:stretch;margin-bottom:8px;">
+                    <span style="display:flex;align-items:center;padding:0 14px;background:var(--beige-dark);border:1.5px solid var(--beige-dark);border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-size:.95rem;font-weight:600;color:var(--text);white-space:nowrap;">+7</span>
+                    <input type="tel" id="orderPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')" style="flex:1;border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;margin-bottom:0;">
                 </div>
                 <label style="display:flex;align-items:flex-start;gap:8px;margin:8px 0 12px;cursor:pointer;text-align:left;">
                     <input type="checkbox" id="orderConsent" onchange="toggleOrderBtn()" style="margin-top:3px;width:18px;height:18px;accent-color:var(--brown);flex-shrink:0;">
