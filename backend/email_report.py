@@ -137,6 +137,12 @@ def send_report(force=False):
     # Use explicit SMTP settings if provided, otherwise auto-detect
     smtp_host = settings.get("reportSmtpHost", "").strip()
     smtp_port = settings.get("reportSmtpPort", "").strip()
+    # Handle case where user enters "host:port" in the host field
+    if smtp_host and ":" in smtp_host:
+        parts = smtp_host.split(":")
+        smtp_host = parts[0]
+        if not smtp_port:
+            smtp_port = parts[1]
     if not smtp_host:
         smtp_host, smtp_port = detect_smtp(smtp_email)
     else:
