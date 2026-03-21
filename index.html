@@ -842,6 +842,36 @@
         }
 
         /* ===== AUTH MODAL ===== */
+        /* ===== FLY TO CART ===== */
+        .fly-to-cart {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold), var(--brown));
+            box-shadow: 0 4px 20px rgba(201,169,110,.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--white);
+            opacity: 1;
+            transition: none;
+        }
+
+        @keyframes cartBounce {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.35); }
+            70% { transform: scale(.9); }
+            100% { transform: scale(1); }
+        }
+
+        .cart-bounce {
+            animation: cartBounce .45s cubic-bezier(.22,1,.36,1);
+        }
+
         /* ===== BOTTOM BANNER ===== */
         .bottom-banner {
             width: 100%;
@@ -1252,20 +1282,72 @@
     }
 
     // ===== CART =====
+    function flyToCart(fromEl) {
+        const fromRect = fromEl.getBoundingClientRect();
+        const badge = document.getElementById('cartBadge');
+        const toRect = badge.getBoundingClientRect();
+
+        const fly = document.createElement('div');
+        fly.className = 'fly-to-cart';
+        fly.textContent = '🛒';
+
+        const startX = fromRect.left + fromRect.width / 2 - 20;
+        const startY = fromRect.top + fromRect.height / 2 - 20;
+        fly.style.left = startX + 'px';
+        fly.style.top = startY + 'px';
+
+        document.body.appendChild(fly);
+
+        const endX = toRect.left + toRect.width / 2 - 20;
+        const endY = toRect.top + toRect.height / 2 - 20;
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        const duration = 650;
+        const start = performance.now();
+
+        function animate(now) {
+            const t = Math.min((now - start) / duration, 1);
+            // Ease out cubic
+            const ease = 1 - Math.pow(1 - t, 3);
+            // Arc: go up first, then curve to target
+            const arcY = -120 * Math.sin(Math.PI * t);
+            fly.style.left = (startX + dx * ease) + 'px';
+            fly.style.top = (startY + dy * ease + arcY) + 'px';
+            fly.style.transform = 'scale(' + (1 - t * 0.5) + ')';
+            fly.style.opacity = t > 0.75 ? (1 - (t - 0.75) * 4) : 1;
+
+            if (t < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                fly.remove();
+                // Bounce the cart badge
+                badge.classList.remove('cart-bounce');
+                void badge.offsetWidth;
+                badge.classList.add('cart-bounce');
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+
     function addToCart(id) {
         const product = products.find(p => p.id === id);
         if (!product) return;
         const existing = cart.find(c => c.id === id);
         if (existing) { existing.qty++; } else { cart.push({ ...product, qty: 1 }); }
         updateCartBadge();
-        showToast(product.name + ' добавлен в корзину');
-        const btn = document.getElementById('btn-' + id);
-        if (btn) {
-            btn.textContent = '\u2713 Добавлено';
-            btn.classList.add('added');
-            setTimeout(() => { btn.textContent = 'В корзину'; btn.classList.remove('added'); }, 1500);
+
+        // Fly animation from button
+        const btn = document.getElementById('btn-' + id) || document.getElementById('detail-btn-' + id);
+        if (btn) flyToCart(btn);
+
+        // Button feedback
+        const mainBtn = document.getElementById('btn-' + id);
+        if (mainBtn) {
+            mainBtn.textContent = '\u2713 Добавлено';
+            mainBtn.classList.add('added');
+            setTimeout(() => { mainBtn.textContent = 'В корзину'; mainBtn.classList.remove('added'); }, 1500);
         }
-        // Also update detail modal button if open
         const detBtn = document.getElementById('detail-btn-' + id);
         if (detBtn) {
             detBtn.textContent = '\u2713 Добавлено';
