@@ -389,7 +389,7 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Иконка</th>
+                                <th>Фото</th>
                                 <th>Название</th>
                                 <th>Цена</th>
                                 <th>Старая цена</th>
@@ -567,7 +567,7 @@
             const tbody = document.getElementById('productsBody');
             tbody.innerHTML = products.map(p => `
                 <tr>
-                    <td class="emoji-cell">${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : (p.emoji || '')}</td>
+                    <td>${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
                     <td>${p.name}${p.category ? ' <span style="color:#666;font-size:.8rem;">(' + p.category + ')</span>' : ''}</td>
                     <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
                     <td>${p.oldPrice ? '<span class="old-price-cell">' + p.oldPrice.toLocaleString('ru-RU') + ' &#8381;</span>' : '\u2014'}</td>
