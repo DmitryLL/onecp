@@ -371,12 +371,35 @@
             letter-spacing: -.2px;
         }
 
-        .card-body .price {
+        .card-info-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .card-info-row .price {
             font-size: 1.35rem;
             font-weight: 800;
             color: var(--brown);
-            margin-bottom: 16px;
             letter-spacing: -.3px;
+            white-space: nowrap;
+        }
+
+        .card-info-row .link-detail {
+            font-size: .85rem;
+            font-weight: 600;
+            color: var(--gold);
+            cursor: pointer;
+            white-space: nowrap;
+            text-decoration: none;
+            transition: color .2s;
+        }
+
+        .card-info-row .link-detail:hover {
+            color: var(--brown);
+            text-decoration: underline;
         }
 
         .card-buttons {
@@ -412,24 +435,6 @@
             background: linear-gradient(135deg, #5d9c59, #3d7a39);
         }
 
-        .btn-desc {
-            flex: 0 0 auto;
-            padding: 12px 18px;
-            background: var(--beige);
-            color: var(--brown);
-            border: 1.5px solid var(--beige-dark);
-            border-radius: var(--radius-sm);
-            font-size: .85rem;
-            font-weight: 600;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all .3s;
-        }
-
-        .btn-desc:hover {
-            background: var(--beige-dark);
-            border-color: var(--brown-light);
-        }
 
         /* ===== PRODUCT DETAIL MODAL ===== */
         .detail-overlay {
@@ -1301,9 +1306,11 @@
                 </div>
                 <div class="card-body">
                     <h3>${esc(p.name)}</h3>
-                    <div class="price">${p.price.toLocaleString('ru-RU')} \u20bd</div>
+                    <div class="card-info-row">
+                        <div class="price">${p.price.toLocaleString('ru-RU')} \u20bd</div>
+                        ${p.description ? '<a class="link-detail" onclick="showDetail(' + p.id + ')">Подробнее</a>' : ''}
+                    </div>
                     <div class="card-buttons">
-                        ${p.description ? '<button class="btn-desc" onclick="showDetail(' + p.id + ')">Подробнее</button>' : ''}
                         <button class="btn-cart" id="btn-${p.id}" onclick="addToCart(${p.id})">В корзину</button>
                     </div>
                 </div>

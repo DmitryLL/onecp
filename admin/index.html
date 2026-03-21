@@ -347,7 +347,8 @@
             <div class="sidebar-sub">Панель управления</div>
             <nav class="sidebar-nav">
                 <a href="#" class="active" onclick="showPanel('products'); return false;">📦 Товары</a>
-                <a href="#" onclick="showPanel('customers'); return false;">👥 Клиенты и заказы</a>
+                <a href="#" onclick="showPanel('customers'); return false;">👥 Клиенты</a>
+                <a href="#" onclick="showPanel('orders'); return false;">📋 Заказы</a>
                 <a href="#" onclick="showPanel('settings'); return false;">⚙️ Настройки сайта</a>
             </nav>
             <div class="sidebar-bottom">
@@ -383,15 +384,13 @@
             </div>
 
             <!-- CUSTOMERS PANEL -->
-            <div class="customers-panel" id="customersPanel" style="display:none;">
+            <div id="customersPanel" style="display:none;">
                 <div class="page-header">
-                    <h1>Клиенты и заказы</h1>
+                    <h1>Клиенты</h1>
                 </div>
 
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
-                    <label style="color:#aaa;font-size:.9rem;">Выгрузка заказов за дату:</label>
-                    <input type="date" id="exportDate" style="padding:8px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.9rem;font-family:inherit;">
-                    <button class="btn btn-primary btn-sm" onclick="exportOrdersExcel()">Скачать Excel</button>
+                <div style="margin-bottom:20px;">
+                    <input type="text" id="customerSearch" placeholder="Поиск по номеру телефона..." oninput="filterCustomers()" style="padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;font-family:inherit;width:100%;max-width:400px;">
                 </div>
 
                 <div class="table-wrap" style="margin-bottom:32px;">
@@ -402,6 +401,7 @@
                                 <th>Телефон</th>
                                 <th>Имя</th>
                                 <th>Дата регистрации</th>
+                                <th>Заказов</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -409,7 +409,7 @@
                     </table>
                 </div>
 
-                <!-- Order details shown when clicking a customer -->
+                <!-- Order history for selected customer -->
                 <div id="customerOrdersBlock" style="display:none;">
                     <div class="page-header">
                         <h1 id="customerOrdersTitle">Заказы клиента</h1>
@@ -430,6 +430,21 @@
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <!-- ORDERS PANEL -->
+            <div id="ordersPanel" style="display:none;">
+                <div class="page-header">
+                    <h1>Заказы</h1>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+                    <label style="color:#aaa;font-size:.9rem;">Дата:</label>
+                    <input type="date" id="ordersDate" onchange="loadOrdersByDate()" style="padding:8px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.9rem;font-family:inherit;">
+                    <button class="btn btn-primary btn-sm" onclick="exportOrdersExcel()">Скачать Excel</button>
+                </div>
+
+                <div id="ordersDateContent"></div>
             </div>
 
             <!-- SETTINGS PANEL -->
@@ -728,6 +743,7 @@
             links.forEach(a => a.classList.remove('active'));
             document.getElementById('productsPanel').style.display = 'none';
             document.getElementById('customersPanel').style.display = 'none';
+            document.getElementById('ordersPanel').style.display = 'none';
             document.getElementById('settingsPanel').classList.remove('active');
 
             if (panel === 'products') {
@@ -737,9 +753,13 @@
                 document.getElementById('customersPanel').style.display = 'block';
                 links[1]?.classList.add('active');
                 loadCustomers();
+            } else if (panel === 'orders') {
+                document.getElementById('ordersPanel').style.display = 'block';
+                links[2]?.classList.add('active');
+                loadOrdersByDate();
             } else {
                 document.getElementById('settingsPanel').classList.add('active');
-                links[2]?.classList.add('active');
+                links[3]?.classList.add('active');
                 loadSettingsForm();
             }
         }
@@ -756,24 +776,38 @@
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
+        function filterCustomers() {
+            renderCustomers();
+        }
+
         function renderCustomers() {
+            const search = (document.getElementById('customerSearch').value || '').trim();
+            const filtered = search ? customers.filter(c => c.phone.includes(search)) : customers;
             const tbody = document.getElementById('customersBody');
-            tbody.innerHTML = customers.map(c => {
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:24px;">Клиенты не найдены</td></tr>';
+                document.getElementById('customerOrdersBlock').style.display = 'none';
+                return;
+            }
+            tbody.innerHTML = filtered.map(c => {
                 const orderCount = allOrders.filter(o => o.customerPhone === c.phone).length;
                 return `<tr>
                     <td>${c.id}</td>
-                    <td>${c.phone}</td>
-                    <td>${c.name || '—'}</td>
+                    <td>${escH(c.phone)}</td>
+                    <td>${escH(c.name || '—')}</td>
                     <td style="color:#888;font-size:.85rem;">${c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '—'}</td>
+                    <td>${orderCount}</td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="showCustomerOrders('${c.phone}', '${c.name || c.phone}')">
-                            Заказы (${orderCount})
+                        <button class="btn btn-secondary btn-sm" onclick="showCustomerOrders('${escH(c.phone)}', '${escH(c.name || c.phone)}')">
+                            История заказов
                         </button>
                     </td>
                 </tr>`;
             }).join('');
             document.getElementById('customerOrdersBlock').style.display = 'none';
         }
+
+        function escH(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
         function showCustomerOrders(phone, name) {
             const orders = allOrders.filter(o => o.customerPhone === phone);
@@ -785,16 +819,16 @@
                 tbody.innerHTML = orders.map(o => `<tr>
                     <td>#${o.id}</td>
                     <td style="color:#888;font-size:.85rem;">${o.createdAt ? new Date(o.createdAt).toLocaleString('ru-RU') : '—'}</td>
-                    <td style="font-size:.85rem;">${o.items.map(it => it.name + ' x' + it.qty).join(', ')}</td>
+                    <td style="font-size:.85rem;">${o.items.map(it => escH(it.name) + ' x' + it.qty).join(', ')}</td>
                     <td class="price-cell">${o.total.toLocaleString('ru-RU')} &#8381;</td>
                     <td>
-                        <select onchange="updateOrderStatus(${o.id}, this.value)" style="padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#fff;font-size:.85rem;">
+                        <select onchange="updateOrderStatus(${o.id}, this.value, 'customers')" style="padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#fff;font-size:.85rem;">
                             ${['new','confirmed','cooking','ready','delivered','cancelled'].map(s =>
                                 '<option value="' + s + '"' + (s === o.status ? ' selected' : '') + '>' + statusLabel(s) + '</option>'
                             ).join('')}
                         </select>
                     </td>
-                    <td style="color:#888;font-size:.85rem;">${o.comment || '—'}</td>
+                    <td style="color:#888;font-size:.85rem;">${escH(o.comment || '—')}</td>
                 </tr>`).join('');
             }
             document.getElementById('customerOrdersBlock').style.display = 'block';
@@ -805,28 +839,80 @@
             return m[s] || s;
         }
 
-        async function updateOrderStatus(orderId, status) {
+        async function updateOrderStatus(orderId, status, from) {
             try {
                 await api('/api/admin/orders/' + orderId + '/status', { method: 'PUT', body: { status } });
                 showToast('Статус обновлён');
-                await loadCustomers();
+                if (from === 'customers') await loadCustomers();
+                else await loadOrdersByDate();
             } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        // ===== ORDERS BY DATE =====
+        let dateOrders = [];
+
+        async function loadOrdersByDate() {
+            const dateStr = document.getElementById('ordersDate').value;
+            if (!dateStr) { document.getElementById('ordersDateContent').innerHTML = '<p style="color:#666;">Выберите дату</p>'; return; }
+            try {
+                const orders = await api('/api/admin/orders');
+                dateOrders = orders.filter(o => o.createdAt && o.createdAt.substring(0, 10) === dateStr);
+                renderOrdersByDate();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        function renderOrdersByDate() {
+            const container = document.getElementById('ordersDateContent');
+            if (!dateOrders.length) {
+                container.innerHTML = '<p style="color:#666;padding:24px 0;">Нет заказов за эту дату</p>';
+                return;
+            }
+
+            // Group orders by customer
+            const grouped = {};
+            dateOrders.forEach(o => {
+                const key = o.customerPhone || 'unknown';
+                if (!grouped[key]) grouped[key] = { name: o.customerName || '—', phone: key, orders: [] };
+                grouped[key].orders.push(o);
+            });
+
+            let html = '';
+            Object.values(grouped).forEach(g => {
+                const totalSum = g.orders.reduce((s, o) => s + o.total, 0);
+                html += `<div class="settings-card" style="margin-bottom:16px;">
+                    <h3 style="margin-bottom:12px;">${escH(g.name)} — ${escH(g.phone)} <span style="color:#888;font-size:.85rem;font-weight:400;margin-left:12px;">Итого: ${totalSum.toLocaleString('ru-RU')} ₽</span></h3>
+                    <div class="table-wrap"><table>
+                        <thead><tr>
+                            <th>Заказ #</th><th>Время</th><th>Состав</th><th>Сумма</th><th>Статус</th><th>Комментарий</th>
+                        </tr></thead>
+                        <tbody>${g.orders.map(o => `<tr>
+                            <td>#${o.id}</td>
+                            <td style="color:#888;font-size:.85rem;">${o.createdAt ? new Date(o.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '—'}</td>
+                            <td style="font-size:.85rem;">${o.items.map(it => escH(it.name) + ' x' + it.qty).join(', ')}</td>
+                            <td class="price-cell">${o.total.toLocaleString('ru-RU')} ₽</td>
+                            <td>
+                                <select onchange="updateOrderStatus(${o.id}, this.value, 'orders')" style="padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#fff;font-size:.85rem;">
+                                    ${['new','confirmed','cooking','ready','delivered','cancelled'].map(s =>
+                                        '<option value="' + s + '"' + (s === o.status ? ' selected' : '') + '>' + statusLabel(s) + '</option>'
+                                    ).join('')}
+                                </select>
+                            </td>
+                            <td style="color:#888;font-size:.85rem;">${escH(o.comment || '—')}</td>
+                        </tr>`).join('')}</tbody>
+                    </table></div>
+                </div>`;
+            });
+            container.innerHTML = html;
         }
 
         // ===== EXPORT EXCEL =====
         function exportOrdersExcel() {
-            const dateStr = document.getElementById('exportDate').value;
+            const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { showToast('Выберите дату'); return; }
-
-            const filtered = allOrders.filter(o => {
-                if (!o.createdAt) return false;
-                return o.createdAt.substring(0, 10) === dateStr;
-            });
-
-            if (!filtered.length) { showToast('Нет заказов за эту дату'); return; }
+            if (!dateOrders.length) { showToast('Нет заказов за эту дату'); return; }
 
             const rows = [];
-            filtered.forEach(o => {
+            dateOrders.forEach(o => {
                 o.items.forEach(it => {
                     rows.push({
                         '# Заказа': o.id,
@@ -845,7 +931,6 @@
             });
 
             const ws = XLSX.utils.json_to_sheet(rows);
-            // Auto-width columns
             ws['!cols'] = Object.keys(rows[0]).map(k => ({ wch: Math.max(k.length, 14) }));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Заказы');
@@ -915,8 +1000,8 @@
 
         // ===== INIT =====
         loadDishes();
-        // Set today as default export date
-        document.getElementById('exportDate').value = new Date().toISOString().substring(0, 10);
+        // Set today as default orders date
+        document.getElementById('ordersDate').value = new Date().toISOString().substring(0, 10);
     </script>
 </body>
 </html>
