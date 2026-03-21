@@ -10,7 +10,7 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
-            background: #f9f9f9;
+            background: #000;
             scroll-behavior: smooth;
         }
 
@@ -120,8 +120,8 @@
             color: #333;
         }
 
-        /* ===== CATALOG WRAPPER (beige) ===== */
-        .catalog-section {
+        /* ===== BEIGE WRAPPER ===== */
+        .beige-wrapper {
             background: #f5efe6;
         }
 
@@ -220,7 +220,7 @@
 
         .about-item {
             padding: 32px 20px;
-            background: #fff;
+            background: rgba(255,255,255,.7);
             border-radius: 14px;
             box-shadow: 0 2px 12px rgba(0,0,0,.05);
         }
@@ -248,7 +248,7 @@
         .contact-row .ci-icon {
             width: 44px;
             height: 44px;
-            background: #eef3fc;
+            background: rgba(255,255,255,.6);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -262,7 +262,7 @@
 
         /* ===== FORM ===== */
         .form-card {
-            background: #fff;
+            background: rgba(255,255,255,.7);
             border-radius: 14px;
             padding: 32px;
             box-shadow: 0 2px 12px rgba(0,0,0,.06);
@@ -511,14 +511,15 @@
     <a href="#catalog" class="hero-btn">Перейти к каталогу</a>
 </section>
 
+<!-- BEIGE WRAPPER -->
+<div class="beige-wrapper">
+
 <!-- CATALOG -->
-<div class="catalog-section">
 <section id="catalog">
     <h2 class="section-title">Каталог товаров</h2>
     <p class="section-sub">Выберите товар и добавьте в корзину</p>
     <div class="catalog-grid" id="catalogGrid"></div>
 </section>
-</div>
 
 <!-- ABOUT -->
 <section id="about">
@@ -605,6 +606,9 @@
         </div>
     </div>
 </section>
+
+<!-- /BEIGE WRAPPER -->
+</div>
 
 <!-- CART -->
 <div class="cart-overlay" id="cartOverlay" onclick="closeCartOutside(event)">
