@@ -1489,10 +1489,19 @@
     }
 
     // ===== FORM =====
-    function submitForm(e) {
+    async function submitForm(e) {
         e.preventDefault();
-        showToast('Спасибо! Ваш вопрос отправлен.');
-        e.target.reset();
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const message = document.getElementById('message').value.trim();
+        if (!name || !email || !message) { showToast('Заполните все поля'); return; }
+        try {
+            await api('/api/menu/question', { method: 'POST', body: { name, email, message } });
+            showToast('Спасибо! Ваш вопрос отправлен.');
+            e.target.reset();
+        } catch (err) {
+            showToast('Ошибка: ' + err.message);
+        }
     }
 
     // ===== TOAST =====
