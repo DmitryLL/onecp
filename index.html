@@ -82,15 +82,12 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            background: rgba(26,22,18,.85);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            background: var(--black);
             border-bottom: 1px solid rgba(201,169,110,.15);
             transition: all .4s cubic-bezier(.22,1,.36,1);
         }
 
         header.scrolled {
-            background: rgba(26,22,18,.95);
             box-shadow: 0 4px 30px rgba(0,0,0,.3);
         }
 
@@ -1077,11 +1074,6 @@
 
 <!-- CATALOG -->
 <section id="catalog">
-    <div class="section-header animate-on-scroll">
-        <span class="section-tag">Каталог</span>
-        <h2 class="section-title">Наши товары</h2>
-        <p class="section-sub">Выберите то, что вам по вкусу, и добавьте в корзину</p>
-    </div>
     <div class="catalog-grid" id="catalogGrid"></div>
 </section>
 
@@ -1089,11 +1081,6 @@
 
 <!-- ABOUT -->
 <section id="about">
-    <div class="section-header animate-on-scroll">
-        <span class="section-tag">О нас</span>
-        <h2 class="section-title">Почему выбирают нас</h2>
-        <p class="section-sub">Мы стремимся к лучшему сервису</p>
-    </div>
     <div class="about-grid">
         <div class="about-item animate-on-scroll">
             <div class="about-icon">&#x1F69A;</div>
@@ -1122,11 +1109,6 @@
 
 <!-- CONTACTS -->
 <section id="contacts">
-    <div class="section-header animate-on-scroll">
-        <span class="section-tag">Контакты</span>
-        <h2 class="section-title">Свяжитесь с нами</h2>
-        <p class="section-sub">Мы всегда на связи и рады помочь</p>
-    </div>
     <div class="contacts-grid">
         <div class="contact-info animate-on-scroll">
             <div class="contact-row">
