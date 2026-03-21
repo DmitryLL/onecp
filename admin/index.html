@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель — OneCp</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .layout { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 240px;
+            background: #111;
+            border-right: 1px solid #222;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-sub {
+            font-size: .8rem;
+            color: #666;
+            margin-bottom: 32px;
+        }
+
+        .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            color: #999;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: .95rem;
+            transition: background .2s, color .2s;
+        }
+
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background: rgba(245,239,230,.1);
+            color: #f5efe6;
+        }
+
+        .sidebar-bottom {
+            border-top: 1px solid #222;
+            padding-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* ===== MAIN ===== */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            padding: 32px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 1.6rem;
+            color: #fff;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: .95rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background .2s, transform .1s;
+        }
+        .btn:active { transform: scale(.97); }
+
+        .btn-primary {
+            background: #f5efe6;
+            color: #111;
+            font-weight: 600;
+        }
+        .btn-primary:hover { background: #e8ddd0; }
+
+        .btn-danger {
+            background: #3a1515;
+            color: #e74c3c;
+        }
+        .btn-danger:hover { background: #4a1e1e; }
+
+        .btn-secondary {
+            background: #1a1a1a;
+            color: #ccc;
+            border: 1px solid #333;
+        }
+        .btn-secondary:hover { background: #222; }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: .85rem;
+        }
+
+        /* ===== TABLE ===== */
+        .table-wrap {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #1a1a1a;
+            padding: 14px 16px;
+            text-align: left;
+            font-size: .85rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-top: 1px solid #1a1a1a;
+            font-size: .95rem;
+        }
+
+        tr:hover td { background: rgba(245,239,230,.03); }
+
+        .emoji-cell { font-size: 1.5rem; }
+
+        .price-cell {
+            font-weight: 600;
+            color: #f5efe6;
+        }
+
+        .old-price-cell {
+            color: #666;
+            text-decoration: line-through;
+            font-size: .85rem;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px;
+        }
+
+        .modal h2 {
+            color: #fff;
+            font-size: 1.3rem;
+            margin-bottom: 24px;
+        }
+
+        .modal .form-group {
+            margin-bottom: 18px;
+        }
+
+        .modal label {
+            display: block;
+            color: #aaa;
+            font-size: .85rem;
+            margin-bottom: 6px;
+        }
+
+        .modal input, .modal select {
+            width: 100%;
+            padding: 10px 14px;
+            background: #1a1a1a;
+            border: 1.5px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: .95rem;
+            font-family: inherit;
+        }
+
+        .modal input:focus, .modal select:focus {
+            outline: none;
+            border-color: #f5efe6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        /* ===== SETTINGS PANEL ===== */
+        .settings-panel { display: none; }
+        .settings-panel.active { display: block; }
+        .products-panel { display: block; }
+        .products-panel.hidden { display: none; }
+
+        .settings-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .settings-card h3 {
+            color: #fff;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+        }
+
+        .settings-card .form-group {
+            margin-bottom: 16px;
+        }
+
+        .settings-card label {
+            display: block;
+            color: #aaa;
+            font-size: .85rem;
+            margin-bottom: 6px;
+        }
+
+        .settings-card input, .settings-card textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: #1a1a1a;
+            border: 1.5px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: .95rem;
+            font-family: inherit;
+        }
+
+        .settings-card textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .settings-card input:focus, .settings-card textarea:focus {
+            outline: none;
+            border-color: #f5efe6;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1a3a1a;
+            color: #4ade80;
+            padding: 14px 24px;
+            border-radius: 10px;
+            border: 1px solid #2a4a2a;
+            font-size: .95rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: .3s;
+            z-index: 3000;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ===== STATS ===== */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stat-card .stat-label {
+            font-size: .8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f5efe6;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 16px; }
+            .actions-cell { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">OneCp</div>
+            <div class="sidebar-sub">Панель управления</div>
+            <nav class="sidebar-nav">
+                <a href="#" class="active" onclick="showPanel('products'); return false;">📦 Товары</a>
+                <a href="#" onclick="showPanel('settings'); return false;">⚙️ Настройки сайта</a>
+            </nav>
+            <div class="sidebar-bottom">
+                <a href="/" class="sidebar-nav" style="color:#666;text-decoration:none;padding:10px 14px;font-size:.9rem;">← На сайт</a>
+                <a href="#" onclick="logout(); return false;" class="sidebar-nav" style="color:#e74c3c;text-decoration:none;padding:10px 14px;font-size:.9rem;">Выйти</a>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="main">
+            <!-- PRODUCTS PANEL -->
+            <div class="products-panel" id="productsPanel">
+                <div class="page-header">
+                    <h1>Товары</h1>
+                    <button class="btn btn-primary" onclick="openModal()">+ Добавить товар</button>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-label">Всего товаров</div>
+                        <div class="stat-value" id="statTotal">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Средняя цена</div>
+                        <div class="stat-value" id="statAvg">0 ₽</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Со скидкой</div>
+                        <div class="stat-value" id="statDiscount">0</div>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Иконка</th>
+                                <th>Название</th>
+                                <th>Цена</th>
+                                <th>Старая цена</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SETTINGS PANEL -->
+            <div class="settings-panel" id="settingsPanel">
+                <div class="page-header">
+                    <h1>Настройки сайта</h1>
+                    <button class="btn btn-primary" onclick="saveSettings()">Сохранить</button>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Главная секция (Hero)</h3>
+                    <div class="form-group">
+                        <label>Заголовок</label>
+                        <input type="text" id="setHeroTitle">
+                    </div>
+                    <div class="form-group">
+                        <label>Подзаголовок</label>
+                        <input type="text" id="setHeroSub">
+                    </div>
+                    <div class="form-group">
+                        <label>Текст кнопки</label>
+                        <input type="text" id="setHeroBtn">
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Каталог</h3>
+                    <div class="form-group">
+                        <label>Заголовок секции</label>
+                        <input type="text" id="setCatalogTitle">
+                    </div>
+                    <div class="form-group">
+                        <label>Подзаголовок</label>
+                        <input type="text" id="setCatalogSub">
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>О нас</h3>
+                    <div class="form-group">
+                        <label>Заголовок</label>
+                        <input type="text" id="setAboutTitle">
+                    </div>
+                    <div class="form-group">
+                        <label>Подзаголовок</label>
+                        <input type="text" id="setAboutSub">
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Контакты</h3>
+                    <div class="form-group">
+                        <label>Адрес</label>
+                        <input type="text" id="setAddress">
+                    </div>
+                    <div class="form-group">
+                        <label>Телефон</label>
+                        <input type="text" id="setPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="text" id="setEmail">
+                    </div>
+                    <div class="form-group">
+                        <label>Режим работы</label>
+                        <textarea id="setSchedule"></textarea>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Футер</h3>
+                    <div class="form-group">
+                        <label>Текст копирайта</label>
+                        <input type="text" id="setFooter">
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3>Учётные данные</h3>
+                    <div class="form-group">
+                        <label>Логин администратора</label>
+                        <input type="text" id="setAdminUser">
+                    </div>
+                    <div class="form-group">
+                        <label>Новый пароль (оставьте пустым, чтобы не менять)</label>
+                        <input type="password" id="setAdminPass" placeholder="Новый пароль">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+        <div class="modal">
+            <h2 id="modalTitle">Добавить товар</h2>
+            <form onsubmit="saveProduct(event)">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Название</label>
+                    <input type="text" id="prodName" required>
+                </div>
+                <div class="form-group">
+                    <label>Иконка (emoji)</label>
+                    <input type="text" id="prodEmoji" placeholder="🎧" required>
+                </div>
+                <div class="form-group">
+                    <label>Цена (₽)</label>
+                    <input type="number" id="prodPrice" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Старая цена (₽, 0 = без скидки)</label>
+                    <input type="number" id="prodOldPrice" min="0" value="0">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== AUTH CHECK =====
+        if (sessionStorage.getItem('onecp_auth') !== 'true') {
+            window.location.href = '/logon/';
+        }
+
+        // ===== DEFAULT DATA =====
+        const defaultProducts = [
+            { id: 1, name: 'Беспроводные наушники', price: 3490, oldPrice: 4990, emoji: '🎧' },
+            { id: 2, name: 'Умные часы', price: 7990, oldPrice: 11990, emoji: '⌚' },
+            { id: 3, name: 'Портативная колонка', price: 2490, oldPrice: 3490, emoji: '🔊' },
+            { id: 4, name: 'Механическая клавиатура', price: 5490, oldPrice: 7990, emoji: '⌨️' },
+            { id: 5, name: 'Игровая мышь', price: 2990, oldPrice: 4490, emoji: '🖱️' },
+            { id: 6, name: 'Веб-камера HD', price: 3990, oldPrice: 5990, emoji: '📷' },
+            { id: 7, name: 'USB-хаб 7 портов', price: 1490, oldPrice: 2490, emoji: '🔌' },
+            { id: 8, name: 'Настольная лампа LED', price: 2290, oldPrice: 3290, emoji: '💡' },
+        ];
+
+        const defaultSettings = {
+            heroTitle: 'Добро пожаловать в OneCp',
+            heroSub: 'Качественные товары по лучшим ценам с быстрой доставкой по всей России',
+            heroBtn: 'Перейти к каталогу',
+            catalogTitle: 'Каталог товаров',
+            catalogSub: 'Выберите товар и добавьте в корзину',
+            aboutTitle: 'Почему мы?',
+            aboutSub: 'Наши преимущества',
+            address: 'г. Москва, ул. Примерная, д. 1, оф. 101',
+            phone: '+7 (800) 123-45-67',
+            email: 'info@onecp.ru',
+            schedule: 'Пн-Пт: 9:00 — 20:00\nСб-Вс: 10:00 — 18:00',
+            footer: '© 2026 OneCp. Все права защищены.'
+        };
+
+        // ===== LOAD DATA =====
+        function loadProducts() {
+            const saved = localStorage.getItem('onecp_products');
+            return saved ? JSON.parse(saved) : [...defaultProducts];
+        }
+
+        function saveProducts(products) {
+            localStorage.setItem('onecp_products', JSON.stringify(products));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('onecp_settings');
+            return saved ? { ...defaultSettings, ...JSON.parse(saved) } : { ...defaultSettings };
+        }
+
+        let products = loadProducts();
+
+        // ===== RENDER TABLE =====
+        function renderTable() {
+            const tbody = document.getElementById('productsBody');
+            tbody.innerHTML = products.map(p => `
+                <tr>
+                    <td class="emoji-cell">${p.emoji}</td>
+                    <td>${p.name}</td>
+                    <td class="price-cell">${p.price.toLocaleString('ru-RU')} ₽</td>
+                    <td>${p.oldPrice ? '<span class="old-price-cell">' + p.oldPrice.toLocaleString('ru-RU') + ' ₽</span>' : '—'}</td>
+                    <td>
+                        <div class="actions-cell">
+                            <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">Изменить</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Удалить</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('statTotal').textContent = products.length;
+            const avg = products.length ? Math.round(products.reduce((s, p) => s + p.price, 0) / products.length) : 0;
+            document.getElementById('statAvg').textContent = avg.toLocaleString('ru-RU') + ' ₽';
+            const disc = products.filter(p => p.oldPrice && p.oldPrice > p.price).length;
+            document.getElementById('statDiscount').textContent = disc;
+        }
+
+        // ===== MODAL =====
+        function openModal(id) {
+            document.getElementById('editId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodEmoji').value = '';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodOldPrice').value = '0';
+            document.getElementById('modalTitle').textContent = 'Добавить товар';
+            document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+
+        function closeModalOutside(e) {
+            if (e.target === e.currentTarget) closeModal();
+        }
+
+        function editProduct(id) {
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('editId').value = id;
+            document.getElementById('prodName').value = p.name;
+            document.getElementById('prodEmoji').value = p.emoji;
+            document.getElementById('prodPrice').value = p.price;
+            document.getElementById('prodOldPrice').value = p.oldPrice || 0;
+            document.getElementById('modalTitle').textContent = 'Редактировать товар';
+            document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editId').value;
+            const data = {
+                name: document.getElementById('prodName').value.trim(),
+                emoji: document.getElementById('prodEmoji').value.trim(),
+                price: parseInt(document.getElementById('prodPrice').value) || 0,
+                oldPrice: parseInt(document.getElementById('prodOldPrice').value) || 0,
+            };
+
+            if (editId) {
+                const idx = products.findIndex(p => p.id === parseInt(editId));
+                if (idx !== -1) {
+                    products[idx] = { ...products[idx], ...data };
+                    showToast('Товар обновлён');
+                }
+            } else {
+                const maxId = products.length ? Math.max(...products.map(p => p.id)) : 0;
+                products.push({ id: maxId + 1, ...data });
+                showToast('Товар добавлен');
+            }
+
+            saveProducts(products);
+            renderTable();
+            closeModal();
+        }
+
+        function deleteProduct(id) {
+            if (!confirm('Удалить этот товар?')) return;
+            products = products.filter(p => p.id !== id);
+            saveProducts(products);
+            renderTable();
+            showToast('Товар удалён');
+        }
+
+        // ===== PANELS =====
+        function showPanel(panel) {
+            const links = document.querySelectorAll('.sidebar-nav a');
+            links.forEach(a => a.classList.remove('active'));
+
+            if (panel === 'products') {
+                document.getElementById('productsPanel').classList.remove('hidden');
+                document.getElementById('settingsPanel').classList.remove('active');
+                links[0]?.classList.add('active');
+            } else {
+                document.getElementById('productsPanel').classList.add('hidden');
+                document.getElementById('settingsPanel').classList.add('active');
+                links[1]?.classList.add('active');
+                loadSettingsForm();
+            }
+        }
+
+        // ===== SETTINGS =====
+        function loadSettingsForm() {
+            const s = loadSettings();
+            document.getElementById('setHeroTitle').value = s.heroTitle;
+            document.getElementById('setHeroSub').value = s.heroSub;
+            document.getElementById('setHeroBtn').value = s.heroBtn;
+            document.getElementById('setCatalogTitle').value = s.catalogTitle;
+            document.getElementById('setCatalogSub').value = s.catalogSub;
+            document.getElementById('setAboutTitle').value = s.aboutTitle;
+            document.getElementById('setAboutSub').value = s.aboutSub;
+            document.getElementById('setAddress').value = s.address;
+            document.getElementById('setPhone').value = s.phone;
+            document.getElementById('setEmail').value = s.email;
+            document.getElementById('setSchedule').value = s.schedule;
+            document.getElementById('setFooter').value = s.footer;
+            document.getElementById('setAdminUser').value = localStorage.getItem('onecp_admin_user') || 'admin';
+            document.getElementById('setAdminPass').value = '';
+        }
+
+        function saveSettings() {
+            const s = {
+                heroTitle: document.getElementById('setHeroTitle').value,
+                heroSub: document.getElementById('setHeroSub').value,
+                heroBtn: document.getElementById('setHeroBtn').value,
+                catalogTitle: document.getElementById('setCatalogTitle').value,
+                catalogSub: document.getElementById('setCatalogSub').value,
+                aboutTitle: document.getElementById('setAboutTitle').value,
+                aboutSub: document.getElementById('setAboutSub').value,
+                address: document.getElementById('setAddress').value,
+                phone: document.getElementById('setPhone').value,
+                email: document.getElementById('setEmail').value,
+                schedule: document.getElementById('setSchedule').value,
+                footer: document.getElementById('setFooter').value,
+            };
+            localStorage.setItem('onecp_settings', JSON.stringify(s));
+
+            // Update admin credentials
+            const newUser = document.getElementById('setAdminUser').value.trim();
+            if (newUser) localStorage.setItem('onecp_admin_user', newUser);
+
+            const newPass = document.getElementById('setAdminPass').value;
+            if (newPass) localStorage.setItem('onecp_admin_pass', newPass);
+
+            showToast('Настройки сохранены');
+        }
+
+        // ===== LOGOUT =====
+        function logout() {
+            sessionStorage.removeItem('onecp_auth');
+            window.location.href = '/logon/';
+        }
+
+        // ===== TOAST =====
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            toast.textContent = text;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // ===== INIT =====
+        renderTable();
+    </script>
+</body>
+</html>

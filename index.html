@@ -634,8 +634,8 @@
 </footer>
 
 <script>
-    // ===== PRODUCTS DATA =====
-    const products = [
+    // ===== PRODUCTS DATA (reads from localStorage if edited in admin) =====
+    const defaultProducts = [
         { id: 1, name: 'Беспроводные наушники', price: 3490, oldPrice: 4990, emoji: '🎧' },
         { id: 2, name: 'Умные часы', price: 7990, oldPrice: 11990, emoji: '⌚' },
         { id: 3, name: 'Портативная колонка', price: 2490, oldPrice: 3490, emoji: '🔊' },
@@ -645,6 +645,8 @@
         { id: 7, name: 'USB-хаб 7 портов', price: 1490, oldPrice: 2490, emoji: '🔌' },
         { id: 8, name: 'Настольная лампа LED', price: 2290, oldPrice: 3290, emoji: '💡' },
     ];
+    const savedProducts = localStorage.getItem('onecp_products');
+    const products = savedProducts ? JSON.parse(savedProducts) : defaultProducts;
 
     let cart = [];
 
@@ -758,8 +760,29 @@
         setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
+    // ===== APPLY SETTINGS FROM ADMIN =====
+    function applySettings() {
+        const saved = localStorage.getItem('onecp_settings');
+        if (!saved) return;
+        const s = JSON.parse(saved);
+        const q = (sel) => document.querySelector(sel);
+        if (s.heroTitle) { const el = q('.hero h1'); if (el) el.textContent = s.heroTitle; }
+        if (s.heroSub) { const el = q('.hero p'); if (el) el.textContent = s.heroSub; }
+        if (s.heroBtn) { const el = q('.hero-btn'); if (el) el.textContent = s.heroBtn; }
+        if (s.catalogTitle) { const el = q('#catalog .section-title'); if (el) el.textContent = s.catalogTitle; }
+        if (s.catalogSub) { const el = q('#catalog .section-sub'); if (el) el.textContent = s.catalogSub; }
+        if (s.aboutTitle) { const el = q('#about .section-title'); if (el) el.textContent = s.aboutTitle; }
+        if (s.aboutSub) { const el = q('#about .section-sub'); if (el) el.textContent = s.aboutSub; }
+        if (s.address) { const rows = document.querySelectorAll('.contact-row p'); if (rows[0]) rows[0].textContent = s.address; }
+        if (s.phone) { const rows = document.querySelectorAll('.contact-row p'); if (rows[1]) rows[1].textContent = s.phone; }
+        if (s.email) { const rows = document.querySelectorAll('.contact-row p'); if (rows[2]) rows[2].textContent = s.email; }
+        if (s.schedule) { const rows = document.querySelectorAll('.contact-row p'); if (rows[3]) rows[3].innerHTML = s.schedule.replace(/\n/g, '<br>'); }
+        if (s.footer) { const el = q('footer'); if (el) el.innerHTML = s.footer; }
+    }
+
     // ===== INIT =====
     renderCatalog();
+    applySettings();
 </script>
 </body>
 </html>
