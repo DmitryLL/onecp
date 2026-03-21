@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Dish
+from models import Dish, SiteSettings
 
 router = APIRouter(prefix="/api/menu", tags=["menu"])
 
@@ -40,3 +40,9 @@ def get_categories(db: Session = Depends(get_db)):
         .all()
     )
     return [c[0] for c in cats if c[0]]
+
+
+@router.get("/settings")
+def get_site_settings(db: Session = Depends(get_db)):
+    settings = db.query(SiteSettings).all()
+    return {s.key: s.value for s in settings}
