@@ -236,7 +236,7 @@
         /* ===== SETTINGS PANEL ===== */
         .settings-panel { display: none; }
         .settings-panel.active { display: block; }
-        .products-panel { display: block; }
+        .products-panel { display: none; }
 
         .settings-card {
             background: #111;
@@ -346,9 +346,9 @@
             <div class="sidebar-logo"><img src="/images/logo.png" alt="One Coffee Place" style="height:36px;width:auto;"></div>
             <div class="sidebar-sub">Панель управления</div>
             <nav class="sidebar-nav">
-                <a href="#" class="active" onclick="showPanel('products'); return false;">📦 Товары</a>
+                <a href="#" class="active" onclick="showPanel('orders'); return false;">📋 Заказы</a>
+                <a href="#" onclick="showPanel('products'); return false;">📦 Товары</a>
                 <a href="#" onclick="showPanel('customers'); return false;">👥 Клиенты</a>
-                <a href="#" onclick="showPanel('orders'); return false;">📋 Заказы</a>
                 <a href="#" onclick="showPanel('settings'); return false;">⚙️ Настройки сайта</a>
             </nav>
             <div class="sidebar-bottom">
@@ -433,7 +433,7 @@
             </div>
 
             <!-- ORDERS PANEL -->
-            <div id="ordersPanel" style="display:none;">
+            <div id="ordersPanel" style="display:block;">
                 <div class="page-header">
                     <h1>Заказы</h1>
                 </div>
@@ -782,17 +782,17 @@
             document.getElementById('ordersPanel').style.display = 'none';
             document.getElementById('settingsPanel').classList.remove('active');
 
-            if (panel === 'products') {
-                document.getElementById('productsPanel').style.display = 'block';
+            if (panel === 'orders') {
+                document.getElementById('ordersPanel').style.display = 'block';
                 links[0]?.classList.add('active');
+                loadOrdersByDate();
+            } else if (panel === 'products') {
+                document.getElementById('productsPanel').style.display = 'block';
+                links[1]?.classList.add('active');
             } else if (panel === 'customers') {
                 document.getElementById('customersPanel').style.display = 'block';
-                links[1]?.classList.add('active');
-                loadCustomers();
-            } else if (panel === 'orders') {
-                document.getElementById('ordersPanel').style.display = 'block';
                 links[2]?.classList.add('active');
-                loadOrdersByDate();
+                loadCustomers();
             } else {
                 document.getElementById('settingsPanel').classList.add('active');
                 links[3]?.classList.add('active');
@@ -1076,9 +1076,10 @@
         }
 
         // ===== INIT =====
-        loadDishes();
-        // Set today as default orders date
+        // Set today as default orders date and load orders first
         document.getElementById('ordersDate').value = new Date().toISOString().substring(0, 10);
+        loadOrdersByDate();
+        loadDishes();
     </script>
 </body>
 </html>
