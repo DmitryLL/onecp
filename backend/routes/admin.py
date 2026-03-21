@@ -1,0 +1,215 @@
+import os
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from jose import jwt
+from passlib.hash import pbkdf2_sha256
+
+from database import get_db
+from models import AdminUser, Dish, Order, Customer, SiteSettings
+
+router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+JWT_SECRET = os.getenv("JWT_SECRET", "onecp-secret-change-me")
+JWT_ALGORITHM = "HS256"
+
+
+def get_admin(request: Request, db: Session = Depends(get_db)) -> AdminUser:
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    token = auth[7:]
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Not admin")
+        admin_id = int(payload["sub"])
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    admin = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
+    if not admin:
+        raise HTTPException(status_code=401, detail="Admin not found")
+    return admin
+
+
+class AdminLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class DishIn(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    old_price: float | None = None
+    emoji: str | None = None
+    image_url: str | None = None
+    category: str | None = None
+    available: bool = True
+    sort_order: int = 0
+
+
+class OrderStatusUpdate(BaseModel):
+    status: str
+
+
+class SettingIn(BaseModel):
+    key: str
+    value: str
+
+
+# ===== AUTH =====
+
+@router.post("/login")
+def admin_login(body: AdminLoginRequest, db: Session = Depends(get_db)):
+    admin = db.query(AdminUser).filter(AdminUser.username == body.username).first()
+    if not admin or not pbkdf2_sha256.verify(body.password, admin.password_hash):
+        raise HTTPException(status_code=401, detail="Неверный логин или пароль")
+
+    from datetime import datetime, timedelta, timezone
+    exp = datetime.now(timezone.utc) + timedelta(hours=24)
+    token = jwt.encode({"sub": str(admin.id), "role": "admin", "exp": exp}, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return {"ok": True, "token": token, "username": admin.username}
+
+
+# ===== DISHES =====
+
+@router.get("/dishes")
+def list_dishes(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    dishes = db.query(Dish).order_by(Dish.sort_order, Dish.id).all()
+    return [
+        {
+            "id": d.id,
+            "name": d.name,
+            "description": d.description,
+            "price": d.price,
+            "oldPrice": d.old_price,
+            "emoji": d.emoji,
+            "imageUrl": d.image_url,
+            "category": d.category,
+            "available": d.available,
+            "sortOrder": d.sort_order,
+        }
+        for d in dishes
+    ]
+
+
+@router.post("/dishes")
+def create_dish(body: DishIn, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    dish = Dish(
+        name=body.name,
+        description=body.description,
+        price=body.price,
+        old_price=body.old_price,
+        emoji=body.emoji,
+        image_url=body.image_url,
+        category=body.category,
+        available=body.available,
+        sort_order=body.sort_order,
+    )
+    db.add(dish)
+    db.commit()
+    db.refresh(dish)
+    return {"ok": True, "id": dish.id}
+
+
+@router.put("/dishes/{dish_id}")
+def update_dish(dish_id: int, body: DishIn, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Блюдо не найдено")
+    dish.name = body.name
+    dish.description = body.description
+    dish.price = body.price
+    dish.old_price = body.old_price
+    dish.emoji = body.emoji
+    dish.image_url = body.image_url
+    dish.category = body.category
+    dish.available = body.available
+    dish.sort_order = body.sort_order
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/dishes/{dish_id}")
+def delete_dish(dish_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Блюдо не найдено")
+    db.delete(dish)
+    db.commit()
+    return {"ok": True}
+
+
+# ===== ORDERS =====
+
+@router.get("/orders")
+def list_orders(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    orders = db.query(Order).order_by(Order.created_at.desc()).limit(100).all()
+    status_labels = {
+        "new": "Новый", "confirmed": "Подтверждён", "cooking": "Готовится",
+        "ready": "Готов", "delivered": "Доставлен", "cancelled": "Отменён",
+    }
+    return [
+        {
+            "id": o.id,
+            "customerPhone": o.customer.phone if o.customer else "—",
+            "customerName": o.customer.name if o.customer else "—",
+            "status": o.status,
+            "statusLabel": status_labels.get(o.status, o.status),
+            "total": o.total,
+            "comment": o.comment,
+            "address": o.address,
+            "createdAt": o.created_at.isoformat() if o.created_at else None,
+            "items": [
+                {"name": it.dish.name if it.dish else "—", "qty": it.quantity, "price": it.price}
+                for it in o.items
+            ],
+        }
+        for o in orders
+    ]
+
+
+@router.put("/orders/{order_id}/status")
+def update_order_status(order_id: int, body: OrderStatusUpdate, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+    if body.status not in ("new", "confirmed", "cooking", "ready", "delivered", "cancelled"):
+        raise HTTPException(status_code=400, detail="Неверный статус")
+    order.status = body.status
+    db.commit()
+    return {"ok": True}
+
+
+# ===== CUSTOMERS =====
+
+@router.get("/customers")
+def list_customers(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    customers = db.query(Customer).order_by(Customer.created_at.desc()).limit(200).all()
+    return [
+        {"id": c.id, "phone": c.phone, "name": c.name, "createdAt": c.created_at.isoformat() if c.created_at else None}
+        for c in customers
+    ]
+
+
+# ===== SETTINGS =====
+
+@router.get("/settings")
+def get_settings(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    settings = db.query(SiteSettings).all()
+    return {s.key: s.value for s in settings}
+
+
+@router.put("/settings")
+def update_settings(body: list[SettingIn], admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    for item in body:
+        existing = db.query(SiteSettings).filter(SiteSettings.key == item.key).first()
+        if existing:
+            existing.value = item.value
+        else:
+            db.add(SiteSettings(key=item.key, value=item.value))
+    db.commit()
+    return {"ok": True}

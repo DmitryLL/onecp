@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: onecp_db
+      POSTGRES_USER: onecp
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-onecp_pass_2026}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onecp -d onecp_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://onecp:${DB_PASSWORD:-onecp_pass_2026}@db:5432/onecp_db
+      JWT_SECRET: ${JWT_SECRET:-onecp-jwt-secret-2026}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-onecp2026}
+      SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+      SMSRU_API_KEY: ${SMSRU_API_KEY:-}
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  pgdata:

@@ -17,4 +17,4 @@ jobs:
 
       - name: Deploy via SSH
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@192.124.171.167 'cd /onecp && git fetch origin deploy && git reset --hard origin/deploy && bash /onecp/setup-nginx.sh'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@192.124.171.167 'cd /onecp && git fetch origin deploy && git reset --hard origin/deploy && docker compose up -d --build && bash /onecp/setup-nginx.sh'

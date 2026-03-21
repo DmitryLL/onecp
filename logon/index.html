@@ -113,27 +113,30 @@
     </div>
 
     <script>
-        // Check if already logged in
-        if (sessionStorage.getItem('onecp_auth') === 'true') {
+        if (localStorage.getItem('onecp_admin_token')) {
             window.location.href = '/admin/';
         }
 
-        function handleLogin(e) {
+        async function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value;
 
-            // Credentials stored in localStorage (set defaults if not exist)
-            const savedUser = localStorage.getItem('onecp_admin_user') || 'admin';
-            const savedPass = localStorage.getItem('onecp_admin_pass') || 'onecp2026';
-
-            if (user === savedUser && pass === savedPass) {
-                sessionStorage.setItem('onecp_auth', 'true');
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Error');
+                localStorage.setItem('onecp_admin_token', data.token);
                 window.location.href = '/admin/';
-            } else {
-                const err = document.getElementById('errorMsg');
-                err.style.display = 'block';
-                setTimeout(() => err.style.display = 'none', 3000);
+            } catch (err) {
+                const el = document.getElementById('errorMsg');
+                el.textContent = err.message;
+                el.style.display = 'block';
+                setTimeout(() => el.style.display = 'none', 3000);
             }
         }
     </script>

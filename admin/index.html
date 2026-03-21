@@ -525,64 +525,49 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ===== AUTH CHECK =====
-        if (sessionStorage.getItem('onecp_auth') !== 'true') {
-            window.location.href = '/logon/';
+        // ===== AUTH =====
+        let adminToken = localStorage.getItem('onecp_admin_token');
+        if (!adminToken) window.location.href = '/logon/';
+
+        async function api(url, opts = {}) {
+            const headers = { ...opts.headers };
+            if (opts.body && typeof opts.body === 'object') {
+                headers['Content-Type'] = 'application/json';
+                opts.body = JSON.stringify(opts.body);
+            }
+            if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
+            const res = await fetch(url, { ...opts, headers });
+            if (res.status === 401 || res.status === 403) {
+                localStorage.removeItem('onecp_admin_token');
+                window.location.href = '/logon/';
+                return;
+            }
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || 'Error');
+            }
+            return res.json();
         }
 
-        // ===== DEFAULT DATA =====
-        const defaultProducts = [
-            { id: 1, name: 'Беспроводные наушники', price: 3490, oldPrice: 4990, emoji: '🎧' },
-            { id: 2, name: 'Умные часы', price: 7990, oldPrice: 11990, emoji: '⌚' },
-            { id: 3, name: 'Портативная колонка', price: 2490, oldPrice: 3490, emoji: '🔊' },
-            { id: 4, name: 'Механическая клавиатура', price: 5490, oldPrice: 7990, emoji: '⌨️' },
-            { id: 5, name: 'Игровая мышь', price: 2990, oldPrice: 4490, emoji: '🖱️' },
-            { id: 6, name: 'Веб-камера HD', price: 3990, oldPrice: 5990, emoji: '📷' },
-            { id: 7, name: 'USB-хаб 7 портов', price: 1490, oldPrice: 2490, emoji: '🔌' },
-            { id: 8, name: 'Настольная лампа LED', price: 2290, oldPrice: 3290, emoji: '💡' },
-        ];
+        let products = [];
 
-        const defaultSettings = {
-            heroTitle: 'Добро пожаловать в OneCp',
-            heroSub: 'Качественные товары по лучшим ценам с быстрой доставкой по всей России',
-            heroBtn: 'Перейти к каталогу',
-            catalogTitle: 'Каталог товаров',
-            catalogSub: 'Выберите товар и добавьте в корзину',
-            aboutTitle: 'Почему мы?',
-            aboutSub: 'Наши преимущества',
-            address: 'г. Москва, ул. Примерная, д. 1, оф. 101',
-            phone: '+7 (800) 123-45-67',
-            email: 'info@onecp.ru',
-            schedule: 'Пн-Пт: 9:00 — 20:00\nСб-Вс: 10:00 — 18:00',
-            footer: '© 2026 OneCp. Все права защищены.'
-        };
-
-        // ===== LOAD DATA =====
-        function loadProducts() {
-            const saved = localStorage.getItem('onecp_products');
-            return saved ? JSON.parse(saved) : [...defaultProducts];
+        // ===== LOAD DISHES =====
+        async function loadDishes() {
+            try {
+                products = await api('/api/admin/dishes');
+                renderTable();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
         }
-
-        function saveProducts(products) {
-            localStorage.setItem('onecp_products', JSON.stringify(products));
-        }
-
-        function loadSettings() {
-            const saved = localStorage.getItem('onecp_settings');
-            return saved ? { ...defaultSettings, ...JSON.parse(saved) } : { ...defaultSettings };
-        }
-
-        let products = loadProducts();
 
         // ===== RENDER TABLE =====
         function renderTable() {
             const tbody = document.getElementById('productsBody');
             tbody.innerHTML = products.map(p => `
                 <tr>
-                    <td class="emoji-cell">${p.emoji}</td>
-                    <td>${p.name}</td>
-                    <td class="price-cell">${p.price.toLocaleString('ru-RU')} ₽</td>
-                    <td>${p.oldPrice ? '<span class="old-price-cell">' + p.oldPrice.toLocaleString('ru-RU') + ' ₽</span>' : '—'}</td>
+                    <td class="emoji-cell">${p.emoji || ''}</td>
+                    <td>${p.name}${p.category ? ' <span style="color:#666;font-size:.8rem;">(' + p.category + ')</span>' : ''}</td>
+                    <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
+                    <td>${p.oldPrice ? '<span class="old-price-cell">' + p.oldPrice.toLocaleString('ru-RU') + ' &#8381;</span>' : '\u2014'}</td>
                     <td>
                         <div class="actions-cell">
                             <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">Изменить</button>
@@ -591,89 +576,77 @@
                     </td>
                 </tr>
             `).join('');
-
             updateStats();
         }
 
         function updateStats() {
             document.getElementById('statTotal').textContent = products.length;
             const avg = products.length ? Math.round(products.reduce((s, p) => s + p.price, 0) / products.length) : 0;
-            document.getElementById('statAvg').textContent = avg.toLocaleString('ru-RU') + ' ₽';
-            const disc = products.filter(p => p.oldPrice && p.oldPrice > p.price).length;
-            document.getElementById('statDiscount').textContent = disc;
+            document.getElementById('statAvg').textContent = avg.toLocaleString('ru-RU') + ' &#8381;';
+            document.getElementById('statDiscount').textContent = products.filter(p => p.oldPrice && p.oldPrice > p.price).length;
         }
 
         // ===== MODAL =====
-        function openModal(id) {
+        function openModal() {
             document.getElementById('editId').value = '';
             document.getElementById('prodName').value = '';
             document.getElementById('prodEmoji').value = '';
             document.getElementById('prodPrice').value = '';
             document.getElementById('prodOldPrice').value = '0';
-            document.getElementById('modalTitle').textContent = 'Добавить товар';
+            document.getElementById('modalTitle').textContent = 'Добавить блюдо';
             document.getElementById('modalOverlay').classList.add('open');
         }
 
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('open');
-        }
-
-        function closeModalOutside(e) {
-            if (e.target === e.currentTarget) closeModal();
-        }
+        function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+        function closeModalOutside(e) { if (e.target === e.currentTarget) closeModal(); }
 
         function editProduct(id) {
             const p = products.find(x => x.id === id);
             if (!p) return;
             document.getElementById('editId').value = id;
             document.getElementById('prodName').value = p.name;
-            document.getElementById('prodEmoji').value = p.emoji;
+            document.getElementById('prodEmoji').value = p.emoji || '';
             document.getElementById('prodPrice').value = p.price;
             document.getElementById('prodOldPrice').value = p.oldPrice || 0;
-            document.getElementById('modalTitle').textContent = 'Редактировать товар';
+            document.getElementById('modalTitle').textContent = 'Редактировать блюдо';
             document.getElementById('modalOverlay').classList.add('open');
         }
 
-        function saveProduct(e) {
+        async function saveProduct(e) {
             e.preventDefault();
             const editId = document.getElementById('editId').value;
             const data = {
                 name: document.getElementById('prodName').value.trim(),
-                emoji: document.getElementById('prodEmoji').value.trim(),
-                price: parseInt(document.getElementById('prodPrice').value) || 0,
-                oldPrice: parseInt(document.getElementById('prodOldPrice').value) || 0,
+                emoji: document.getElementById('prodEmoji').value.trim() || null,
+                price: parseFloat(document.getElementById('prodPrice').value) || 0,
+                old_price: parseFloat(document.getElementById('prodOldPrice').value) || null,
             };
-
-            if (editId) {
-                const idx = products.findIndex(p => p.id === parseInt(editId));
-                if (idx !== -1) {
-                    products[idx] = { ...products[idx], ...data };
-                    showToast('Товар обновлён');
+            try {
+                if (editId) {
+                    await api('/api/admin/dishes/' + editId, { method: 'PUT', body: data });
+                    showToast('Блюдо обновлено');
+                } else {
+                    await api('/api/admin/dishes', { method: 'POST', body: data });
+                    showToast('Блюдо добавлено');
                 }
-            } else {
-                const maxId = products.length ? Math.max(...products.map(p => p.id)) : 0;
-                products.push({ id: maxId + 1, ...data });
-                showToast('Товар добавлен');
-            }
-
-            saveProducts(products);
-            renderTable();
-            closeModal();
+                await loadDishes();
+                closeModal();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
-        function deleteProduct(id) {
-            if (!confirm('Удалить этот товар?')) return;
-            products = products.filter(p => p.id !== id);
-            saveProducts(products);
-            renderTable();
-            showToast('Товар удалён');
+        async function deleteProduct(id) {
+            if (!confirm('Удалить это блюдо?')) return;
+            try {
+                await api('/api/admin/dishes/' + id, { method: 'DELETE' });
+                showToast('Блюдо удалено');
+                await loadDishes();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
         // ===== PANELS =====
         function showPanel(panel) {
             const links = document.querySelectorAll('.sidebar-nav a');
             links.forEach(a => a.classList.remove('active'));
-
             if (panel === 'products') {
                 document.getElementById('productsPanel').classList.remove('hidden');
                 document.getElementById('settingsPanel').classList.remove('active');
@@ -687,54 +660,37 @@
         }
 
         // ===== SETTINGS =====
-        function loadSettingsForm() {
-            const s = loadSettings();
-            document.getElementById('setHeroTitle').value = s.heroTitle;
-            document.getElementById('setHeroSub').value = s.heroSub;
-            document.getElementById('setHeroBtn').value = s.heroBtn;
-            document.getElementById('setCatalogTitle').value = s.catalogTitle;
-            document.getElementById('setCatalogSub').value = s.catalogSub;
-            document.getElementById('setAboutTitle').value = s.aboutTitle;
-            document.getElementById('setAboutSub').value = s.aboutSub;
-            document.getElementById('setAddress').value = s.address;
-            document.getElementById('setPhone').value = s.phone;
-            document.getElementById('setEmail').value = s.email;
-            document.getElementById('setSchedule').value = s.schedule;
-            document.getElementById('setFooter').value = s.footer;
-            document.getElementById('setAdminUser').value = localStorage.getItem('onecp_admin_user') || 'admin';
-            document.getElementById('setAdminPass').value = '';
+        async function loadSettingsForm() {
+            try {
+                const s = await api('/api/admin/settings');
+                document.getElementById('setHeroTitle').value = s.heroTitle || '';
+                document.getElementById('setHeroSub').value = s.heroSub || '';
+                document.getElementById('setHeroBtn').value = s.heroBtn || '';
+                document.getElementById('setCatalogTitle').value = s.catalogTitle || '';
+                document.getElementById('setCatalogSub').value = s.catalogSub || '';
+                document.getElementById('setAboutTitle').value = s.aboutTitle || '';
+                document.getElementById('setAboutSub').value = s.aboutSub || '';
+                document.getElementById('setAddress').value = s.address || '';
+                document.getElementById('setPhone').value = s.phone || '';
+                document.getElementById('setEmail').value = s.email || '';
+                document.getElementById('setSchedule').value = s.schedule || '';
+                document.getElementById('setFooter').value = s.footer || '';
+            } catch (e) { /* first time, fields stay empty */ }
         }
 
-        function saveSettings() {
-            const s = {
-                heroTitle: document.getElementById('setHeroTitle').value,
-                heroSub: document.getElementById('setHeroSub').value,
-                heroBtn: document.getElementById('setHeroBtn').value,
-                catalogTitle: document.getElementById('setCatalogTitle').value,
-                catalogSub: document.getElementById('setCatalogSub').value,
-                aboutTitle: document.getElementById('setAboutTitle').value,
-                aboutSub: document.getElementById('setAboutSub').value,
-                address: document.getElementById('setAddress').value,
-                phone: document.getElementById('setPhone').value,
-                email: document.getElementById('setEmail').value,
-                schedule: document.getElementById('setSchedule').value,
-                footer: document.getElementById('setFooter').value,
-            };
-            localStorage.setItem('onecp_settings', JSON.stringify(s));
-
-            // Update admin credentials
-            const newUser = document.getElementById('setAdminUser').value.trim();
-            if (newUser) localStorage.setItem('onecp_admin_user', newUser);
-
-            const newPass = document.getElementById('setAdminPass').value;
-            if (newPass) localStorage.setItem('onecp_admin_pass', newPass);
-
-            showToast('Настройки сохранены');
+        async function saveSettings() {
+            const fields = ['heroTitle','heroSub','heroBtn','catalogTitle','catalogSub','aboutTitle','aboutSub','address','phone','email','schedule','footer'];
+            const ids = ['setHeroTitle','setHeroSub','setHeroBtn','setCatalogTitle','setCatalogSub','setAboutTitle','setAboutSub','setAddress','setPhone','setEmail','setSchedule','setFooter'];
+            const body = fields.map((key, i) => ({ key, value: document.getElementById(ids[i]).value }));
+            try {
+                await api('/api/admin/settings', { method: 'PUT', body });
+                showToast('Настройки сохранены');
+            } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
         // ===== LOGOUT =====
         function logout() {
-            sessionStorage.removeItem('onecp_auth');
+            localStorage.removeItem('onecp_admin_token');
             window.location.href = '/logon/';
         }
 
@@ -747,7 +703,7 @@
         }
 
         // ===== INIT =====
-        renderTable();
+        loadDishes();
     </script>
 </body>
 </html>

@@ -619,6 +619,30 @@
         </div>
         <div class="cart-items" id="cartItems"></div>
         <div class="cart-total" id="cartTotal"></div>
+        <div id="cartCheckout" style="display:none;padding-top:16px;">
+            <input type="text" id="orderAddress" placeholder="Адрес доставки" style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:.95rem;margin-bottom:8px;font-family:inherit;">
+            <input type="text" id="orderComment" placeholder="Комментарий к заказу" style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:.95rem;margin-bottom:12px;font-family:inherit;">
+            <button onclick="checkout()" style="width:100%;padding:14px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600;">Оформить заказ</button>
+        </div>
+    </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="cart-overlay" id="authModal" onclick="if(event.target===event.currentTarget)this.classList.remove('open')">
+    <div class="cart-panel" style="max-width:400px;justify-content:center;align-items:center;">
+        <div style="width:100%;max-width:320px;">
+            <h2 style="margin-bottom:24px;text-align:center;">Авторизация</h2>
+            <div id="authStep1">
+                <p style="color:#666;margin-bottom:16px;text-align:center;">Введите номер телефона для получения кода</p>
+                <input type="tel" id="authPhone" placeholder="+7 (999) 123-45-67" style="width:100%;padding:12px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:1rem;margin-bottom:12px;font-family:inherit;">
+                <button onclick="sendCode()" style="width:100%;padding:14px;background:#2d6cdf;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600;">Получить код</button>
+            </div>
+            <div id="authStep2" style="display:none;">
+                <p style="color:#666;margin-bottom:16px;text-align:center;">Введите код из SMS</p>
+                <input type="text" id="authCode" placeholder="1234" maxlength="4" style="width:100%;padding:12px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:1.5rem;text-align:center;letter-spacing:8px;margin-bottom:12px;font-family:inherit;">
+                <button onclick="verifyCode()" style="width:100%;padding:14px;background:#27ae60;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600;">Подтвердить</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -634,56 +658,78 @@
 </footer>
 
 <script>
-    // ===== PRODUCTS DATA (reads from localStorage if edited in admin) =====
-    const defaultProducts = [
-        { id: 1, name: 'Беспроводные наушники', price: 3490, oldPrice: 4990, emoji: '🎧' },
-        { id: 2, name: 'Умные часы', price: 7990, oldPrice: 11990, emoji: '⌚' },
-        { id: 3, name: 'Портативная колонка', price: 2490, oldPrice: 3490, emoji: '🔊' },
-        { id: 4, name: 'Механическая клавиатура', price: 5490, oldPrice: 7990, emoji: '⌨️' },
-        { id: 5, name: 'Игровая мышь', price: 2990, oldPrice: 4490, emoji: '🖱️' },
-        { id: 6, name: 'Веб-камера HD', price: 3990, oldPrice: 5990, emoji: '📷' },
-        { id: 7, name: 'USB-хаб 7 портов', price: 1490, oldPrice: 2490, emoji: '🔌' },
-        { id: 8, name: 'Настольная лампа LED', price: 2290, oldPrice: 3290, emoji: '💡' },
-    ];
-    const savedProducts = localStorage.getItem('onecp_products');
-    const products = savedProducts ? JSON.parse(savedProducts) : defaultProducts;
-
+    let products = [];
     let cart = [];
+    let customerToken = localStorage.getItem('onecp_customer_token');
+    let customerInfo = null;
+
+    // ===== API HELPER =====
+    async function api(url, opts = {}) {
+        const headers = opts.headers || {};
+        if (opts.body && typeof opts.body === 'object') {
+            headers['Content-Type'] = 'application/json';
+            opts.body = JSON.stringify(opts.body);
+        }
+        if (customerToken) headers['Authorization'] = 'Bearer ' + customerToken;
+        const res = await fetch(url, { ...opts, headers });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || 'Error');
+        }
+        return res.json();
+    }
+
+    // ===== LOAD MENU FROM API =====
+    async function loadMenu() {
+        try {
+            products = await api('/api/menu/');
+        } catch (e) {
+            console.error('Failed to load menu:', e);
+            products = [];
+        }
+        renderCatalog();
+    }
 
     // ===== RENDER CATALOG =====
     function renderCatalog() {
         const grid = document.getElementById('catalogGrid');
+        if (!products.length) {
+            grid.innerHTML = '<p style="text-align:center;color:#999;grid-column:1/-1;">Загрузка меню...</p>';
+            return;
+        }
         grid.innerHTML = products.map(p => `
             <div class="card">
-                <div class="card-img">${p.emoji}</div>
+                <div class="card-img">${p.emoji || ''}</div>
                 <div class="card-body">
-                    <h3>${p.name}</h3>
-                    <div class="price">${p.price.toLocaleString('ru-RU')} ₽ <span class="old-price">${p.oldPrice.toLocaleString('ru-RU')} ₽</span></div>
+                    <h3>${esc(p.name)}</h3>
+                    ${p.description ? '<p style="color:#888;font-size:.85rem;margin-bottom:8px;">' + esc(p.description) + '</p>' : ''}
+                    <div class="price">${p.price.toLocaleString('ru-RU')} &#8381;${p.oldPrice ? ' <span class="old-price">' + p.oldPrice.toLocaleString('ru-RU') + ' &#8381;</span>' : ''}</div>
                     <button class="btn-cart" id="btn-${p.id}" onclick="addToCart(${p.id})">В корзину</button>
                 </div>
             </div>
         `).join('');
     }
 
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
     // ===== CART =====
     function addToCart(id) {
         const product = products.find(p => p.id === id);
+        if (!product) return;
         const existing = cart.find(c => c.id === id);
-        if (existing) {
-            existing.qty++;
-        } else {
-            cart.push({ ...product, qty: 1 });
-        }
+        if (existing) { existing.qty++; } else { cart.push({ ...product, qty: 1 }); }
         updateCartBadge();
-        showToast(`${product.name} добавлен в корзину`);
-
+        showToast(product.name + ' добавлен в корзину');
         const btn = document.getElementById('btn-' + id);
-        btn.textContent = '✓ Добавлено';
-        btn.classList.add('added');
-        setTimeout(() => {
-            btn.textContent = 'В корзину';
-            btn.classList.remove('added');
-        }, 1500);
+        if (btn) {
+            btn.textContent = '\u2713 Добавлено';
+            btn.classList.add('added');
+            setTimeout(() => { btn.textContent = 'В корзину'; btn.classList.remove('added'); }, 1500);
+        }
     }
 
     function removeFromCart(id) {
@@ -702,25 +748,28 @@
     function renderCart() {
         const container = document.getElementById('cartItems');
         const totalEl = document.getElementById('cartTotal');
+        const checkoutArea = document.getElementById('cartCheckout');
 
         if (cart.length === 0) {
             container.innerHTML = '<div class="cart-empty">Корзина пуста</div>';
             totalEl.textContent = '';
+            if (checkoutArea) checkoutArea.style.display = 'none';
             return;
         }
 
         container.innerHTML = cart.map(c => `
             <div class="cart-item">
                 <div class="cart-item-info">
-                    <h4>${c.emoji} ${c.name} × ${c.qty}</h4>
-                    <p>${(c.price * c.qty).toLocaleString('ru-RU')} ₽</p>
+                    <h4>${c.emoji || ''} ${esc(c.name)} \u00d7 ${c.qty}</h4>
+                    <p>${(c.price * c.qty).toLocaleString('ru-RU')} \u20bd</p>
                 </div>
-                <button class="cart-item-remove" onclick="removeFromCart(${c.id})">✕</button>
+                <button class="cart-item-remove" onclick="removeFromCart(${c.id})">\u2715</button>
             </div>
         `).join('');
 
         const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
-        totalEl.textContent = 'Итого: ' + total.toLocaleString('ru-RU') + ' ₽';
+        totalEl.textContent = '\u0418\u0442\u043e\u0433\u043e: ' + total.toLocaleString('ru-RU') + ' \u20bd';
+        if (checkoutArea) checkoutArea.style.display = 'block';
     }
 
     function openCart() {
@@ -734,6 +783,87 @@
 
     function closeCartOutside(e) {
         if (e.target === e.currentTarget) closeCart();
+    }
+
+    // ===== AUTH (phone + SMS code) =====
+    async function startAuth() {
+        document.getElementById('authModal').classList.add('open');
+        document.getElementById('authStep1').style.display = 'block';
+        document.getElementById('authStep2').style.display = 'none';
+    }
+
+    async function sendCode() {
+        const phone = document.getElementById('authPhone').value.trim();
+        if (!phone) return;
+        try {
+            await api('/api/auth/send-code', { method: 'POST', body: { phone } });
+            document.getElementById('authStep1').style.display = 'none';
+            document.getElementById('authStep2').style.display = 'block';
+            showToast('Код отправлен');
+        } catch (e) {
+            showToast(e.message);
+        }
+    }
+
+    async function verifyCode() {
+        const phone = document.getElementById('authPhone').value.trim();
+        const code = document.getElementById('authCode').value.trim();
+        if (!code) return;
+        try {
+            const res = await api('/api/auth/verify-code', { method: 'POST', body: { phone, code } });
+            customerToken = res.token;
+            customerInfo = res.customer;
+            localStorage.setItem('onecp_customer_token', customerToken);
+            document.getElementById('authModal').classList.remove('open');
+            updateAuthUI();
+            showToast('Вы авторизованы!');
+            // Now place the order
+            await placeOrder();
+        } catch (e) {
+            showToast(e.message);
+        }
+    }
+
+    function updateAuthUI() {
+        // Could update nav to show user info
+    }
+
+    async function placeOrder() {
+        if (!customerToken || cart.length === 0) return;
+        const comment = document.getElementById('orderComment')?.value || '';
+        const address = document.getElementById('orderAddress')?.value || '';
+        try {
+            const res = await api('/api/orders/', {
+                method: 'POST',
+                body: {
+                    items: cart.map(c => ({ dish_id: c.id, quantity: c.qty })),
+                    comment: comment || null,
+                    address: address || null,
+                }
+            });
+            cart = [];
+            updateCartBadge();
+            closeCart();
+            showToast('Заказ #' + res.order.id + ' оформлен!');
+        } catch (e) {
+            showToast('Ошибка: ' + e.message);
+        }
+    }
+
+    async function checkout() {
+        if (cart.length === 0) return;
+        if (!customerToken) {
+            startAuth();
+        } else {
+            await placeOrder();
+        }
+    }
+
+    function logoutCustomer() {
+        customerToken = null;
+        customerInfo = null;
+        localStorage.removeItem('onecp_customer_token');
+        showToast('Вы вышли');
     }
 
     // ===== MOBILE MENU =====
@@ -760,29 +890,8 @@
         setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
-    // ===== APPLY SETTINGS FROM ADMIN =====
-    function applySettings() {
-        const saved = localStorage.getItem('onecp_settings');
-        if (!saved) return;
-        const s = JSON.parse(saved);
-        const q = (sel) => document.querySelector(sel);
-        if (s.heroTitle) { const el = q('.hero h1'); if (el) el.textContent = s.heroTitle; }
-        if (s.heroSub) { const el = q('.hero p'); if (el) el.textContent = s.heroSub; }
-        if (s.heroBtn) { const el = q('.hero-btn'); if (el) el.textContent = s.heroBtn; }
-        if (s.catalogTitle) { const el = q('#catalog .section-title'); if (el) el.textContent = s.catalogTitle; }
-        if (s.catalogSub) { const el = q('#catalog .section-sub'); if (el) el.textContent = s.catalogSub; }
-        if (s.aboutTitle) { const el = q('#about .section-title'); if (el) el.textContent = s.aboutTitle; }
-        if (s.aboutSub) { const el = q('#about .section-sub'); if (el) el.textContent = s.aboutSub; }
-        if (s.address) { const rows = document.querySelectorAll('.contact-row p'); if (rows[0]) rows[0].textContent = s.address; }
-        if (s.phone) { const rows = document.querySelectorAll('.contact-row p'); if (rows[1]) rows[1].textContent = s.phone; }
-        if (s.email) { const rows = document.querySelectorAll('.contact-row p'); if (rows[2]) rows[2].textContent = s.email; }
-        if (s.schedule) { const rows = document.querySelectorAll('.contact-row p'); if (rows[3]) rows[3].innerHTML = s.schedule.replace(/\n/g, '<br>'); }
-        if (s.footer) { const el = q('footer'); if (el) el.innerHTML = s.footer; }
-    }
-
     // ===== INIT =====
-    renderCatalog();
-    applySettings();
+    loadMenu();
 </script>
 </body>
 </html>
