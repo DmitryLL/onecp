@@ -105,12 +105,15 @@
         }
 
         .logo {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--beige);
+            display: flex;
+            align-items: center;
             text-decoration: none;
-            letter-spacing: -.5px;
             transition: opacity .2s;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
         }
 
         .logo:hover { opacity: .85; }
@@ -1034,7 +1037,7 @@
 <!-- HEADER -->
 <header id="siteHeader">
     <div class="header-inner">
-        <a href="#" class="logo">OneCp</a>
+        <a href="#" class="logo"><img src="images/logo.png" alt="One Coffee Place"></a>
         <nav class="desktop">
             <a href="#catalog">Каталог</a>
             <a href="#about">О нас</a>
