@@ -128,11 +128,10 @@ def update_dish(dish_id: int, body: DishIn, admin: AdminUser = Depends(get_admin
     dish.description = body.description
     dish.price = body.price
     dish.old_price = body.old_price
-    dish.emoji = body.emoji
-    dish.image_url = body.image_url
     dish.category = body.category
     dish.available = body.available
     dish.sort_order = body.sort_order
+    # image_url is managed by the upload/delete endpoints, not here
     db.commit()
     return {"ok": True}
 
