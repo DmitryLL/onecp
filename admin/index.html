@@ -919,20 +919,13 @@
                     <h3 style="margin-bottom:12px;">${g.name !== '—' ? escH(g.name) + ' — ' : ''}${escH(g.phone)} <span style="color:#888;font-size:.85rem;font-weight:400;margin-left:12px;">Итого: ${totalSum.toLocaleString('ru-RU')} ₽</span></h3>
                     <div class="table-wrap"><table>
                         <thead><tr>
-                            <th>Заказ #</th><th>Время</th><th>Состав</th><th>Сумма</th><th>Статус</th><th>Комментарий</th>
+                            <th>Заказ #</th><th>Время</th><th>Состав</th><th>Сумма</th><th>Комментарий</th>
                         </tr></thead>
                         <tbody>${g.orders.map(o => `<tr>
                             <td>#${o.id}</td>
                             <td style="color:#888;font-size:.85rem;">${o.createdAt ? new Date(o.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '—'}</td>
                             <td style="font-size:.85rem;">${o.items.map(it => escH(it.name) + ' x' + it.qty).join(', ')}</td>
                             <td class="price-cell">${o.total.toLocaleString('ru-RU')} ₽</td>
-                            <td>
-                                <select onchange="updateOrderStatus(${o.id}, this.value, 'orders')" style="padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#fff;font-size:.85rem;">
-                                    ${['new','confirmed','cooking','ready','delivered','cancelled'].map(s =>
-                                        '<option value="' + s + '"' + (s === o.status ? ' selected' : '') + '>' + statusLabel(s) + '</option>'
-                                    ).join('')}
-                                </select>
-                            </td>
                             <td style="color:#888;font-size:.85rem;">${escH(o.comment || '—')}</td>
                         </tr>`).join('')}</tbody>
                     </table></div>
@@ -959,27 +952,27 @@
             if (!dateOrders.length) { showToast('Нет заказов за эту дату'); return; }
             try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
 
-            const rows = [];
-            dateOrders.forEach(o => {
-                o.items.forEach(it => {
-                    rows.push({
-                        '# Заказа': o.id,
-                        'Дата': new Date(o.createdAt).toLocaleString('ru-RU'),
-                        'Клиент': o.customerName || '—',
-                        'Телефон': o.customerPhone || '—',
-                        'Товар': it.name,
-                        'Кол-во': it.qty,
-                        'Цена': it.price,
-                        'Сумма заказа': o.total,
-                        'Статус': statusLabel(o.status),
-                        'Адрес': o.address || '',
-                        'Комментарий': o.comment || '',
-                    });
+            const headers = ['# Заказа','Время','Клиент','Телефон','Товар','Кол-во','Цена','Сумма заказа','Комментарий'];
+            const data = [headers];
+            dateOrders.forEach((o, idx) => {
+                if (idx > 0) data.push([]); // пустая строка между заказами
+                o.items.forEach((it, i) => {
+                    data.push([
+                        i === 0 ? o.id : '',
+                        i === 0 ? new Date(o.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '',
+                        i === 0 ? (o.customerName || '—') : '',
+                        i === 0 ? (o.customerPhone || '—') : '',
+                        it.name,
+                        it.qty,
+                        it.price,
+                        i === 0 ? o.total : '',
+                        i === 0 ? (o.comment || '') : '',
+                    ]);
                 });
             });
 
-            const ws = XLSX.utils.json_to_sheet(rows);
-            ws['!cols'] = Object.keys(rows[0]).map(k => ({ wch: Math.max(k.length, 14) }));
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = headers.map(k => ({ wch: Math.max(k.length, 14) }));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Заказы');
             XLSX.writeFile(wb, 'orders_' + dateStr + '.xlsx');
