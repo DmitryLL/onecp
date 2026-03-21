@@ -1200,11 +1200,16 @@
         <div id="authStep1">
             <p>Введите номер телефона для получения кода</p>
             <input type="tel" id="authPhone" class="auth-input" placeholder="+7 (999) 123-45-67">
-            <button onclick="sendCode()" class="auth-btn primary">Получить код</button>
+            <label style="display:flex;align-items:flex-start;gap:8px;margin:16px 0;cursor:pointer;text-align:left;">
+                <input type="checkbox" id="authConsent" onchange="toggleSendBtn()" style="margin-top:3px;width:18px;height:18px;accent-color:var(--brown);flex-shrink:0;">
+                <span style="font-size:.8rem;color:var(--text-light);line-height:1.4;">Я согласен на обработку персональных данных</span>
+            </label>
+            <button onclick="sendCode()" id="authSendBtn" class="auth-btn primary" disabled style="opacity:.5;cursor:not-allowed;">Получить код</button>
         </div>
         <div id="authStep2" style="display:none;">
             <p>Введите код из SMS</p>
             <input type="text" id="authCode" class="auth-input code" placeholder="0000" maxlength="4">
+            <div id="authMockCode" style="display:none;margin:-8px 0 16px;padding:10px;background:var(--beige-light);border:1px dashed var(--beige-dark);border-radius:8px;font-size:.85rem;color:var(--text-light);"></div>
             <button onclick="verifyCode()" class="auth-btn success">Подтвердить</button>
         </div>
     </div>
@@ -1412,19 +1417,38 @@
     }
 
     // ===== AUTH (phone + SMS code) =====
+    function toggleSendBtn() {
+        const btn = document.getElementById('authSendBtn');
+        const checked = document.getElementById('authConsent').checked;
+        btn.disabled = !checked;
+        btn.style.opacity = checked ? '1' : '.5';
+        btn.style.cursor = checked ? 'pointer' : 'not-allowed';
+    }
+
     async function startAuth() {
         document.getElementById('authModal').classList.add('open');
         document.getElementById('authStep1').style.display = 'block';
         document.getElementById('authStep2').style.display = 'none';
+        document.getElementById('authConsent').checked = false;
+        toggleSendBtn();
     }
 
     async function sendCode() {
+        if (document.getElementById('authSendBtn').disabled) return;
         const phone = document.getElementById('authPhone').value.trim();
         if (!phone) return;
         try {
-            await api('/api/auth/send-code', { method: 'POST', body: { phone } });
+            const res = await api('/api/auth/send-code', { method: 'POST', body: { phone } });
             document.getElementById('authStep1').style.display = 'none';
             document.getElementById('authStep2').style.display = 'block';
+            // Show mock code if returned
+            const mockEl = document.getElementById('authMockCode');
+            if (res.debug_code) {
+                mockEl.textContent = 'Код для тестирования: ' + res.debug_code;
+                mockEl.style.display = 'block';
+            } else {
+                mockEl.style.display = 'none';
+            }
             showToast('Код отправлен');
         } catch (e) {
             showToast(e.message);

@@ -132,7 +132,10 @@ def send_code(body: SendCodeRequest, db: Session = Depends(get_db)):
 
     send_sms(body.phone, code)
 
-    return {"ok": True, "message": "Код отправлен"}
+    result = {"ok": True, "message": "Код отправлен"}
+    if SMS_PROVIDER == "mock":
+        result["debug_code"] = code
+    return result
 
 
 @router.post("/verify-code")
