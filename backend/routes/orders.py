@@ -1,9 +1,11 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Customer, Dish, Order, OrderItem
+from models import Customer, Dish, Order, OrderItem, SmsCode
 from routes.auth import get_current_customer_dep
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
@@ -18,6 +20,7 @@ class CreateOrderRequest(BaseModel):
     items: list[OrderItemIn]
     comment: str | None = None
     address: str | None = None
+    sms_code: str
 
 
 @router.post("/")
@@ -28,6 +31,20 @@ def create_order(
 ):
     if not body.items:
         raise HTTPException(status_code=400, detail="Корзина пуста")
+
+    # Verify SMS code
+    sms_code = (
+        db.query(SmsCode)
+        .filter(SmsCode.phone == customer.phone, SmsCode.code == body.sms_code, SmsCode.used == False)
+        .order_by(SmsCode.created_at.desc())
+        .first()
+    )
+    if not sms_code:
+        raise HTTPException(status_code=400, detail="Неверный код подтверждения")
+    age = (datetime.now(timezone.utc) - sms_code.created_at.replace(tzinfo=timezone.utc)).total_seconds()
+    if age > 300:
+        raise HTTPException(status_code=400, detail="Код истёк, запросите новый")
+    sms_code.used = True
 
     dish_ids = [item.dish_id for item in body.items]
     dishes = db.query(Dish).filter(Dish.id.in_(dish_ids), Dish.available == True).all()

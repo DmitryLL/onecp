@@ -1193,7 +1193,14 @@
         <div class="checkout-area" id="cartCheckout">
             <input type="text" id="orderAddress" placeholder="Адрес доставки">
             <input type="text" id="orderComment" placeholder="Комментарий к заказу">
-            <button class="btn-checkout" onclick="checkout()">Оформить заказ</button>
+            <div id="orderSmsStep" style="display:none;">
+                <div style="display:flex;gap:8px;margin-bottom:8px;">
+                    <input type="text" id="orderSmsCode" placeholder="Код из SMS" maxlength="4" style="flex:1;">
+                    <button class="btn-checkout" onclick="confirmOrder()" style="flex:1;">Подтвердить</button>
+                </div>
+                <div id="orderMockCode" style="display:none;padding:8px;background:var(--beige-light);border:1px dashed var(--beige-dark);border-radius:8px;font-size:.82rem;color:var(--text-light);text-align:center;"></div>
+            </div>
+            <button class="btn-checkout" id="checkoutBtn" onclick="checkout()">Оформить заказ</button>
         </div>
     </div>
 </div>
@@ -1472,15 +1479,43 @@
             customerInfo = res.customer;
             localStorage.setItem('onecp_customer_token', customerToken);
             document.getElementById('authModal').classList.remove('open');
-            showToast('Вы авторизованы!');
-            await placeOrder();
+            showToast('Вы авторизованы! Нажмите «Оформить заказ»');
         } catch (e) {
             showToast(e.message);
         }
     }
 
-    async function placeOrder() {
+    async function checkout() {
+        if (cart.length === 0) return;
+        if (!customerToken) {
+            startAuth();
+            return;
+        }
+        // Send SMS code for order confirmation
+        try {
+            const me = await api('/api/auth/me');
+            const res = await api('/api/auth/send-code', { method: 'POST', body: { phone: me.phone } });
+            document.getElementById('checkoutBtn').style.display = 'none';
+            document.getElementById('orderSmsStep').style.display = 'block';
+            document.getElementById('orderSmsCode').value = '';
+            document.getElementById('orderSmsCode').focus();
+            const mockEl = document.getElementById('orderMockCode');
+            if (res.debug_code) {
+                mockEl.textContent = 'Код: ' + res.debug_code;
+                mockEl.style.display = 'block';
+            } else {
+                mockEl.style.display = 'none';
+            }
+            showToast('Код подтверждения отправлен');
+        } catch (e) {
+            showToast(e.message);
+        }
+    }
+
+    async function confirmOrder() {
         if (!customerToken || cart.length === 0) return;
+        const code = document.getElementById('orderSmsCode')?.value?.trim();
+        if (!code) { showToast('Введите код'); return; }
         const comment = document.getElementById('orderComment')?.value || '';
         const address = document.getElementById('orderAddress')?.value || '';
         try {
@@ -1490,23 +1525,18 @@
                     items: cart.map(c => ({ dish_id: c.id, quantity: c.qty })),
                     comment: comment || null,
                     address: address || null,
+                    sms_code: code,
                 }
             });
             cart = [];
             updateCartBadge();
             closeCart();
+            // Reset SMS step
+            document.getElementById('orderSmsStep').style.display = 'none';
+            document.getElementById('checkoutBtn').style.display = 'block';
             showToast('Заказ #' + res.order.id + ' оформлен!');
         } catch (e) {
-            showToast('Ошибка: ' + e.message);
-        }
-    }
-
-    async function checkout() {
-        if (cart.length === 0) return;
-        if (!customerToken) {
-            startAuth();
-        } else {
-            await placeOrder();
+            showToast(e.message);
         }
     }
 
