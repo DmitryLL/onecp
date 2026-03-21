@@ -370,6 +370,8 @@
                             <tr>
                                 <th>Фото</th>
                                 <th>Название</th>
+                                <th>Описание</th>
+                                <th>Вес/Объём</th>
                                 <th>Цена</th>
                                 <th>Действия</th>
                             </tr>
@@ -546,7 +548,9 @@
             tbody.innerHTML = products.map(p => `
                 <tr>
                     <td>${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
-                    <td>${p.name}${p.description ? '<br><span style="color:#888;font-size:.8rem;">' + p.description + '</span>' : ''}${p.weight ? '<br><span style="color:#666;font-size:.8rem;">' + p.weight + ' ' + (p.weightUnit || 'г') + '</span>' : ''}</td>
+                    <td>${p.name}</td>
+                    <td style="color:#888;font-size:.85rem;max-width:200px;">${p.description ? p.description : '—'}</td>
+                    <td style="white-space:nowrap;">${p.weight ? p.weight + ' ' + (p.weightUnit || 'г') : '—'}</td>
                     <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
                     <td>
                         <div class="actions-cell">

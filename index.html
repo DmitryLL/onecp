@@ -202,6 +202,97 @@
 
         .btn-cart.added { background: #27ae60; }
 
+        .card-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-desc {
+            flex: 1;
+            padding: 10px;
+            background: #eef3fc;
+            color: #2d6cdf;
+            border: none;
+            border-radius: 8px;
+            font-size: .9rem;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .btn-desc:hover { background: #dde7f7; }
+
+        .card-buttons .btn-cart { flex: 1; }
+
+        /* ===== PRODUCT DETAIL MODAL ===== */
+        .detail-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.5);
+            z-index: 2500;
+            align-items: center;
+            justify-content: center;
+        }
+        .detail-overlay.open { display: flex; }
+
+        .detail-modal {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 520px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0,0,0,.15);
+        }
+
+        .detail-modal img {
+            width: 100%;
+            height: 260px;
+            object-fit: cover;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .detail-body {
+            padding: 24px;
+        }
+
+        .detail-body h2 { font-size: 1.3rem; margin-bottom: 8px; }
+
+        .detail-body .detail-weight {
+            color: #999;
+            font-size: .85rem;
+            margin-bottom: 12px;
+        }
+
+        .detail-body .detail-text {
+            color: #555;
+            font-size: .95rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            white-space: pre-line;
+        }
+
+        .detail-body .detail-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2d6cdf;
+            margin-bottom: 16px;
+        }
+
+        .detail-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: rgba(0,0,0,.5);
+            color: #fff;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
         /* ===== ABOUT ===== */
         .about-grid {
             display: grid;
@@ -638,6 +729,14 @@
     </div>
 </div>
 
+<!-- PRODUCT DETAIL MODAL -->
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===event.currentTarget)closeDetail()">
+    <div class="detail-modal" style="position:relative;">
+        <button class="detail-close" onclick="closeDetail()">&times;</button>
+        <div id="detailContent"></div>
+    </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -694,10 +793,12 @@
                 <div class="card-img">${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:100%;height:100%;object-fit:cover;">' : ''}</div>
                 <div class="card-body">
                     <h3>${esc(p.name)}</h3>
-                    ${p.description ? '<p style="color:#888;font-size:.85rem;margin-bottom:4px;">' + esc(p.description) + '</p>' : ''}
                     ${p.weight ? '<p style="color:#999;font-size:.8rem;margin-bottom:8px;">' + p.weight + ' ' + (p.weightUnit || 'г') + '</p>' : ''}
                     <div class="price">${p.price.toLocaleString('ru-RU')} &#8381;</div>
-                    <button class="btn-cart" id="btn-${p.id}" onclick="addToCart(${p.id})">В корзину</button>
+                    <div class="card-buttons">
+                        ${p.description ? '<button class="btn-desc" onclick="showDetail(' + p.id + ')">Подробнее</button>' : ''}
+                        <button class="btn-cart" id="btn-${p.id}" onclick="addToCart(${p.id})">В корзину</button>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -707,6 +808,27 @@
         const d = document.createElement('div');
         d.textContent = s;
         return d.innerHTML;
+    }
+
+    // ===== PRODUCT DETAIL =====
+    function showDetail(id) {
+        const p = products.find(x => x.id === id);
+        if (!p) return;
+        let html = '';
+        if (p.imageUrl) html += '<img src="' + p.imageUrl + '">';
+        html += '<div class="detail-body">';
+        html += '<h2>' + esc(p.name) + '</h2>';
+        if (p.weight) html += '<div class="detail-weight">' + p.weight + ' ' + (p.weightUnit || 'г') + '</div>';
+        if (p.description) html += '<div class="detail-text">' + esc(p.description) + '</div>';
+        html += '<div class="detail-price">' + p.price.toLocaleString('ru-RU') + ' \u20bd</div>';
+        html += '<button class="btn-cart" style="width:100%;" id="detail-btn-' + p.id + '" onclick="addToCart(' + p.id + ')">В корзину</button>';
+        html += '</div>';
+        document.getElementById('detailContent').innerHTML = html;
+        document.getElementById('detailOverlay').classList.add('open');
+    }
+
+    function closeDetail() {
+        document.getElementById('detailOverlay').classList.remove('open');
     }
 
     // ===== CART =====
