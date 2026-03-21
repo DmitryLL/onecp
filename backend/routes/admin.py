@@ -10,7 +10,7 @@ from passlib.hash import pbkdf2_sha256
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/onecp/uploads")
 
 from database import get_db
-from models import AdminUser, Dish, Order, OrderItem, Customer, SiteSettings
+from models import AdminUser, Dish, Order, OrderItem, Customer, SiteSettings, Question
 from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -280,3 +280,79 @@ def test_report(admin: AdminUser = Depends(get_admin)):
         return {"ok": True, "message": "Отчёт отправлен"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== QUESTIONS =====
+
+@router.get("/questions")
+def list_questions(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    questions = db.query(Question).order_by(Question.created_at.desc()).limit(200).all()
+    return [
+        {
+            "id": q.id,
+            "name": q.name,
+            "email": q.email,
+            "message": q.message,
+            "answer": q.answer,
+            "answeredAt": q.answered_at.isoformat() if q.answered_at else None,
+            "createdAt": q.created_at.isoformat() if q.created_at else None,
+        }
+        for q in questions
+    ]
+
+
+class AnswerIn(BaseModel):
+    answer: str
+
+
+@router.put("/questions/{question_id}/answer")
+def answer_question(question_id: int, body: AnswerIn, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    q = db.query(Question).filter(Question.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Вопрос не найден")
+
+    q.answer = body.answer.strip()
+    from datetime import datetime, timezone
+    q.answered_at = datetime.now(timezone.utc)
+    db.commit()
+
+    # Send answer via email
+    settings = {s.key: s.value for s in db.query(SiteSettings).filter(SiteSettings.key.in_(["replySmtpHost", "replySmtpPort", "replySmtpEmail", "replySmtpPassword"])).all()}
+    smtp_host = settings.get("replySmtpHost", "").strip()
+    smtp_pass = settings.get("replySmtpPassword", "").strip()
+    smtp_email = settings.get("replySmtpEmail", "").strip()
+    smtp_port = settings.get("replySmtpPort", "465").strip()
+
+    if smtp_host and smtp_email and smtp_pass:
+        # Handle host:port in host field
+        if ":" in smtp_host:
+            parts = smtp_host.split(":")
+            smtp_host = parts[0]
+            if not smtp_port or smtp_port == "465":
+                smtp_port = parts[1]
+
+        import smtplib
+        from email.mime.text import MIMEText
+        msg = MIMEText(f"Здравствуйте, {q.name}!\n\nВы задавали вопрос:\n{q.message}\n\nОтвет:\n{q.answer}\n\n— One Coffee Place", "plain", "utf-8")
+        msg["From"] = smtp_email
+        msg["To"] = q.email
+        msg["Subject"] = "Ответ на ваш вопрос — One Coffee Place"
+        try:
+            with smtplib.SMTP_SSL(smtp_host, int(smtp_port), timeout=15) as server:
+                server.login(smtp_email, smtp_pass)
+                server.sendmail(smtp_email, [q.email], msg.as_string())
+            return {"ok": True, "message": "Ответ сохранён и отправлен на " + q.email}
+        except Exception as e:
+            return {"ok": True, "message": f"Ответ сохранён, но письмо не отправлено: {e}"}
+    else:
+        return {"ok": True, "message": "Ответ сохранён (почта для ответов не настроена)"}
+
+
+@router.delete("/questions/{question_id}")
+def delete_question(question_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    q = db.query(Question).filter(Question.id == question_id).first()
+    if not q:
+        raise HTTPException(status_code=404, detail="Вопрос не найден")
+    db.delete(q)
+    db.commit()
+    return {"ok": True}
