@@ -91,6 +91,7 @@ def send_sms(phone: str, code: str):
     if SMS_PROVIDER == "smsru":
         import urllib.request
         import urllib.parse
+        import json
         params = urllib.parse.urlencode({
             "api_id": SMSRU_API_KEY,
             "to": phone.lstrip("+"),
@@ -98,9 +99,17 @@ def send_sms(phone: str, code: str):
             "json": 1,
         })
         try:
-            urllib.request.urlopen(f"https://sms.ru/sms/send?{params}", timeout=10)
+            resp = urllib.request.urlopen(f"https://sms.ru/sms/send?{params}", timeout=10)
+            body = resp.read().decode("utf-8")
+            logger.info(f"[SMS.RU] Response: {body}")
+            try:
+                data = json.loads(body)
+                if data.get("status") != "OK":
+                    logger.error(f"[SMS.RU] Send failed: {data.get('status_text', body)}")
+            except Exception:
+                pass
         except Exception as e:
-            logger.error(f"SMS send error: {e}")
+            logger.error(f"[SMS.RU] Request error: {e}")
 
 
 @router.post("/send-code")
