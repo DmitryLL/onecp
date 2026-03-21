@@ -1085,6 +1085,10 @@
 
 <!-- ABOUT -->
 <section id="about">
+    <div class="section-header animate-on-scroll">
+        <h2 class="section-title" id="siteAboutTitle">Почему выбирают нас</h2>
+        <p class="section-sub" id="siteAboutSub">Наши преимущества</p>
+    </div>
     <div class="about-grid">
         <div class="about-item animate-on-scroll">
             <div class="about-icon">&#x1F69A;</div>
@@ -1113,6 +1117,10 @@
 
 <!-- CONTACTS -->
 <section id="contacts">
+    <div class="section-header animate-on-scroll">
+        <h2 class="section-title">Контакты</h2>
+        <p class="section-sub">Свяжитесь с нами любым удобным способом</p>
+    </div>
     <div class="contacts-grid">
         <div class="contact-info animate-on-scroll">
             <div class="contact-row">
@@ -1511,6 +1519,8 @@
             if (s.heroBtn) document.getElementById('siteHeroBtn').querySelector('span').textContent = s.heroBtn;
             if (s.catalogTitle) document.getElementById('siteCatalogTitle').innerHTML = nl2br(s.catalogTitle);
             if (s.catalogSub) document.getElementById('siteCatalogSub').innerHTML = nl2br(s.catalogSub);
+            if (s.aboutTitle) document.getElementById('siteAboutTitle').innerHTML = nl2br(s.aboutTitle);
+            if (s.aboutSub) document.getElementById('siteAboutSub').innerHTML = nl2br(s.aboutSub);
             if (s.address) document.getElementById('siteAddress').innerHTML = nl2br(s.address);
             if (s.phone) document.getElementById('sitePhone').innerHTML = nl2br(s.phone);
             if (s.email) document.getElementById('siteEmail').innerHTML = nl2br(s.email);
