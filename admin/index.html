@@ -347,6 +347,7 @@
             <div class="sidebar-sub">Панель управления</div>
             <nav class="sidebar-nav">
                 <a href="#" class="active" onclick="showPanel('orders'); return false;">📋 Заказы</a>
+                <a href="#" onclick="showPanel('questions'); return false;">💬 Вопросы</a>
                 <a href="#" onclick="showPanel('products'); return false;">📦 Товары</a>
                 <a href="#" onclick="showPanel('customers'); return false;">👥 Клиенты</a>
                 <a href="#" onclick="showPanel('settings'); return false;">⚙️ Настройки сайта</a>
@@ -445,6 +446,14 @@
                 </div>
 
                 <div id="ordersDateContent"></div>
+            </div>
+
+            <!-- QUESTIONS PANEL -->
+            <div id="questionsPanel" style="display:none;">
+                <div class="page-header">
+                    <h1>Вопросы</h1>
+                </div>
+                <div id="questionsList"></div>
             </div>
 
             <!-- SETTINGS PANEL -->
@@ -556,6 +565,25 @@
                     </div>
                     <button class="btn btn-primary btn-sm" onclick="testEmailReport()" style="margin-top:8px;">Тестовая отправка</button>
                     <span id="testReportStatus" style="margin-left:12px;font-size:.85rem;color:#888;"></span>
+                </div>
+
+                <div class="settings-card">
+                    <h3>✉️ Почта для ответов на вопросы</h3>
+                    <div class="form-group">
+                        <label>SMTP сервер</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="setReplySmtpHost" class="setting-field" placeholder="smtp.jino.ru" style="flex:1;">
+                            <input type="number" id="setReplySmtpPort" class="setting-field" placeholder="465" value="465" style="width:80px;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Почта отправителя</label>
+                        <input type="email" id="setReplySmtpEmail" class="setting-field" placeholder="info@site.ru">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль приложения</label>
+                        <input type="password" id="setReplySmtpPassword" class="setting-field" placeholder="Пароль">
+                    </div>
                 </div>
             </div>
         </div>
@@ -780,22 +808,27 @@
             document.getElementById('productsPanel').style.display = 'none';
             document.getElementById('customersPanel').style.display = 'none';
             document.getElementById('ordersPanel').style.display = 'none';
+            document.getElementById('questionsPanel').style.display = 'none';
             document.getElementById('settingsPanel').classList.remove('active');
 
             if (panel === 'orders') {
                 document.getElementById('ordersPanel').style.display = 'block';
                 links[0]?.classList.add('active');
                 loadOrdersByDate();
+            } else if (panel === 'questions') {
+                document.getElementById('questionsPanel').style.display = 'block';
+                links[1]?.classList.add('active');
+                loadQuestions();
             } else if (panel === 'products') {
                 document.getElementById('productsPanel').style.display = 'block';
-                links[1]?.classList.add('active');
+                links[2]?.classList.add('active');
             } else if (panel === 'customers') {
                 document.getElementById('customersPanel').style.display = 'block';
-                links[2]?.classList.add('active');
+                links[3]?.classList.add('active');
                 loadCustomers();
             } else {
                 document.getElementById('settingsPanel').classList.add('active');
-                links[3]?.classList.add('active');
+                links[4]?.classList.add('active');
                 loadSettingsForm();
             }
         }
@@ -987,6 +1020,76 @@
             showToast('Файл скачан');
         }
 
+        // ===== QUESTIONS =====
+        let questions = [];
+
+        async function loadQuestions() {
+            try {
+                questions = await api('/api/admin/questions');
+                renderQuestions();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsList');
+            if (!questions.length) {
+                container.innerHTML = '<p style="color:#666;padding:24px 0;">Нет вопросов</p>';
+                return;
+            }
+            container.innerHTML = questions.map(q => {
+                const date = q.createdAt ? new Date(q.createdAt).toLocaleString('ru-RU') : '—';
+                const answered = q.answeredAt ? new Date(q.answeredAt).toLocaleString('ru-RU') : null;
+                return `<div class="settings-card" style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                        <div>
+                            <strong style="color:#f5efe6;">${escH(q.name)}</strong>
+                            <span style="color:#888;font-size:.85rem;margin-left:12px;">${escH(q.email)}</span>
+                            <span style="color:#555;font-size:.8rem;margin-left:12px;">${date}</span>
+                        </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${q.id})">Удалить</button>
+                    </div>
+                    <p style="color:#e0e0e0;margin-bottom:12px;white-space:pre-wrap;">${escH(q.message)}</p>
+                    ${answered
+                        ? `<div style="background:#1a2a1a;border:1px solid #2a3a2a;border-radius:8px;padding:12px;margin-top:8px;">
+                            <div style="font-size:.8rem;color:#4ade80;margin-bottom:6px;">Ответ (${answered}):</div>
+                            <p style="color:#ccc;white-space:pre-wrap;">${escH(q.answer)}</p>
+                        </div>`
+                        : `<div id="answerBlock_${q.id}">
+                            <textarea id="answerText_${q.id}" rows="3" placeholder="Введите ответ..." style="width:100%;padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;font-family:inherit;resize:vertical;margin-bottom:8px;"></textarea>
+                            <button class="btn btn-primary btn-sm" onclick="answerQuestion(${q.id})">Отправить ответ</button>
+                            <span id="answerStatus_${q.id}" style="margin-left:12px;font-size:.85rem;color:#888;"></span>
+                        </div>`
+                    }
+                </div>`;
+            }).join('');
+        }
+
+        async function answerQuestion(id) {
+            const text = document.getElementById('answerText_' + id).value.trim();
+            if (!text) { showToast('Введите текст ответа'); return; }
+            const status = document.getElementById('answerStatus_' + id);
+            status.textContent = 'Отправка...';
+            status.style.color = '#888';
+            try {
+                const res = await api('/api/admin/questions/' + id + '/answer', { method: 'PUT', body: { answer: text } });
+                status.textContent = '✓ ' + (res.message || 'Отправлено');
+                status.style.color = '#4ade80';
+                setTimeout(() => loadQuestions(), 1500);
+            } catch (e) {
+                status.textContent = '✗ ' + e.message;
+                status.style.color = '#e74c3c';
+            }
+        }
+
+        async function deleteQuestion(id) {
+            if (!confirm('Удалить этот вопрос?')) return;
+            try {
+                await api('/api/admin/questions/' + id, { method: 'DELETE' });
+                showToast('Вопрос удалён');
+                await loadQuestions();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
         // ===== SETTINGS =====
         async function loadSettingsForm() {
             try {
@@ -1011,6 +1114,11 @@
                 document.getElementById('setReportSmtpPassword').value = s.reportSmtpPassword || '';
                 document.getElementById('setReportRecipient').value = s.reportRecipient || '';
                 document.getElementById('setReportTime').value = s.reportTime || '13:00';
+                // Reply email
+                document.getElementById('setReplySmtpHost').value = s.replySmtpHost || '';
+                document.getElementById('setReplySmtpPort').value = s.replySmtpPort || '465';
+                document.getElementById('setReplySmtpEmail').value = s.replySmtpEmail || '';
+                document.getElementById('setReplySmtpPassword').value = s.replySmtpPassword || '';
             } catch (e) { /* first time, fields stay empty */ }
         }
 
@@ -1018,9 +1126,11 @@
 
         async function saveSettings() {
             const fields = ['heroTitle','heroSub','heroBtn','catalogTitle','catalogSub','aboutTitle','aboutSub','address','phone','email','schedule','footer',
-                'reportEnabled','reportSmtpHost','reportSmtpPort','reportSmtpEmail','reportSmtpPassword','reportRecipient','reportTime'];
+                'reportEnabled','reportSmtpHost','reportSmtpPort','reportSmtpEmail','reportSmtpPassword','reportRecipient','reportTime',
+                'replySmtpHost','replySmtpPort','replySmtpEmail','replySmtpPassword'];
             const ids = ['setHeroTitle','setHeroSub','setHeroBtn','setCatalogTitle','setCatalogSub','setAboutTitle','setAboutSub','setAddress','setPhone','setEmail','setSchedule','setFooter',
-                'setReportEnabled','setReportSmtpHost','setReportSmtpPort','setReportSmtpEmail','setReportSmtpPassword','setReportRecipient','setReportTime'];
+                'setReportEnabled','setReportSmtpHost','setReportSmtpPort','setReportSmtpEmail','setReportSmtpPassword','setReportRecipient','setReportTime',
+                'setReplySmtpHost','setReplySmtpPort','setReplySmtpEmail','setReplySmtpPassword'];
             const body = fields.map((key, i) => {
                 const el = document.getElementById(ids[i]);
                 const value = el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
