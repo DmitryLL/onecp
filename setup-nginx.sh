@@ -13,6 +13,18 @@ server {
     root /onecp;
     index index.html;
 
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 256;
+    gzip_types text/plain text/css text/javascript application/javascript application/json image/svg+xml;
+
+    # Cache static files
+    location ~* \.(css|js|jpg|jpeg|png|gif|webp|svg|ico|woff2?)$ {
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+    }
+
     location /api/ {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
