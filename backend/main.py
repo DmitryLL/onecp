@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from passlib.hash import pbkdf2_sha256
 
 from database import engine, SessionLocal, Base
-from models import AdminUser, Dish
+from models import AdminUser, Dish, SiteSettings
 from routes.auth import router as auth_router
 from routes.menu import router as menu_router
 from routes.orders import router as orders_router
@@ -54,6 +54,26 @@ def init_db():
             ]
             db.add_all(default_dishes)
             logger.info("Seeded default dishes")
+
+        # Seed default site settings if empty
+        if db.query(SiteSettings).count() == 0:
+            defaults = {
+                "heroTitle": "Добро пожаловать в OneCp",
+                "heroSub": "Качественные товары по лучшим ценам с быстрой доставкой по всей России",
+                "heroBtn": "Перейти к каталогу",
+                "catalogTitle": "Каталог товаров",
+                "catalogSub": "Выберите товар и добавьте в корзину",
+                "aboutTitle": "Почему мы?",
+                "aboutSub": "Наши преимущества",
+                "address": "г. Москва, ул. Примерная, д. 1, оф. 101",
+                "phone": "+7 (800) 123-45-67",
+                "email": "info@onecp.ru",
+                "schedule": "Пн-Пт: 9:00 — 20:00\nСб-Вс: 10:00 — 18:00",
+                "footer": "© 2026 OneCp. Все права защищены.",
+            }
+            for key, value in defaults.items():
+                db.add(SiteSettings(key=key, value=value))
+            logger.info("Seeded default site settings")
 
         db.commit()
     finally:
