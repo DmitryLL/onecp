@@ -45,6 +45,8 @@ class Dish(Base):
     emoji = Column(String(10), nullable=True)
     image_url = Column(String(500), nullable=True)
     category = Column(String(100), nullable=True, index=True)
+    weight = Column(Float, nullable=True)
+    weight_unit = Column(String(10), nullable=True)  # г, мл, л, кг
     available = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

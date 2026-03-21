@@ -503,6 +503,22 @@
                 </div>
                 <input type="hidden" id="prodEmoji" value="">
                 <div class="form-group">
+                    <label>Описание</label>
+                    <textarea id="prodDescription" rows="2" style="width:100%;padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;font-family:inherit;resize:vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Вес / Объём</label>
+                    <div style="display:flex;gap:8px;">
+                        <input type="number" id="prodWeight" min="0" step="any" placeholder="Количество" style="flex:1;">
+                        <select id="prodWeightUnit" style="width:100px;padding:10px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;">
+                            <option value="г">г</option>
+                            <option value="мл">мл</option>
+                            <option value="л">л</option>
+                            <option value="кг">кг</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label>Картинка товара</label>
                     <div id="prodImagePreview" style="margin-bottom:8px;"></div>
                     <input type="file" id="prodImage" accept="image/*" style="width:100%;padding:8px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#ccc;font-size:.9rem;">
@@ -568,7 +584,7 @@
             tbody.innerHTML = products.map(p => `
                 <tr>
                     <td>${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
-                    <td>${p.name}${p.category ? ' <span style="color:#666;font-size:.8rem;">(' + p.category + ')</span>' : ''}</td>
+                    <td>${p.name}${p.description ? '<br><span style="color:#888;font-size:.8rem;">' + p.description + '</span>' : ''}${p.weight ? '<br><span style="color:#666;font-size:.8rem;">' + p.weight + ' ' + (p.weightUnit || 'г') + '</span>' : ''}</td>
                     <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
                     <td>${p.oldPrice ? '<span class="old-price-cell">' + p.oldPrice.toLocaleString('ru-RU') + ' &#8381;</span>' : '\u2014'}</td>
                     <td>
@@ -605,6 +621,9 @@
             document.getElementById('editId').value = '';
             document.getElementById('prodName').value = '';
             document.getElementById('prodEmoji').value = '';
+            document.getElementById('prodDescription').value = '';
+            document.getElementById('prodWeight').value = '';
+            document.getElementById('prodWeightUnit').value = 'г';
             document.getElementById('prodPrice').value = '';
             document.getElementById('prodOldPrice').value = '0';
             clearImagePreview();
@@ -621,6 +640,9 @@
             document.getElementById('editId').value = id;
             document.getElementById('prodName').value = p.name;
             document.getElementById('prodEmoji').value = p.emoji || '';
+            document.getElementById('prodDescription').value = p.description || '';
+            document.getElementById('prodWeight').value = p.weight || '';
+            document.getElementById('prodWeightUnit').value = p.weightUnit || 'г';
             document.getElementById('prodPrice').value = p.price;
             document.getElementById('prodOldPrice').value = p.oldPrice || 0;
             clearImagePreview();
@@ -662,6 +684,9 @@
             const data = {
                 name: document.getElementById('prodName').value.trim(),
                 emoji: document.getElementById('prodEmoji').value.trim() || null,
+                description: document.getElementById('prodDescription').value.trim() || null,
+                weight: parseFloat(document.getElementById('prodWeight').value) || null,
+                weight_unit: document.getElementById('prodWeightUnit').value || null,
                 price: parseFloat(document.getElementById('prodPrice').value) || 0,
                 old_price: parseFloat(document.getElementById('prodOldPrice').value) || null,
             };

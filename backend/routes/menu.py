@@ -25,6 +25,8 @@ def get_menu(db: Session = Depends(get_db)):
             "emoji": d.emoji,
             "imageUrl": d.image_url,
             "category": d.category,
+            "weight": d.weight,
+            "weightUnit": d.weight_unit,
         }
         for d in dishes
     ]
