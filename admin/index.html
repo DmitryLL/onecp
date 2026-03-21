@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <title>Админ-панель — OneCp</title>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -943,10 +942,22 @@
         }
 
         // ===== EXPORT EXCEL =====
-        function exportOrdersExcel() {
+        function loadXlsx() {
+            return new Promise((resolve, reject) => {
+                if (window.XLSX) { resolve(); return; }
+                const s = document.createElement('script');
+                s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+                s.onload = resolve;
+                s.onerror = () => reject(new Error('Не удалось загрузить библиотеку Excel'));
+                document.head.appendChild(s);
+            });
+        }
+
+        async function exportOrdersExcel() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { showToast('Выберите дату'); return; }
             if (!dateOrders.length) { showToast('Нет заказов за эту дату'); return; }
+            try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
 
             const rows = [];
             dateOrders.forEach(o => {
