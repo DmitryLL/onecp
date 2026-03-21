@@ -1102,7 +1102,10 @@
             <input type="text" id="orderComment" placeholder="Комментарий к заказу">
             <!-- Step 1: phone + consent -->
             <div id="orderStep1">
-                <input type="tel" id="orderPhone" placeholder="+7 (999) 123-45-67" style="margin-bottom:8px;">
+                <div style="display:flex;align-items:center;gap:0;margin-bottom:8px;">
+                    <span style="padding:10px 12px;background:var(--beige-dark);border:1.5px solid var(--beige-dark);border-right:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-size:1rem;font-weight:600;color:var(--text);white-space:nowrap;">+7</span>
+                    <input type="tel" id="orderPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')" style="flex:1;border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;">
+                </div>
                 <label style="display:flex;align-items:flex-start;gap:8px;margin:8px 0 12px;cursor:pointer;text-align:left;">
                     <input type="checkbox" id="orderConsent" onchange="toggleOrderBtn()" style="margin-top:3px;width:18px;height:18px;accent-color:var(--brown);flex-shrink:0;">
                     <span style="font-size:.78rem;color:var(--text-light);line-height:1.4;">Я согласен на обработку персональных данных</span>
@@ -1333,10 +1336,15 @@
         btn.style.cursor = checked ? 'pointer' : 'not-allowed';
     }
 
+    function getOrderPhone() {
+        return '+7' + document.getElementById('orderPhone').value.trim();
+    }
+
     async function orderSendCode() {
         if (document.getElementById('orderSendCodeBtn').disabled) return;
-        const phone = document.getElementById('orderPhone').value.trim();
-        if (!phone) { showToast('Введите номер телефона'); return; }
+        const raw = document.getElementById('orderPhone').value.trim();
+        if (raw.length !== 10) { showToast('Введите 10 цифр номера'); return; }
+        const phone = getOrderPhone();
         try {
             const res = await api('/api/auth/send-code', { method: 'POST', body: { phone } });
             document.getElementById('orderStep1').style.display = 'none';
@@ -1363,7 +1371,7 @@
 
     async function confirmOrder() {
         if (cart.length === 0) return;
-        const phone = document.getElementById('orderPhone').value.trim();
+        const phone = getOrderPhone();
         const code = document.getElementById('orderSmsCode')?.value?.trim();
         if (!code) { showToast('Введите код'); return; }
         const comment = document.getElementById('orderComment')?.value || '';
