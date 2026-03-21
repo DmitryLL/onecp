@@ -842,99 +842,6 @@
         }
 
         /* ===== AUTH MODAL ===== */
-        .auth-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(26,22,18,.6);
-            backdrop-filter: blur(8px);
-            z-index: 2100;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .auth-overlay.open { display: flex; }
-
-        .auth-modal {
-            background: var(--white);
-            border-radius: var(--radius-lg);
-            padding: 40px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: var(--shadow-lg);
-            text-align: center;
-            animation: fadeUp .4s cubic-bezier(.22,1,.36,1);
-        }
-
-        .auth-modal h2 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-
-        .auth-modal p {
-            color: var(--text-light);
-            font-size: .9rem;
-            margin-bottom: 24px;
-        }
-
-        .auth-input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1.5px solid var(--beige-dark);
-            border-radius: var(--radius-sm);
-            font-size: 1rem;
-            font-family: inherit;
-            background: var(--beige-light);
-            color: var(--text);
-            margin-bottom: 16px;
-            transition: all .25s;
-        }
-
-        .auth-input:focus {
-            outline: none;
-            border-color: var(--gold);
-            box-shadow: 0 0 0 4px rgba(201,169,110,.15);
-        }
-
-        .auth-input.code {
-            font-size: 1.8rem;
-            text-align: center;
-            letter-spacing: 10px;
-            font-weight: 700;
-        }
-
-        .auth-btn {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-size: 1rem;
-            font-weight: 700;
-            font-family: inherit;
-            cursor: pointer;
-            transition: all .3s;
-            color: var(--white);
-        }
-
-        .auth-btn.primary {
-            background: linear-gradient(135deg, var(--brown), var(--brown-dark));
-        }
-
-        .auth-btn.primary:hover {
-            background: linear-gradient(135deg, var(--gold), var(--brown));
-            box-shadow: 0 4px 15px rgba(139,115,85,.3);
-        }
-
-        .auth-btn.success {
-            background: linear-gradient(135deg, #5d9c59, #3d7a39);
-        }
-
-        .auth-btn.success:hover {
-            box-shadow: 0 4px 15px rgba(93,156,89,.35);
-        }
-
         /* ===== BOTTOM BANNER ===== */
         .bottom-banner {
             width: 100%;
@@ -1193,39 +1100,29 @@
         <div class="checkout-area" id="cartCheckout">
             <input type="text" id="orderAddress" placeholder="Адрес доставки">
             <input type="text" id="orderComment" placeholder="Комментарий к заказу">
-            <div id="orderSmsStep" style="display:none;">
+            <!-- Step 1: phone + consent -->
+            <div id="orderStep1">
+                <input type="tel" id="orderPhone" placeholder="+7 (999) 123-45-67" style="margin-bottom:8px;">
+                <label style="display:flex;align-items:flex-start;gap:8px;margin:8px 0 12px;cursor:pointer;text-align:left;">
+                    <input type="checkbox" id="orderConsent" onchange="toggleOrderBtn()" style="margin-top:3px;width:18px;height:18px;accent-color:var(--brown);flex-shrink:0;">
+                    <span style="font-size:.78rem;color:var(--text-light);line-height:1.4;">Я согласен на обработку персональных данных</span>
+                </label>
+                <button class="btn-checkout" id="orderSendCodeBtn" onclick="orderSendCode()" disabled style="opacity:.5;cursor:not-allowed;">Получить код</button>
+            </div>
+            <!-- Step 2: enter SMS code -->
+            <div id="orderStep2" style="display:none;">
+                <p style="font-size:.85rem;color:var(--text-light);margin-bottom:8px;">Введите код из SMS</p>
                 <div style="display:flex;gap:8px;margin-bottom:8px;">
-                    <input type="text" id="orderSmsCode" placeholder="Код из SMS" maxlength="4" style="flex:1;">
+                    <input type="text" id="orderSmsCode" placeholder="0000" maxlength="4" style="flex:1;text-align:center;font-size:1.2rem;letter-spacing:6px;">
                     <button class="btn-checkout" onclick="confirmOrder()" style="flex:1;">Подтвердить</button>
                 </div>
-                <div id="orderMockCode" style="display:none;padding:8px;background:var(--beige-light);border:1px dashed var(--beige-dark);border-radius:8px;font-size:.82rem;color:var(--text-light);text-align:center;"></div>
+                <div id="orderMockCode" style="display:none;padding:8px;background:var(--beige-light);border:1px dashed var(--beige-dark);border-radius:8px;font-size:.82rem;color:var(--text-light);text-align:center;margin-bottom:8px;"></div>
+                <button class="btn-checkout" onclick="resetOrderStep()" style="background:transparent;color:var(--text-light);font-size:.82rem;border:1px solid var(--beige-dark);">Изменить номер</button>
             </div>
-            <button class="btn-checkout" id="checkoutBtn" onclick="checkout()">Оформить заказ</button>
         </div>
     </div>
 </div>
 
-<!-- AUTH MODAL -->
-<div class="auth-overlay" id="authModal" onclick="if(event.target===event.currentTarget)this.classList.remove('open')">
-    <div class="auth-modal">
-        <h2>Авторизация</h2>
-        <div id="authStep1">
-            <p>Введите номер телефона для получения кода</p>
-            <input type="tel" id="authPhone" class="auth-input" placeholder="+7 (999) 123-45-67">
-            <label style="display:flex;align-items:flex-start;gap:8px;margin:16px 0;cursor:pointer;text-align:left;">
-                <input type="checkbox" id="authConsent" onchange="toggleSendBtn()" style="margin-top:3px;width:18px;height:18px;accent-color:var(--brown);flex-shrink:0;">
-                <span style="font-size:.8rem;color:var(--text-light);line-height:1.4;">Я согласен на обработку персональных данных</span>
-            </label>
-            <button onclick="sendCode()" id="authSendBtn" class="auth-btn primary" disabled style="opacity:.5;cursor:not-allowed;">Получить код</button>
-        </div>
-        <div id="authStep2" style="display:none;">
-            <p>Введите код из SMS</p>
-            <input type="text" id="authCode" class="auth-input code" placeholder="0000" maxlength="4">
-            <div id="authMockCode" style="display:none;margin:-8px 0 16px;padding:10px;background:var(--beige-light);border:1px dashed var(--beige-dark);border-radius:8px;font-size:.85rem;color:var(--text-light);"></div>
-            <button onclick="verifyCode()" class="auth-btn success">Подтвердить</button>
-        </div>
-    </div>
-</div>
 
 <!-- PRODUCT DETAIL MODAL -->
 <div class="detail-overlay" id="detailOverlay" onclick="if(event.target===event.currentTarget)closeDetail()">
@@ -1249,8 +1146,6 @@
 <script>
     let products = [];
     let cart = [];
-    let customerToken = localStorage.getItem('onecp_customer_token');
-    let customerInfo = null;
 
     // ===== HEADER SCROLL =====
     window.addEventListener('scroll', () => {
@@ -1278,7 +1173,6 @@
             headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(opts.body);
         }
-        if (customerToken) headers['Authorization'] = 'Bearer ' + customerToken;
         const res = await fetch(url, { ...opts, headers });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -1430,35 +1324,28 @@
         if (e.target === e.currentTarget) closeCart();
     }
 
-    // ===== AUTH (phone + SMS code) =====
-    function toggleSendBtn() {
-        const btn = document.getElementById('authSendBtn');
-        const checked = document.getElementById('authConsent').checked;
+    // ===== ORDER: phone + SMS =====
+    function toggleOrderBtn() {
+        const btn = document.getElementById('orderSendCodeBtn');
+        const checked = document.getElementById('orderConsent').checked;
         btn.disabled = !checked;
         btn.style.opacity = checked ? '1' : '.5';
         btn.style.cursor = checked ? 'pointer' : 'not-allowed';
     }
 
-    async function startAuth() {
-        document.getElementById('authModal').classList.add('open');
-        document.getElementById('authStep1').style.display = 'block';
-        document.getElementById('authStep2').style.display = 'none';
-        document.getElementById('authConsent').checked = false;
-        toggleSendBtn();
-    }
-
-    async function sendCode() {
-        if (document.getElementById('authSendBtn').disabled) return;
-        const phone = document.getElementById('authPhone').value.trim();
-        if (!phone) return;
+    async function orderSendCode() {
+        if (document.getElementById('orderSendCodeBtn').disabled) return;
+        const phone = document.getElementById('orderPhone').value.trim();
+        if (!phone) { showToast('Введите номер телефона'); return; }
         try {
             const res = await api('/api/auth/send-code', { method: 'POST', body: { phone } });
-            document.getElementById('authStep1').style.display = 'none';
-            document.getElementById('authStep2').style.display = 'block';
-            // Show mock code if returned
-            const mockEl = document.getElementById('authMockCode');
+            document.getElementById('orderStep1').style.display = 'none';
+            document.getElementById('orderStep2').style.display = 'block';
+            document.getElementById('orderSmsCode').value = '';
+            document.getElementById('orderSmsCode').focus();
+            const mockEl = document.getElementById('orderMockCode');
             if (res.debug_code) {
-                mockEl.textContent = 'Код для тестирования: ' + res.debug_code;
+                mockEl.textContent = 'Код: ' + res.debug_code;
                 mockEl.style.display = 'block';
             } else {
                 mockEl.style.display = 'none';
@@ -1469,51 +1356,14 @@
         }
     }
 
-    async function verifyCode() {
-        const phone = document.getElementById('authPhone').value.trim();
-        const code = document.getElementById('authCode').value.trim();
-        if (!code) return;
-        try {
-            const res = await api('/api/auth/verify-code', { method: 'POST', body: { phone, code } });
-            customerToken = res.token;
-            customerInfo = res.customer;
-            localStorage.setItem('onecp_customer_token', customerToken);
-            document.getElementById('authModal').classList.remove('open');
-            showToast('Вы авторизованы! Нажмите «Оформить заказ»');
-        } catch (e) {
-            showToast(e.message);
-        }
-    }
-
-    async function checkout() {
-        if (cart.length === 0) return;
-        if (!customerToken) {
-            startAuth();
-            return;
-        }
-        // Send SMS code for order confirmation
-        try {
-            const me = await api('/api/auth/me');
-            const res = await api('/api/auth/send-code', { method: 'POST', body: { phone: me.phone } });
-            document.getElementById('checkoutBtn').style.display = 'none';
-            document.getElementById('orderSmsStep').style.display = 'block';
-            document.getElementById('orderSmsCode').value = '';
-            document.getElementById('orderSmsCode').focus();
-            const mockEl = document.getElementById('orderMockCode');
-            if (res.debug_code) {
-                mockEl.textContent = 'Код: ' + res.debug_code;
-                mockEl.style.display = 'block';
-            } else {
-                mockEl.style.display = 'none';
-            }
-            showToast('Код подтверждения отправлен');
-        } catch (e) {
-            showToast(e.message);
-        }
+    function resetOrderStep() {
+        document.getElementById('orderStep1').style.display = 'block';
+        document.getElementById('orderStep2').style.display = 'none';
     }
 
     async function confirmOrder() {
-        if (!customerToken || cart.length === 0) return;
+        if (cart.length === 0) return;
+        const phone = document.getElementById('orderPhone').value.trim();
         const code = document.getElementById('orderSmsCode')?.value?.trim();
         if (!code) { showToast('Введите код'); return; }
         const comment = document.getElementById('orderComment')?.value || '';
@@ -1522,22 +1372,27 @@
             const res = await api('/api/orders/', {
                 method: 'POST',
                 body: {
+                    phone,
+                    sms_code: code,
                     items: cart.map(c => ({ dish_id: c.id, quantity: c.qty })),
                     comment: comment || null,
                     address: address || null,
-                    sms_code: code,
                 }
             });
             cart = [];
             updateCartBadge();
             closeCart();
-            // Reset SMS step
-            document.getElementById('orderSmsStep').style.display = 'none';
-            document.getElementById('checkoutBtn').style.display = 'block';
+            resetOrderStep();
+            document.getElementById('orderConsent').checked = false;
+            toggleOrderBtn();
             showToast('Заказ #' + res.order.id + ' оформлен!');
         } catch (e) {
             showToast(e.message);
         }
+    }
+
+    function checkout() {
+        // Not used anymore — flow is inline in cart
     }
 
     // ===== MOBILE MENU =====

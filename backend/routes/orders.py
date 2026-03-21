@@ -1,12 +1,12 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Customer, Dish, Order, OrderItem, SmsCode
-from routes.auth import get_current_customer_dep
+from routes.auth import normalize_phone
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
@@ -17,16 +17,21 @@ class OrderItemIn(BaseModel):
 
 
 class CreateOrderRequest(BaseModel):
+    phone: str
+    sms_code: str
     items: list[OrderItemIn]
     comment: str | None = None
     address: str | None = None
-    sms_code: str
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        return normalize_phone(v)
 
 
 @router.post("/")
 def create_order(
     body: CreateOrderRequest,
-    customer: Customer = Depends(get_current_customer_dep),
     db: Session = Depends(get_db),
 ):
     if not body.items:
@@ -35,7 +40,7 @@ def create_order(
     # Verify SMS code
     sms_code = (
         db.query(SmsCode)
-        .filter(SmsCode.phone == customer.phone, SmsCode.code == body.sms_code, SmsCode.used == False)
+        .filter(SmsCode.phone == body.phone, SmsCode.code == body.sms_code, SmsCode.used == False)
         .order_by(SmsCode.created_at.desc())
         .first()
     )
@@ -45,6 +50,13 @@ def create_order(
     if age > 300:
         raise HTTPException(status_code=400, detail="Код истёк, запросите новый")
     sms_code.used = True
+
+    # Find or create customer by phone
+    customer = db.query(Customer).filter(Customer.phone == body.phone).first()
+    if not customer:
+        customer = Customer(phone=body.phone)
+        db.add(customer)
+        db.flush()
 
     dish_ids = [item.dish_id for item in body.items]
     dishes = db.query(Dish).filter(Dish.id.in_(dish_ids), Dish.available == True).all()
@@ -78,32 +90,6 @@ def create_order(
         "order": format_order(order),
     }
 
-
-@router.get("/")
-def get_my_orders(
-    customer: Customer = Depends(get_current_customer_dep),
-    db: Session = Depends(get_db),
-):
-    orders = (
-        db.query(Order)
-        .filter(Order.customer_id == customer.id)
-        .order_by(Order.created_at.desc())
-        .limit(50)
-        .all()
-    )
-    return [format_order(o) for o in orders]
-
-
-@router.get("/{order_id}")
-def get_order(
-    order_id: int,
-    customer: Customer = Depends(get_current_customer_dep),
-    db: Session = Depends(get_db),
-):
-    order = db.query(Order).filter(Order.id == order_id, Order.customer_id == customer.id).first()
-    if not order:
-        raise HTTPException(status_code=404, detail="Заказ не найден")
-    return format_order(order)
 
 
 def format_order(order: Order) -> dict:
