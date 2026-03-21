@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OneCp — Интернет-магазин</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            background: #f9f9f9;
+            scroll-behavior: smooth;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        /* ===== HEADER ===== */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+            z-index: 1000;
+            transition: box-shadow .3s;
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d6cdf;
+            text-decoration: none;
+        }
+
+        nav { display: flex; gap: 8px; align-items: center; }
+
+        nav a {
+            text-decoration: none;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: .95rem;
+            transition: background .2s, color .2s;
+        }
+
+        nav a:hover { background: #eef3fc; color: #2d6cdf; }
+
+        .nav-btn {
+            background: #2d6cdf;
+            color: #fff !important;
+            border: none;
+            cursor: pointer;
+            font-size: .95rem;
+            padding: 8px 20px;
+            border-radius: 8px;
+        }
+
+        .nav-btn:hover { background: #1b4faa; }
+
+        /* burger */
+        .burger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .burger span {
+            width: 24px;
+            height: 2px;
+            background: #333;
+            border-radius: 2px;
+            transition: .3s;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            margin-top: 64px;
+            background: linear-gradient(135deg, #2d6cdf 0%, #6a9cf7 100%);
+            color: #fff;
+            padding: 100px 20px 80px;
+            text-align: center;
+        }
+
+        .hero h1 { font-size: 2.8rem; margin-bottom: 16px; }
+        .hero p { font-size: 1.2rem; opacity: .9; max-width: 600px; margin: 0 auto 32px; }
+
+        .hero-btn {
+            display: inline-block;
+            background: #fff;
+            color: #2d6cdf;
+            padding: 14px 36px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.05rem;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .hero-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+
+        /* ===== SECTIONS ===== */
+        section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 12px;
+            color: #222;
+        }
+
+        .section-sub {
+            text-align: center;
+            color: #777;
+            margin-bottom: 48px;
+            font-size: 1.05rem;
+        }
+
+        /* ===== CATALOG ===== */
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,.06);
+            transition: transform .25s, box-shadow .25s;
+        }
+
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,.1); }
+
+        .card-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eef3fc;
+            font-size: 4rem;
+        }
+
+        .card-body { padding: 20px; }
+
+        .card-body h3 { font-size: 1.1rem; margin-bottom: 6px; }
+
+        .card-body .price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2d6cdf;
+            margin-bottom: 12px;
+        }
+
+        .card-body .old-price {
+            text-decoration: line-through;
+            color: #aaa;
+            font-size: .9rem;
+            font-weight: 400;
+            margin-left: 8px;
+        }
+
+        .btn-cart {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #2d6cdf;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: .95rem;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .btn-cart:hover { background: #1b4faa; }
+
+        .btn-cart.added { background: #27ae60; }
+
+        /* ===== ABOUT ===== */
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 32px;
+            text-align: center;
+        }
+
+        .about-item {
+            padding: 32px 20px;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.05);
+        }
+
+        .about-item .icon { font-size: 2.5rem; margin-bottom: 16px; }
+        .about-item h3 { margin-bottom: 8px; }
+        .about-item p { color: #666; font-size: .95rem; line-height: 1.6; }
+
+        /* ===== CONTACTS ===== */
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .contact-info { display: flex; flex-direction: column; gap: 20px; }
+
+        .contact-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .contact-row .ci-icon {
+            width: 44px;
+            height: 44px;
+            background: #eef3fc;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .contact-row h4 { font-size: .95rem; margin-bottom: 2px; }
+        .contact-row p { color: #666; font-size: .95rem; }
+
+        /* ===== FORM ===== */
+        .form-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 32px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.06);
+        }
+
+        .form-card h3 { margin-bottom: 20px; font-size: 1.2rem; }
+
+        .form-group { margin-bottom: 16px; }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: .9rem;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #ddd;
+            border-radius: 8px;
+            font-size: .95rem;
+            font-family: inherit;
+            transition: border-color .2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2d6cdf;
+        }
+
+        .form-group textarea { resize: vertical; min-height: 100px; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: #2d6cdf;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .btn-submit:hover { background: #1b4faa; }
+
+        /* ===== CART POPUP ===== */
+        .cart-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.4);
+            z-index: 2000;
+            justify-content: flex-end;
+        }
+
+        .cart-overlay.open { display: flex; }
+
+        .cart-panel {
+            width: 400px;
+            max-width: 90vw;
+            background: #fff;
+            height: 100%;
+            padding: 28px;
+            overflow-y: auto;
+            box-shadow: -4px 0 20px rgba(0,0,0,.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .cart-header h2 { font-size: 1.3rem; }
+
+        .cart-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .cart-items { flex: 1; }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item-info h4 { font-size: .95rem; }
+        .cart-item-info p { color: #2d6cdf; font-weight: 600; }
+
+        .cart-item-remove {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .cart-total {
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .cart-empty { color: #999; text-align: center; padding: 40px 0; }
+
+        .cart-badge {
+            background: #e74c3c;
+            color: #fff;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: .7rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: #222;
+            color: #aaa;
+            text-align: center;
+            padding: 32px 20px;
+            font-size: .9rem;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #27ae60;
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-size: .95rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,.15);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: .3s;
+            z-index: 3000;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+
+            nav.desktop { display: none; }
+
+            .burger { display: flex; }
+
+            .mobile-menu {
+                display: none;
+                position: fixed;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: #fff;
+                padding: 16px 20px;
+                box-shadow: 0 8px 24px rgba(0,0,0,.1);
+                flex-direction: column;
+                gap: 4px;
+                z-index: 999;
+            }
+
+            .mobile-menu.open { display: flex; }
+
+            .mobile-menu a {
+                display: block;
+                padding: 12px 16px;
+                text-decoration: none;
+                color: #333;
+                border-radius: 8px;
+                font-size: 1rem;
+            }
+
+            .mobile-menu a:hover { background: #eef3fc; }
+
+            .contacts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="header-inner">
+        <a href="#" class="logo">OneCp</a>
+        <nav class="desktop">
+            <a href="#catalog">Каталог</a>
+            <a href="#about">О нас</a>
+            <a href="#contacts">Контакты</a>
+            <a href="#question">Задать вопрос</a>
+            <a href="#" class="nav-btn" onclick="openCart(); return false;">
+                Корзина <span class="cart-badge" id="cartBadge">0</span>
+            </a>
+        </nav>
+        <button class="burger" onclick="toggleMobile()" aria-label="Меню">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</header>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+    <a href="#catalog" onclick="closeMobile()">Каталог</a>
+    <a href="#about" onclick="closeMobile()">О нас</a>
+    <a href="#contacts" onclick="closeMobile()">Контакты</a>
+    <a href="#question" onclick="closeMobile()">Задать вопрос</a>
+    <a href="#" onclick="openCart(); closeMobile(); return false;">Корзина (<span id="cartBadgeMob">0</span>)</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+    <h1>Добро пожаловать в OneCp</h1>
+    <p>Качественные товары по лучшим ценам с быстрой доставкой по всей России</p>
+    <a href="#catalog" class="hero-btn">Перейти к каталогу</a>
+</section>
+
+<!-- CATALOG -->
+<section id="catalog">
+    <h2 class="section-title">Каталог товаров</h2>
+    <p class="section-sub">Выберите товар и добавьте в корзину</p>
+    <div class="catalog-grid" id="catalogGrid"></div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+    <h2 class="section-title">Почему мы?</h2>
+    <p class="section-sub">Наши преимущества</p>
+    <div class="about-grid">
+        <div class="about-item">
+            <div class="icon">🚚</div>
+            <h3>Быстрая доставка</h3>
+            <p>Доставим ваш заказ в любой город России за 1-3 рабочих дня</p>
+        </div>
+        <div class="about-item">
+            <div class="icon">✅</div>
+            <h3>Гарантия качества</h3>
+            <p>Все товары сертифицированы и проходят строгий контроль качества</p>
+        </div>
+        <div class="about-item">
+            <div class="icon">💰</div>
+            <h3>Лучшие цены</h3>
+            <p>Мы работаем напрямую с производителями, поэтому наши цены ниже</p>
+        </div>
+        <div class="about-item">
+            <div class="icon">🔄</div>
+            <h3>Возврат 14 дней</h3>
+            <p>Если товар не подошёл — вернём деньги без лишних вопросов</p>
+        </div>
+    </div>
+</section>
+
+<!-- CONTACTS -->
+<section id="contacts">
+    <h2 class="section-title">Контакты</h2>
+    <p class="section-sub">Свяжитесь с нами любым удобным способом</p>
+    <div class="contacts-grid">
+        <div class="contact-info">
+            <div class="contact-row">
+                <div class="ci-icon">📍</div>
+                <div>
+                    <h4>Адрес</h4>
+                    <p>г. Москва, ул. Примерная, д. 1, оф. 101</p>
+                </div>
+            </div>
+            <div class="contact-row">
+                <div class="ci-icon">📞</div>
+                <div>
+                    <h4>Телефон</h4>
+                    <p>+7 (800) 123-45-67</p>
+                </div>
+            </div>
+            <div class="contact-row">
+                <div class="ci-icon">✉️</div>
+                <div>
+                    <h4>Email</h4>
+                    <p>info@onecp.ru</p>
+                </div>
+            </div>
+            <div class="contact-row">
+                <div class="ci-icon">🕐</div>
+                <div>
+                    <h4>Режим работы</h4>
+                    <p>Пн-Пт: 9:00 — 20:00<br>Сб-Вс: 10:00 — 18:00</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUESTION FORM -->
+        <div class="form-card" id="question">
+            <h3>Задать вопрос</h3>
+            <form id="questionForm" onsubmit="submitForm(event)">
+                <div class="form-group">
+                    <label for="name">Ваше имя</label>
+                    <input type="text" id="name" placeholder="Иван Иванов" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="ivan@mail.ru" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Сообщение</label>
+                    <textarea id="message" placeholder="Напишите ваш вопрос..." required></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Отправить</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- CART -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCartOutside(event)">
+    <div class="cart-panel">
+        <div class="cart-header">
+            <h2>Корзина</h2>
+            <button class="cart-close" onclick="closeCart()">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems"></div>
+        <div class="cart-total" id="cartTotal"></div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- FOOTER -->
+<footer>
+    &copy; 2026 OneCp. Все права защищены.
+</footer>
+
+<script>
+    // ===== PRODUCTS DATA =====
+    const products = [
+        { id: 1, name: 'Беспроводные наушники', price: 3490, oldPrice: 4990, emoji: '🎧' },
+        { id: 2, name: 'Умные часы', price: 7990, oldPrice: 11990, emoji: '⌚' },
+        { id: 3, name: 'Портативная колонка', price: 2490, oldPrice: 3490, emoji: '🔊' },
+        { id: 4, name: 'Механическая клавиатура', price: 5490, oldPrice: 7990, emoji: '⌨️' },
+        { id: 5, name: 'Игровая мышь', price: 2990, oldPrice: 4490, emoji: '🖱️' },
+        { id: 6, name: 'Веб-камера HD', price: 3990, oldPrice: 5990, emoji: '📷' },
+        { id: 7, name: 'USB-хаб 7 портов', price: 1490, oldPrice: 2490, emoji: '🔌' },
+        { id: 8, name: 'Настольная лампа LED', price: 2290, oldPrice: 3290, emoji: '💡' },
+    ];
+
+    let cart = [];
+
+    // ===== RENDER CATALOG =====
+    function renderCatalog() {
+        const grid = document.getElementById('catalogGrid');
+        grid.innerHTML = products.map(p => `
+            <div class="card">
+                <div class="card-img">${p.emoji}</div>
+                <div class="card-body">
+                    <h3>${p.name}</h3>
+                    <div class="price">${p.price.toLocaleString('ru-RU')} ₽ <span class="old-price">${p.oldPrice.toLocaleString('ru-RU')} ₽</span></div>
+                    <button class="btn-cart" id="btn-${p.id}" onclick="addToCart(${p.id})">В корзину</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ===== CART =====
+    function addToCart(id) {
+        const product = products.find(p => p.id === id);
+        const existing = cart.find(c => c.id === id);
+        if (existing) {
+            existing.qty++;
+        } else {
+            cart.push({ ...product, qty: 1 });
+        }
+        updateCartBadge();
+        showToast(`${product.name} добавлен в корзину`);
+
+        const btn = document.getElementById('btn-' + id);
+        btn.textContent = '✓ Добавлено';
+        btn.classList.add('added');
+        setTimeout(() => {
+            btn.textContent = 'В корзину';
+            btn.classList.remove('added');
+        }, 1500);
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(c => c.id !== id);
+        updateCartBadge();
+        renderCart();
+    }
+
+    function updateCartBadge() {
+        const count = cart.reduce((s, c) => s + c.qty, 0);
+        document.getElementById('cartBadge').textContent = count;
+        const mob = document.getElementById('cartBadgeMob');
+        if (mob) mob.textContent = count;
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cartItems');
+        const totalEl = document.getElementById('cartTotal');
+
+        if (cart.length === 0) {
+            container.innerHTML = '<div class="cart-empty">Корзина пуста</div>';
+            totalEl.textContent = '';
+            return;
+        }
+
+        container.innerHTML = cart.map(c => `
+            <div class="cart-item">
+                <div class="cart-item-info">
+                    <h4>${c.emoji} ${c.name} × ${c.qty}</h4>
+                    <p>${(c.price * c.qty).toLocaleString('ru-RU')} ₽</p>
+                </div>
+                <button class="cart-item-remove" onclick="removeFromCart(${c.id})">✕</button>
+            </div>
+        `).join('');
+
+        const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
+        totalEl.textContent = 'Итого: ' + total.toLocaleString('ru-RU') + ' ₽';
+    }
+
+    function openCart() {
+        renderCart();
+        document.getElementById('cartOverlay').classList.add('open');
+    }
+
+    function closeCart() {
+        document.getElementById('cartOverlay').classList.remove('open');
+    }
+
+    function closeCartOutside(e) {
+        if (e.target === e.currentTarget) closeCart();
+    }
+
+    // ===== MOBILE MENU =====
+    function toggleMobile() {
+        document.getElementById('mobileMenu').classList.toggle('open');
+    }
+
+    function closeMobile() {
+        document.getElementById('mobileMenu').classList.remove('open');
+    }
+
+    // ===== FORM =====
+    function submitForm(e) {
+        e.preventDefault();
+        showToast('Спасибо! Ваш вопрос отправлен.');
+        e.target.reset();
+    }
+
+    // ===== TOAST =====
+    function showToast(text) {
+        const toast = document.getElementById('toast');
+        toast.textContent = text;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ===== INIT =====
+    renderCatalog();
+</script>
+</body>
+</html>
