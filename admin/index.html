@@ -880,7 +880,7 @@
             Object.values(grouped).forEach(g => {
                 const totalSum = g.orders.reduce((s, o) => s + o.total, 0);
                 html += `<div class="settings-card" style="margin-bottom:16px;">
-                    <h3 style="margin-bottom:12px;">${escH(g.name)} — ${escH(g.phone)} <span style="color:#888;font-size:.85rem;font-weight:400;margin-left:12px;">Итого: ${totalSum.toLocaleString('ru-RU')} ₽</span></h3>
+                    <h3 style="margin-bottom:12px;">${g.name !== '—' ? escH(g.name) + ' — ' : ''}${escH(g.phone)} <span style="color:#888;font-size:.85rem;font-weight:400;margin-left:12px;">Итого: ${totalSum.toLocaleString('ru-RU')} ₽</span></h3>
                     <div class="table-wrap"><table>
                         <thead><tr>
                             <th>Заказ #</th><th>Время</th><th>Состав</th><th>Сумма</th><th>Статус</th><th>Комментарий</th>
