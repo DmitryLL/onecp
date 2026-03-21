@@ -1151,7 +1151,6 @@
                     <input type="text" id="orderSmsCode" placeholder="0000" maxlength="4" style="flex:1;text-align:center;font-size:1.2rem;letter-spacing:6px;">
                     <button class="btn-checkout" onclick="confirmOrder()" style="flex:1;">Подтвердить</button>
                 </div>
-                <div id="orderMockCode" style="display:none;padding:8px;background:var(--beige-light);border:1px dashed var(--beige-dark);border-radius:8px;font-size:.82rem;color:var(--text-light);text-align:center;margin-bottom:8px;"></div>
                 <button class="btn-checkout" onclick="resetOrderStep()" style="background:transparent;color:var(--text-light);font-size:.82rem;border:1px solid var(--beige-dark);">Изменить номер</button>
             </div>
         </div>
@@ -1435,14 +1434,7 @@
             document.getElementById('orderStep2').style.display = 'block';
             document.getElementById('orderSmsCode').value = '';
             document.getElementById('orderSmsCode').focus();
-            const mockEl = document.getElementById('orderMockCode');
-            if (res.debug_code) {
-                mockEl.textContent = 'Код: ' + res.debug_code;
-                mockEl.style.display = 'block';
-            } else {
-                mockEl.style.display = 'none';
-            }
-            showToast('Код отправлен');
+            showToast('Код отправлен на ваш телефон');
         } catch (e) {
             showToast(e.message);
         }
