@@ -38,6 +38,23 @@ def init_db():
                 admin.password_hash = pbkdf2_sha256.hash(admin_pass)
                 logger.info("Updated admin password from env")
 
+        # Seed default dishes if empty
+        if db.query(Dish).count() == 0:
+            default_dishes = [
+                Dish(name="Капучино", description="Классический капучино с нежной молочной пенкой", price=250, category="Кофе", weight=300, weight_unit="мл", sort_order=1),
+                Dish(name="Латте", description="Мягкий кофе с большим количеством молока", price=280, category="Кофе", weight=350, weight_unit="мл", sort_order=2),
+                Dish(name="Американо", description="Крепкий чёрный кофе", price=200, category="Кофе", weight=250, weight_unit="мл", sort_order=3),
+                Dish(name="Раф", description="Сливочный кофейный напиток с ванильным вкусом", price=320, category="Кофе", weight=300, weight_unit="мл", sort_order=4),
+                Dish(name="Мокко", description="Кофе с шоколадом и молоком", price=350, category="Кофе", weight=300, weight_unit="мл", sort_order=5),
+                Dish(name="Чизкейк", description="Нежный сливочный чизкейк", price=290, category="Десерты", weight=150, weight_unit="г", sort_order=10),
+                Dish(name="Тирамису", description="Итальянский десерт с кофейной пропиткой", price=350, category="Десерты", weight=160, weight_unit="г", sort_order=11),
+                Dish(name="Круассан", description="Хрустящий круассан с маслом", price=180, category="Выпечка", weight=80, weight_unit="г", sort_order=20),
+                Dish(name="Сэндвич с курицей", description="Сэндвич с куриным филе, салатом и соусом", price=320, category="Еда", weight=250, weight_unit="г", sort_order=30),
+                Dish(name="Салат Цезарь", description="Классический салат с курицей и пармезаном", price=380, category="Еда", weight=220, weight_unit="г", sort_order=31),
+            ]
+            db.add_all(default_dishes)
+            logger.info("Seeded default dishes")
+
         # Seed default site settings if empty
         if db.query(SiteSettings).count() == 0:
             defaults = {
