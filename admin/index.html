@@ -521,6 +521,33 @@
                         <textarea id="setFooter" class="setting-field" rows="2"></textarea>
                     </div>
                 </div>
+
+                <div class="settings-card">
+                    <h3>📧 Отчёт по заказам на почту</h3>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="setReportEnabled" class="setting-field" style="width:auto;margin:0;accent-color:#4ade80;width:18px;height:18px;">
+                            <span style="color:#e0e0e0;font-size:.95rem;">Включить ежедневную отправку</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Почта отправителя (SMTP)</label>
+                        <input type="email" id="setReportSmtpEmail" class="setting-field" placeholder="shop@mail.ru">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль приложения</label>
+                        <input type="password" id="setReportSmtpPassword" class="setting-field" placeholder="Пароль от почты или пароль приложения">
+                    </div>
+                    <div class="form-group">
+                        <label>Кому отправлять (email получателя)</label>
+                        <input type="email" id="setReportRecipient" class="setting-field" placeholder="owner@mail.ru">
+                    </div>
+                    <div class="form-group">
+                        <label>Время отправки (часы:минуты)</label>
+                        <input type="time" id="setReportTime" class="setting-field" value="13:00" style="max-width:160px;">
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="testEmailReport()" style="margin-top:8px;">Тестовая отправка</button>
+                </div>
             </div>
         </div>
     </div>
@@ -954,21 +981,41 @@
                 document.getElementById('setEmail').value = s.email || '';
                 document.getElementById('setSchedule').value = s.schedule || '';
                 document.getElementById('setFooter').value = s.footer || '';
+                // Email report
+                document.getElementById('setReportEnabled').checked = s.reportEnabled === '1';
+                document.getElementById('setReportSmtpEmail').value = s.reportSmtpEmail || '';
+                document.getElementById('setReportSmtpPassword').value = s.reportSmtpPassword || '';
+                document.getElementById('setReportRecipient').value = s.reportRecipient || '';
+                document.getElementById('setReportTime').value = s.reportTime || '13:00';
             } catch (e) { /* first time, fields stay empty */ }
         }
 
         let settingsSaveTimer = null;
 
         async function saveSettings() {
-            const fields = ['heroTitle','heroSub','heroBtn','catalogTitle','catalogSub','aboutTitle','aboutSub','address','phone','email','schedule','footer'];
-            const ids = ['setHeroTitle','setHeroSub','setHeroBtn','setCatalogTitle','setCatalogSub','setAboutTitle','setAboutSub','setAddress','setPhone','setEmail','setSchedule','setFooter'];
-            const body = fields.map((key, i) => ({ key, value: document.getElementById(ids[i]).value }));
+            const fields = ['heroTitle','heroSub','heroBtn','catalogTitle','catalogSub','aboutTitle','aboutSub','address','phone','email','schedule','footer',
+                'reportEnabled','reportSmtpEmail','reportSmtpPassword','reportRecipient','reportTime'];
+            const ids = ['setHeroTitle','setHeroSub','setHeroBtn','setCatalogTitle','setCatalogSub','setAboutTitle','setAboutSub','setAddress','setPhone','setEmail','setSchedule','setFooter',
+                'setReportEnabled','setReportSmtpEmail','setReportSmtpPassword','setReportRecipient','setReportTime'];
+            const body = fields.map((key, i) => {
+                const el = document.getElementById(ids[i]);
+                const value = el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
+                return { key, value };
+            });
             try {
                 await api('/api/admin/settings', { method: 'PUT', body });
                 const status = document.getElementById('settingsSaveStatus');
                 status.textContent = 'Сохранено';
                 status.style.opacity = '1';
                 setTimeout(() => status.style.opacity = '0', 2000);
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        async function testEmailReport() {
+            try {
+                await saveSettings();
+                const res = await api('/api/admin/test-report', { method: 'POST' });
+                showToast(res.message || 'Отчёт отправлен');
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from passlib.hash import pbkdf2_sha256
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from database import engine, SessionLocal, Base
 from models import AdminUser, Dish, SiteSettings
@@ -12,9 +13,12 @@ from routes.auth import router as auth_router
 from routes.menu import router as menu_router
 from routes.orders import router as orders_router
 from routes.admin import router as admin_router
+from email_report import send_report
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("onecp")
+
+scheduler = BackgroundScheduler()
 
 
 def init_db():
@@ -80,10 +84,30 @@ def init_db():
         db.close()
 
 
+def check_report_schedule():
+    """Called every minute — sends report if current time matches configured time."""
+    from datetime import datetime, timezone, timedelta
+    now = datetime.now(timezone(timedelta(hours=10)))  # Vladivostok
+    current_hm = now.strftime("%H:%M")
+    db = SessionLocal()
+    try:
+        row = db.query(SiteSettings).filter(SiteSettings.key == "reportTime").first()
+        if row and row.value and row.value.strip() == current_hm:
+            send_report()
+    except Exception as e:
+        logger.error(f"[SCHEDULER] Error: {e}")
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    scheduler.add_job(check_report_schedule, "interval", minutes=1, id="email_report_check")
+    scheduler.start()
+    logger.info("Scheduler started")
     yield
+    scheduler.shutdown()
 
 
 app = FastAPI(title="OneCp API", lifespan=lifespan)

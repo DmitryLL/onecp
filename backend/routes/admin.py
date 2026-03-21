@@ -270,3 +270,13 @@ def update_settings(body: list[SettingIn], admin: AdminUser = Depends(get_admin)
             db.add(SiteSettings(key=item.key, value=item.value))
     db.commit()
     return {"ok": True}
+
+
+@router.post("/test-report")
+def test_report(admin: AdminUser = Depends(get_admin)):
+    from email_report import send_report
+    try:
+        send_report()
+        return {"ok": True, "message": "Отчёт отправлен"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ошибка отправки: {e}")
