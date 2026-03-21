@@ -21,7 +21,6 @@ def get_menu(db: Session = Depends(get_db)):
             "name": d.name,
             "description": d.description,
             "price": d.price,
-            "oldPrice": d.old_price,
             "emoji": d.emoji,
             "imageUrl": d.image_url,
             "category": d.category,

@@ -47,7 +47,6 @@ class DishIn(BaseModel):
     name: str
     description: str | None = None
     price: float
-    old_price: float | None = None
     emoji: str | None = None
     image_url: str | None = None
     category: str | None = None
@@ -91,7 +90,6 @@ def list_dishes(admin: AdminUser = Depends(get_admin), db: Session = Depends(get
             "name": d.name,
             "description": d.description,
             "price": d.price,
-            "oldPrice": d.old_price,
             "emoji": d.emoji,
             "imageUrl": d.image_url,
             "category": d.category,
@@ -110,7 +108,7 @@ def create_dish(body: DishIn, admin: AdminUser = Depends(get_admin), db: Session
         name=body.name,
         description=body.description,
         price=body.price,
-        old_price=body.old_price,
+        old_price=None,
         emoji=body.emoji,
         image_url=body.image_url,
         category=body.category,
@@ -133,7 +131,6 @@ def update_dish(dish_id: int, body: DishIn, admin: AdminUser = Depends(get_admin
     dish.name = body.name
     dish.description = body.description
     dish.price = body.price
-    dish.old_price = body.old_price
     dish.category = body.category
     dish.weight = body.weight
     dish.weight_unit = body.weight_unit

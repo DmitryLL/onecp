@@ -41,7 +41,7 @@ class Dish(Base):
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     price = Column(Float, nullable=False)
-    old_price = Column(Float, nullable=True)
+    old_price = Column(Float, nullable=True)  # deprecated, not used
     emoji = Column(String(10), nullable=True)
     image_url = Column(String(500), nullable=True)
     category = Column(String(100), nullable=True, index=True)

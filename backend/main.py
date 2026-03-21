@@ -38,23 +38,6 @@ def init_db():
                 admin.password_hash = pbkdf2_sha256.hash(admin_pass)
                 logger.info("Updated admin password from env")
 
-        # Seed default dishes if empty
-        if db.query(Dish).count() == 0:
-            default_dishes = [
-                Dish(name="Капучино", price=250, old_price=None, emoji="☕", category="Кофе", sort_order=1),
-                Dish(name="Латте", price=280, old_price=None, emoji="☕", category="Кофе", sort_order=2),
-                Dish(name="Американо", price=200, old_price=None, emoji="☕", category="Кофе", sort_order=3),
-                Dish(name="Раф", price=320, old_price=380, emoji="☕", category="Кофе", sort_order=4),
-                Dish(name="Мокко", price=350, old_price=None, emoji="☕", category="Кофе", sort_order=5),
-                Dish(name="Чизкейк", price=290, old_price=None, emoji="🍰", category="Десерты", sort_order=10),
-                Dish(name="Тирамису", price=350, old_price=400, emoji="🍰", category="Десерты", sort_order=11),
-                Dish(name="Круассан", price=180, old_price=None, emoji="🥐", category="Выпечка", sort_order=20),
-                Dish(name="Сэндвич с курицей", price=320, old_price=None, emoji="🥪", category="Еда", sort_order=30),
-                Dish(name="Салат Цезарь", price=380, old_price=450, emoji="🥗", category="Еда", sort_order=31),
-            ]
-            db.add_all(default_dishes)
-            logger.info("Seeded default dishes")
-
         # Seed default site settings if empty
         if db.query(SiteSettings).count() == 0:
             defaults = {

@@ -185,14 +185,6 @@
             margin-bottom: 12px;
         }
 
-        .card-body .old-price {
-            text-decoration: line-through;
-            color: #aaa;
-            font-size: .9rem;
-            font-weight: 400;
-            margin-left: 8px;
-        }
-
         .btn-cart {
             display: block;
             width: 100%;
@@ -704,7 +696,7 @@
                     <h3>${esc(p.name)}</h3>
                     ${p.description ? '<p style="color:#888;font-size:.85rem;margin-bottom:4px;">' + esc(p.description) + '</p>' : ''}
                     ${p.weight ? '<p style="color:#999;font-size:.8rem;margin-bottom:8px;">' + p.weight + ' ' + (p.weightUnit || 'г') + '</p>' : ''}
-                    <div class="price">${p.price.toLocaleString('ru-RU')} &#8381;${p.oldPrice ? ' <span class="old-price">' + p.oldPrice.toLocaleString('ru-RU') + ' &#8381;</span>' : ''}</div>
+                    <div class="price">${p.price.toLocaleString('ru-RU')} &#8381;</div>
                     <button class="btn-cart" id="btn-${p.id}" onclick="addToCart(${p.id})">В корзину</button>
                 </div>
             </div>

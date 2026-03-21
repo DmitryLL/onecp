@@ -165,12 +165,6 @@
             color: #f5efe6;
         }
 
-        .old-price-cell {
-            color: #666;
-            text-decoration: line-through;
-            font-size: .85rem;
-        }
-
         .actions-cell {
             display: flex;
             gap: 8px;
@@ -370,21 +364,6 @@
                     <button class="btn btn-primary" onclick="openModal()">+ Добавить товар</button>
                 </div>
 
-                <div class="stats-row">
-                    <div class="stat-card">
-                        <div class="stat-label">Всего товаров</div>
-                        <div class="stat-value" id="statTotal">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Средняя цена</div>
-                        <div class="stat-value" id="statAvg">0 ₽</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Со скидкой</div>
-                        <div class="stat-value" id="statDiscount">0</div>
-                    </div>
-                </div>
-
                 <div class="table-wrap">
                     <table>
                         <thead>
@@ -392,7 +371,6 @@
                                 <th>Фото</th>
                                 <th>Название</th>
                                 <th>Цена</th>
-                                <th>Старая цена</th>
                                 <th>Действия</th>
                             </tr>
                         </thead>
@@ -516,10 +494,6 @@
                     <label>Цена (₽)</label>
                     <input type="number" id="prodPrice" min="0" required>
                 </div>
-                <div class="form-group">
-                    <label>Старая цена (₽, 0 = без скидки)</label>
-                    <input type="number" id="prodOldPrice" min="0" value="0">
-                </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
                     <button type="submit" class="btn btn-primary">Сохранить</button>
@@ -574,7 +548,6 @@
                     <td>${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
                     <td>${p.name}${p.description ? '<br><span style="color:#888;font-size:.8rem;">' + p.description + '</span>' : ''}${p.weight ? '<br><span style="color:#666;font-size:.8rem;">' + p.weight + ' ' + (p.weightUnit || 'г') + '</span>' : ''}</td>
                     <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
-                    <td>${p.oldPrice ? '<span class="old-price-cell">' + p.oldPrice.toLocaleString('ru-RU') + ' &#8381;</span>' : '\u2014'}</td>
                     <td>
                         <div class="actions-cell">
                             <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">Изменить</button>
@@ -583,14 +556,6 @@
                     </td>
                 </tr>
             `).join('');
-            updateStats();
-        }
-
-        function updateStats() {
-            document.getElementById('statTotal').textContent = products.length;
-            const avg = products.length ? Math.round(products.reduce((s, p) => s + p.price, 0) / products.length) : 0;
-            document.getElementById('statAvg').textContent = avg.toLocaleString('ru-RU') + ' &#8381;';
-            document.getElementById('statDiscount').textContent = products.filter(p => p.oldPrice && p.oldPrice > p.price).length;
         }
 
         // ===== MODAL =====
@@ -613,7 +578,6 @@
             document.getElementById('prodWeight').value = '';
             document.getElementById('prodWeightUnit').value = 'г';
             document.getElementById('prodPrice').value = '';
-            document.getElementById('prodOldPrice').value = '0';
             clearImagePreview();
             document.getElementById('modalTitle').textContent = 'Добавить блюдо';
             document.getElementById('modalOverlay').classList.add('open');
@@ -632,7 +596,6 @@
             document.getElementById('prodWeight').value = p.weight || '';
             document.getElementById('prodWeightUnit').value = p.weightUnit || 'г';
             document.getElementById('prodPrice').value = p.price;
-            document.getElementById('prodOldPrice').value = p.oldPrice || 0;
             clearImagePreview();
             if (p.imageUrl) showImagePreview(p.imageUrl);
             document.getElementById('modalTitle').textContent = 'Редактировать блюдо';
@@ -676,7 +639,6 @@
                 weight: parseFloat(document.getElementById('prodWeight').value) || null,
                 weight_unit: document.getElementById('prodWeightUnit').value || null,
                 price: parseFloat(document.getElementById('prodPrice').value) || 0,
-                old_price: parseFloat(document.getElementById('prodOldPrice').value) || null,
             };
             try {
                 let dishId = editId;
