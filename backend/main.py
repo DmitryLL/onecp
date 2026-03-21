@@ -22,16 +22,21 @@ def init_db():
 
     db = SessionLocal()
     try:
-        # Create default admin if not exists
+        # Create or update admin user
+        admin_pass = os.getenv("ADMIN_PASSWORD", "onecp2026")
         admin = db.query(AdminUser).filter(AdminUser.username == "admin").first()
         if not admin:
-            admin_pass = os.getenv("ADMIN_PASSWORD", "onecp2026")
             admin = AdminUser(
                 username="admin",
                 password_hash=pbkdf2_sha256.hash(admin_pass),
             )
             db.add(admin)
             logger.info("Created default admin user")
+        else:
+            # Always sync password with env var
+            if not pbkdf2_sha256.verify(admin_pass, admin.password_hash):
+                admin.password_hash = pbkdf2_sha256.hash(admin_pass)
+                logger.info("Updated admin password from env")
 
         # Seed default dishes if empty
         if db.query(Dish).count() == 0:
