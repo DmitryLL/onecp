@@ -10,7 +10,8 @@ from passlib.hash import pbkdf2_sha256
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/onecp/uploads")
 
 from database import get_db
-from models import AdminUser, Dish, Order, Customer, SiteSettings
+from models import AdminUser, Dish, Order, OrderItem, Customer, SiteSettings
+from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -203,7 +204,7 @@ def delete_dish(dish_id: int, admin: AdminUser = Depends(get_admin), db: Session
 
 @router.get("/orders")
 def list_orders(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
-    orders = db.query(Order).order_by(Order.created_at.desc()).limit(100).all()
+    orders = db.query(Order).options(joinedload(Order.items).joinedload(OrderItem.dish), joinedload(Order.customer)).order_by(Order.created_at.desc()).limit(200).all()
     status_labels = {
         "new": "Новый", "confirmed": "Подтверждён", "cooking": "Готовится",
         "ready": "Готов", "delivered": "Доставлен", "cancelled": "Отменён",
