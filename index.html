@@ -22,8 +22,8 @@
             top: 0;
             left: 0;
             right: 0;
-            background: #fff;
-            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+            background: #111;
+            box-shadow: 0 2px 12px rgba(0,0,0,.3);
             z-index: 1000;
             transition: box-shadow .3s;
         }
@@ -41,7 +41,7 @@
         .logo {
             font-size: 1.5rem;
             font-weight: 700;
-            color: #2d6cdf;
+            color: #fff;
             text-decoration: none;
         }
 
@@ -49,14 +49,14 @@
 
         nav a {
             text-decoration: none;
-            color: #333;
+            color: #ccc;
             padding: 8px 16px;
             border-radius: 8px;
             font-size: .95rem;
             transition: background .2s, color .2s;
         }
 
-        nav a:hover { background: #eef3fc; color: #2d6cdf; }
+        nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
 
         .nav-btn {
             background: #2d6cdf;
@@ -92,7 +92,7 @@
         /* ===== HERO ===== */
         .hero {
             margin-top: 64px;
-            background: linear-gradient(135deg, #2d6cdf 0%, #6a9cf7 100%);
+            background: #000 url('images/top-bg.png') center/cover no-repeat;
             color: #fff;
             padding: 100px 20px 80px;
             text-align: center;
@@ -114,6 +114,16 @@
         }
 
         .hero-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+
+        .hero-btn {
+            background: #fff;
+            color: #333;
+        }
+
+        /* ===== CATALOG WRAPPER (beige) ===== */
+        .catalog-section {
+            background: #f5efe6;
+        }
 
         /* ===== SECTIONS ===== */
         section {
@@ -388,6 +398,13 @@
             vertical-align: middle;
         }
 
+        /* ===== BOTTOM BANNER ===== */
+        .bottom-banner {
+            width: 100%;
+            height: 400px;
+            background: #000 url('images/bottom-bg.png') center/cover no-repeat;
+        }
+
         /* ===== FOOTER ===== */
         footer {
             background: #222;
@@ -495,11 +512,13 @@
 </section>
 
 <!-- CATALOG -->
+<div class="catalog-section">
 <section id="catalog">
     <h2 class="section-title">Каталог товаров</h2>
     <p class="section-sub">Выберите товар и добавьте в корзину</p>
     <div class="catalog-grid" id="catalogGrid"></div>
 </section>
+</div>
 
 <!-- ABOUT -->
 <section id="about">
@@ -601,6 +620,9 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- BOTTOM BANNER -->
+<div class="bottom-banner"></div>
 
 <!-- FOOTER -->
 <footer>
