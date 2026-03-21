@@ -26,6 +26,8 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-1234%qwerT}
       SMS_PROVIDER: ${SMS_PROVIDER:-mock}
       SMSRU_API_KEY: ${SMSRU_API_KEY:-}
+    volumes:
+      - /onecp/uploads:/onecp/uploads
     ports:
       - "127.0.0.1:8000:8000"
 

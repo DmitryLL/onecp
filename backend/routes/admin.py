@@ -1,9 +1,13 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException, Request
+import uuid
+import shutil
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from jose import jwt
 from passlib.hash import pbkdf2_sha256
+
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/onecp/uploads")
 
 from database import get_db
 from models import AdminUser, Dish, Order, Customer, SiteSettings
@@ -130,6 +134,54 @@ def update_dish(dish_id: int, body: DishIn, admin: AdminUser = Depends(get_admin
     dish.available = body.available
     dish.sort_order = body.sort_order
     db.commit()
+    return {"ok": True}
+
+
+@router.post("/dishes/{dish_id}/image")
+def upload_dish_image(dish_id: int, file: UploadFile = File(...), admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Блюдо не найдено")
+
+    # Validate file type
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Допустимые форматы: JPEG, PNG, WebP, GIF")
+
+    # Create uploads dir
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    # Generate unique filename
+    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
+    filename = f"dish_{dish_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    # Delete old image if exists
+    if dish.image_url:
+        old_path = os.path.join(UPLOAD_DIR, os.path.basename(dish.image_url))
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+    # Save file
+    with open(filepath, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    dish.image_url = f"/uploads/{filename}"
+    db.commit()
+    return {"ok": True, "imageUrl": dish.image_url}
+
+
+@router.delete("/dishes/{dish_id}/image")
+def delete_dish_image(dish_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Блюдо не найдено")
+    if dish.image_url:
+        old_path = os.path.join(UPLOAD_DIR, os.path.basename(dish.image_url))
+        if os.path.exists(old_path):
+            os.remove(old_path)
+        dish.image_url = None
+        db.commit()
     return {"ok": True}
 
 

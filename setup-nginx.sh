@@ -18,6 +18,13 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        client_max_body_size 10M;
+    }
+
+    location /uploads/ {
+        alias /onecp/uploads/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
     }
 
     location / {

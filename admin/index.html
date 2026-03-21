@@ -502,8 +502,14 @@
                     <input type="text" id="prodName" required>
                 </div>
                 <div class="form-group">
-                    <label>Иконка (emoji)</label>
-                    <input type="text" id="prodEmoji" placeholder="🎧" required>
+                    <label>Иконка (emoji, необязательно если есть картинка)</label>
+                    <input type="text" id="prodEmoji" placeholder="🎧">
+                </div>
+                <div class="form-group">
+                    <label>Картинка товара</label>
+                    <div id="prodImagePreview" style="margin-bottom:8px;"></div>
+                    <input type="file" id="prodImage" accept="image/*" style="width:100%;padding:8px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#ccc;font-size:.9rem;">
+                    <button type="button" id="prodImageDeleteBtn" class="btn btn-danger btn-sm" style="margin-top:8px;display:none;" onclick="deleteImage()">Удалить картинку</button>
                 </div>
                 <div class="form-group">
                     <label>Цена (₽)</label>
@@ -564,7 +570,7 @@
             const tbody = document.getElementById('productsBody');
             tbody.innerHTML = products.map(p => `
                 <tr>
-                    <td class="emoji-cell">${p.emoji || ''}</td>
+                    <td class="emoji-cell">${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : (p.emoji || '')}</td>
                     <td>${p.name}${p.category ? ' <span style="color:#666;font-size:.8rem;">(' + p.category + ')</span>' : ''}</td>
                     <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
                     <td>${p.oldPrice ? '<span class="old-price-cell">' + p.oldPrice.toLocaleString('ru-RU') + ' &#8381;</span>' : '\u2014'}</td>
@@ -587,12 +593,24 @@
         }
 
         // ===== MODAL =====
+        function clearImagePreview() {
+            document.getElementById('prodImagePreview').innerHTML = '';
+            document.getElementById('prodImage').value = '';
+            document.getElementById('prodImageDeleteBtn').style.display = 'none';
+        }
+
+        function showImagePreview(url) {
+            document.getElementById('prodImagePreview').innerHTML = '<img src="' + url + '" style="width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #333;">';
+            document.getElementById('prodImageDeleteBtn').style.display = 'inline-block';
+        }
+
         function openModal() {
             document.getElementById('editId').value = '';
             document.getElementById('prodName').value = '';
             document.getElementById('prodEmoji').value = '';
             document.getElementById('prodPrice').value = '';
             document.getElementById('prodOldPrice').value = '0';
+            clearImagePreview();
             document.getElementById('modalTitle').textContent = 'Добавить блюдо';
             document.getElementById('modalOverlay').classList.add('open');
         }
@@ -608,8 +626,37 @@
             document.getElementById('prodEmoji').value = p.emoji || '';
             document.getElementById('prodPrice').value = p.price;
             document.getElementById('prodOldPrice').value = p.oldPrice || 0;
+            clearImagePreview();
+            if (p.imageUrl) showImagePreview(p.imageUrl);
             document.getElementById('modalTitle').textContent = 'Редактировать блюдо';
             document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        async function uploadImage(dishId) {
+            const fileInput = document.getElementById('prodImage');
+            if (!fileInput.files.length) return;
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            const res = await fetch('/api/admin/dishes/' + dishId + '/image', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + adminToken },
+                body: formData,
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || 'Upload failed');
+            }
+        }
+
+        async function deleteImage() {
+            const editId = document.getElementById('editId').value;
+            if (!editId) return;
+            try {
+                await api('/api/admin/dishes/' + editId + '/image', { method: 'DELETE' });
+                clearImagePreview();
+                await loadDishes();
+                showToast('Картинка удалена');
+            } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
         async function saveProduct(e) {
@@ -622,13 +669,18 @@
                 old_price: parseFloat(document.getElementById('prodOldPrice').value) || null,
             };
             try {
+                let dishId = editId;
                 if (editId) {
                     await api('/api/admin/dishes/' + editId, { method: 'PUT', body: data });
-                    showToast('Блюдо обновлено');
                 } else {
-                    await api('/api/admin/dishes', { method: 'POST', body: data });
-                    showToast('Блюдо добавлено');
+                    const res = await api('/api/admin/dishes', { method: 'POST', body: data });
+                    dishId = res.id;
                 }
+                // Upload image if selected
+                if (document.getElementById('prodImage').files.length) {
+                    await uploadImage(dishId);
+                }
+                showToast(editId ? 'Блюдо обновлено' : 'Блюдо добавлено');
                 await loadDishes();
                 closeModal();
             } catch (e) { showToast('Ошибка: ' + e.message); }
