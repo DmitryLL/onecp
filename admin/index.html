@@ -531,7 +531,15 @@
                         </label>
                     </div>
                     <div class="form-group">
-                        <label>Почта отправителя (SMTP)</label>
+                        <label>SMTP сервер</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" id="setReportSmtpHost" class="setting-field" placeholder="smtp.mail.ru" style="flex:1;">
+                            <input type="number" id="setReportSmtpPort" class="setting-field" placeholder="465" value="465" style="width:80px;">
+                        </div>
+                        <span style="font-size:.75rem;color:#666;margin-top:4px;display:block;">mail.ru → smtp.mail.ru:465 &nbsp; yandex → smtp.yandex.ru:465 &nbsp; gmail → smtp.gmail.com:465</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Почта отправителя</label>
                         <input type="email" id="setReportSmtpEmail" class="setting-field" placeholder="shop@mail.ru">
                     </div>
                     <div class="form-group">
@@ -539,14 +547,15 @@
                         <input type="password" id="setReportSmtpPassword" class="setting-field" placeholder="Пароль от почты или пароль приложения">
                     </div>
                     <div class="form-group">
-                        <label>Кому отправлять (email получателя)</label>
+                        <label>Кому отправлять</label>
                         <input type="email" id="setReportRecipient" class="setting-field" placeholder="owner@mail.ru">
                     </div>
                     <div class="form-group">
-                        <label>Время отправки (часы:минуты)</label>
+                        <label>Время отправки</label>
                         <input type="time" id="setReportTime" class="setting-field" value="13:00" style="max-width:160px;">
                     </div>
                     <button class="btn btn-primary btn-sm" onclick="testEmailReport()" style="margin-top:8px;">Тестовая отправка</button>
+                    <span id="testReportStatus" style="margin-left:12px;font-size:.85rem;color:#888;"></span>
                 </div>
             </div>
         </div>
@@ -983,6 +992,8 @@
                 document.getElementById('setFooter').value = s.footer || '';
                 // Email report
                 document.getElementById('setReportEnabled').checked = s.reportEnabled === '1';
+                document.getElementById('setReportSmtpHost').value = s.reportSmtpHost || '';
+                document.getElementById('setReportSmtpPort').value = s.reportSmtpPort || '465';
                 document.getElementById('setReportSmtpEmail').value = s.reportSmtpEmail || '';
                 document.getElementById('setReportSmtpPassword').value = s.reportSmtpPassword || '';
                 document.getElementById('setReportRecipient').value = s.reportRecipient || '';
@@ -994,9 +1005,9 @@
 
         async function saveSettings() {
             const fields = ['heroTitle','heroSub','heroBtn','catalogTitle','catalogSub','aboutTitle','aboutSub','address','phone','email','schedule','footer',
-                'reportEnabled','reportSmtpEmail','reportSmtpPassword','reportRecipient','reportTime'];
+                'reportEnabled','reportSmtpHost','reportSmtpPort','reportSmtpEmail','reportSmtpPassword','reportRecipient','reportTime'];
             const ids = ['setHeroTitle','setHeroSub','setHeroBtn','setCatalogTitle','setCatalogSub','setAboutTitle','setAboutSub','setAddress','setPhone','setEmail','setSchedule','setFooter',
-                'setReportEnabled','setReportSmtpEmail','setReportSmtpPassword','setReportRecipient','setReportTime'];
+                'setReportEnabled','setReportSmtpHost','setReportSmtpPort','setReportSmtpEmail','setReportSmtpPassword','setReportRecipient','setReportTime'];
             const body = fields.map((key, i) => {
                 const el = document.getElementById(ids[i]);
                 const value = el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
@@ -1012,11 +1023,18 @@
         }
 
         async function testEmailReport() {
+            const status = document.getElementById('testReportStatus');
+            status.textContent = 'Отправка...';
+            status.style.color = '#888';
             try {
                 await saveSettings();
                 const res = await api('/api/admin/test-report', { method: 'POST' });
-                showToast(res.message || 'Отчёт отправлен');
-            } catch (e) { showToast('Ошибка: ' + e.message); }
+                status.textContent = '✓ ' + (res.message || 'Отправлено');
+                status.style.color = '#4ade80';
+            } catch (e) {
+                status.textContent = '✗ ' + e.message;
+                status.style.color = '#e74c3c';
+            }
         }
 
         function autoSaveSettings() {

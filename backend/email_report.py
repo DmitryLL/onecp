@@ -48,7 +48,8 @@ def get_report_settings() -> dict | None:
     try:
         settings = db.query(SiteSettings).filter(
             SiteSettings.key.in_([
-                "reportEnabled", "reportSmtpEmail", "reportSmtpPassword",
+                "reportEnabled", "reportSmtpHost", "reportSmtpPort",
+                "reportSmtpEmail", "reportSmtpPassword",
                 "reportRecipient", "reportTime",
             ])
         ).all()
@@ -118,11 +119,13 @@ def build_orders_excel(date_str: str) -> bytes | None:
         db.close()
 
 
-def send_report():
+def send_report(force=False):
     logger.info("[EMAIL REPORT] Checking if report should be sent...")
     settings = get_report_settings()
     if not settings:
         logger.info("[EMAIL REPORT] Disabled or not configured")
+        if force:
+            raise ValueError("Отчёт не настроен: включите отправку и заполните все поля")
         return
 
     today = datetime.now(timezone(timedelta(hours=10))).strftime("%Y-%m-%d")  # Vladivostok
@@ -131,7 +134,13 @@ def send_report():
     smtp_email = settings["reportSmtpEmail"]
     smtp_pass = settings["reportSmtpPassword"]
     recipient = settings["reportRecipient"]
-    smtp_host, smtp_port = detect_smtp(smtp_email)
+    # Use explicit SMTP settings if provided, otherwise auto-detect
+    smtp_host = settings.get("reportSmtpHost", "").strip()
+    smtp_port = settings.get("reportSmtpPort", "").strip()
+    if not smtp_host:
+        smtp_host, smtp_port = detect_smtp(smtp_email)
+    else:
+        smtp_port = int(smtp_port) if smtp_port else 465
 
     msg = MIMEMultipart()
     msg["From"] = smtp_email
@@ -149,9 +158,11 @@ def send_report():
         msg.attach(MIMEText(f"За {today} заказов не было.", "plain", "utf-8"))
 
     try:
-        with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15) as server:
+        logger.info(f"[EMAIL REPORT] Connecting to {smtp_host}:{smtp_port} as {smtp_email}...")
+        with smtplib.SMTP_SSL(smtp_host, int(smtp_port), timeout=15) as server:
             server.login(smtp_email, smtp_pass)
             server.sendmail(smtp_email, [recipient], msg.as_string())
         logger.info(f"[EMAIL REPORT] Sent to {recipient}")
     except Exception as e:
         logger.error(f"[EMAIL REPORT] Failed: {e}")
+        raise  # Re-raise so test endpoint can show the error

@@ -276,7 +276,7 @@ def update_settings(body: list[SettingIn], admin: AdminUser = Depends(get_admin)
 def test_report(admin: AdminUser = Depends(get_admin)):
     from email_report import send_report
     try:
-        send_report()
+        send_report(force=True)
         return {"ok": True, "message": "Отчёт отправлен"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка отправки: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
