@@ -1074,6 +1074,10 @@
 
 <!-- CATALOG -->
 <section id="catalog">
+    <div class="section-header animate-on-scroll">
+        <h2 class="section-title" id="siteCatalogTitle">Каталог товаров</h2>
+        <p class="section-sub" id="siteCatalogSub">Выберите товар и добавьте в корзину</p>
+    </div>
     <div class="catalog-grid" id="catalogGrid"></div>
 </section>
 
@@ -1505,6 +1509,8 @@
             if (s.heroTitle) document.getElementById('siteHeroTitle').innerHTML = nl2br(s.heroTitle);
             if (s.heroSub) document.getElementById('siteHeroSub').innerHTML = nl2br(s.heroSub);
             if (s.heroBtn) document.getElementById('siteHeroBtn').querySelector('span').textContent = s.heroBtn;
+            if (s.catalogTitle) document.getElementById('siteCatalogTitle').innerHTML = nl2br(s.catalogTitle);
+            if (s.catalogSub) document.getElementById('siteCatalogSub').innerHTML = nl2br(s.catalogSub);
             if (s.address) document.getElementById('siteAddress').innerHTML = nl2br(s.address);
             if (s.phone) document.getElementById('sitePhone').innerHTML = nl2br(s.phone);
             if (s.email) document.getElementById('siteEmail').innerHTML = nl2br(s.email);
