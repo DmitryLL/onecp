@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Админ-панель — OneCp</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -385,6 +386,12 @@
             <div class="customers-panel" id="customersPanel" style="display:none;">
                 <div class="page-header">
                     <h1>Клиенты и заказы</h1>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+                    <label style="color:#aaa;font-size:.9rem;">Выгрузка заказов за дату:</label>
+                    <input type="date" id="exportDate" style="padding:8px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.9rem;font-family:inherit;">
+                    <button class="btn btn-primary btn-sm" onclick="exportOrdersExcel()">Скачать Excel</button>
                 </div>
 
                 <div class="table-wrap" style="margin-bottom:32px;">
@@ -806,6 +813,46 @@
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
+        // ===== EXPORT EXCEL =====
+        function exportOrdersExcel() {
+            const dateStr = document.getElementById('exportDate').value;
+            if (!dateStr) { showToast('Выберите дату'); return; }
+
+            const filtered = allOrders.filter(o => {
+                if (!o.createdAt) return false;
+                return o.createdAt.substring(0, 10) === dateStr;
+            });
+
+            if (!filtered.length) { showToast('Нет заказов за эту дату'); return; }
+
+            const rows = [];
+            filtered.forEach(o => {
+                o.items.forEach(it => {
+                    rows.push({
+                        '# Заказа': o.id,
+                        'Дата': new Date(o.createdAt).toLocaleString('ru-RU'),
+                        'Клиент': o.customerName || '—',
+                        'Телефон': o.customerPhone || '—',
+                        'Товар': it.name,
+                        'Кол-во': it.qty,
+                        'Цена': it.price,
+                        'Сумма заказа': o.total,
+                        'Статус': statusLabel(o.status),
+                        'Адрес': o.address || '',
+                        'Комментарий': o.comment || '',
+                    });
+                });
+            });
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            // Auto-width columns
+            ws['!cols'] = Object.keys(rows[0]).map(k => ({ wch: Math.max(k.length, 14) }));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Заказы');
+            XLSX.writeFile(wb, 'orders_' + dateStr + '.xlsx');
+            showToast('Файл скачан');
+        }
+
         // ===== SETTINGS =====
         async function loadSettingsForm() {
             try {
@@ -868,6 +915,8 @@
 
         // ===== INIT =====
         loadDishes();
+        // Set today as default export date
+        document.getElementById('exportDate').value = new Date().toISOString().substring(0, 10);
     </script>
 </body>
 </html>
