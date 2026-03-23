@@ -10,7 +10,7 @@ from passlib.hash import pbkdf2_sha256
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/onecp/uploads")
 
 from database import get_db
-from models import AdminUser, Dish, Order, OrderItem, Customer, SiteSettings, Question
+from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question
 from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -366,5 +366,131 @@ def delete_question(question_id: int, admin: AdminUser = Depends(get_admin), db:
     if not q:
         raise HTTPException(status_code=404, detail="Вопрос не найден")
     db.delete(q)
+    db.commit()
+    return {"ok": True}
+
+
+# ===== DISH SETS =====
+
+class DishSetItemIn(BaseModel):
+    dish_id: int
+    quantity: int = 1
+
+
+class DishSetIn(BaseModel):
+    name: str
+    description: str | None = None
+    price: float
+    items: list[DishSetItemIn] = []
+    available: bool = True
+    sort_order: int = 0
+
+
+def format_dish_set(s: DishSet) -> dict:
+    return {
+        "id": s.id,
+        "name": s.name,
+        "description": s.description,
+        "price": s.price,
+        "imageUrl": s.image_url,
+        "available": s.available,
+        "sortOrder": s.sort_order,
+        "items": [
+            {
+                "id": item.id,
+                "dishId": item.dish_id,
+                "dishName": item.dish.name if item.dish else "—",
+                "quantity": item.quantity,
+                "dishPrice": item.dish.price if item.dish else 0,
+            }
+            for item in s.items
+        ],
+    }
+
+
+@router.get("/sets")
+def list_sets(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    sets = db.query(DishSet).options(joinedload(DishSet.items).joinedload(DishSetItem.dish)).order_by(DishSet.sort_order, DishSet.id).all()
+    return [format_dish_set(s) for s in sets]
+
+
+@router.post("/sets")
+def create_set(body: DishSetIn, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    ds = DishSet(
+        name=body.name,
+        description=body.description,
+        price=body.price,
+        available=body.available,
+        sort_order=body.sort_order,
+    )
+    for item in body.items:
+        ds.items.append(DishSetItem(dish_id=item.dish_id, quantity=item.quantity))
+    db.add(ds)
+    db.commit()
+    db.refresh(ds)
+    return {"ok": True, "id": ds.id}
+
+
+@router.put("/sets/{set_id}")
+def update_set(set_id: int, body: DishSetIn, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    ds = db.query(DishSet).filter(DishSet.id == set_id).first()
+    if not ds:
+        raise HTTPException(status_code=404, detail="Набор не найден")
+    ds.name = body.name
+    ds.description = body.description
+    ds.price = body.price
+    ds.available = body.available
+    ds.sort_order = body.sort_order
+    # Replace items
+    db.query(DishSetItem).filter(DishSetItem.set_id == set_id).delete()
+    for item in body.items:
+        db.add(DishSetItem(set_id=set_id, dish_id=item.dish_id, quantity=item.quantity))
+    db.commit()
+    return {"ok": True}
+
+
+@router.post("/sets/{set_id}/image")
+def upload_set_image(set_id: int, file: UploadFile = File(...), admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    ds = db.query(DishSet).filter(DishSet.id == set_id).first()
+    if not ds:
+        raise HTTPException(status_code=404, detail="Набор не найден")
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Допустимые форматы: JPEG, PNG, WebP, GIF")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
+    filename = f"set_{set_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    if ds.image_url:
+        old_path = os.path.join(UPLOAD_DIR, os.path.basename(ds.image_url))
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    with open(filepath, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    ds.image_url = f"/uploads/{filename}"
+    db.commit()
+    return {"ok": True, "imageUrl": ds.image_url}
+
+
+@router.delete("/sets/{set_id}/image")
+def delete_set_image(set_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    ds = db.query(DishSet).filter(DishSet.id == set_id).first()
+    if not ds:
+        raise HTTPException(status_code=404, detail="Набор не найден")
+    if ds.image_url:
+        old_path = os.path.join(UPLOAD_DIR, os.path.basename(ds.image_url))
+        if os.path.exists(old_path):
+            os.remove(old_path)
+        ds.image_url = None
+        db.commit()
+    return {"ok": True}
+
+
+@router.delete("/sets/{set_id}")
+def delete_set(set_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    ds = db.query(DishSet).filter(DishSet.id == set_id).first()
+    if not ds:
+        raise HTTPException(status_code=404, detail="Набор не найден")
+    db.delete(ds)
     db.commit()
     return {"ok": True}

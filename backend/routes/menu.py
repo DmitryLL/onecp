@@ -3,7 +3,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Dish, SiteSettings, Question
+from models import Dish, DishSet, DishSetItem, SiteSettings, Question
+from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/menu", tags=["menu"])
 
@@ -32,6 +33,36 @@ def get_menu(db: Session = Depends(get_db)):
             "carbs": d.carbs,
         }
         for d in dishes
+    ]
+
+
+@router.get("/sets")
+def get_sets(db: Session = Depends(get_db)):
+    sets = (
+        db.query(DishSet)
+        .filter(DishSet.available == True)
+        .options(joinedload(DishSet.items).joinedload(DishSetItem.dish))
+        .order_by(DishSet.sort_order, DishSet.id)
+        .all()
+    )
+    return [
+        {
+            "id": s.id,
+            "name": s.name,
+            "description": s.description,
+            "price": s.price,
+            "imageUrl": s.image_url,
+            "items": [
+                {
+                    "dishId": item.dish_id,
+                    "dishName": item.dish.name if item.dish else "—",
+                    "quantity": item.quantity,
+                    "dishPrice": item.dish.price if item.dish else 0,
+                }
+                for item in s.items
+            ],
+        }
+        for s in sets
     ]
 
 

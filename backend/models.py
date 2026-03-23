@@ -94,6 +94,33 @@ class SiteSettings(Base):
     value = Column(Text, nullable=True)
 
 
+class DishSet(Base):
+    __tablename__ = "dish_sets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    price = Column(Float, nullable=False)
+    image_url = Column(String(500), nullable=True)
+    available = Column(Boolean, default=True)
+    sort_order = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    items = relationship("DishSetItem", back_populates="dish_set", cascade="all, delete-orphan")
+
+
+class DishSetItem(Base):
+    __tablename__ = "dish_set_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    set_id = Column(Integer, ForeignKey("dish_sets.id"), nullable=False)
+    dish_id = Column(Integer, ForeignKey("dishes.id"), nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+
+    dish_set = relationship("DishSet", back_populates="items")
+    dish = relationship("Dish")
+
+
 class Question(Base):
     __tablename__ = "questions"
 
