@@ -1178,6 +1178,14 @@
             <button class="btn-checkout" onclick="confirmOrder()" style="width:100%;margin-bottom:10px;">Подтвердить</button>
             <button class="btn-checkout" onclick="smsGoBack()" style="width:100%;background:transparent;color:var(--text-light);font-size:.82rem;border:1px solid var(--beige-dark);">Отправить код ещё раз</button>
         </div>
+        <!-- SMS Step 3: order success -->
+        <div id="smsStep3" style="display:none;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">&#9989;</div>
+            <h3 style="margin-bottom:8px;color:var(--text);">Заказ оформлен!</h3>
+            <p style="font-size:1rem;color:var(--text-light);margin-bottom:6px;">Ваш заказ номер</p>
+            <p style="font-size:2rem;font-weight:800;color:var(--brown);margin-bottom:20px;" id="smsOrderNumber"></p>
+            <button class="btn-checkout" id="smsOkBtn" onclick="closeOrderSuccess()" disabled style="width:100%;opacity:.5;cursor:not-allowed;">OK (<span id="smsOkTimer">5</span>)</button>
+        </div>
     </div>
 </div>
 
@@ -1537,17 +1545,51 @@
             });
             cart = [];
             updateCartBadge();
-            closeSmsModal();
-            closeCart();
-            document.getElementById('orderName').value = '';
-            document.getElementById('orderPhone').value = '';
-            document.getElementById('orderAddress').value = '';
-            document.getElementById('orderComment').value = '';
-            toggleOrderBtn();
-            showToast('Заказ #' + res.order.id + ' оформлен!');
+            showOrderSuccess(res.order.id);
         } catch (e) {
             showToast(e.message);
         }
+    }
+
+    let okTimerInterval = null;
+
+    function showOrderSuccess(orderId) {
+        document.getElementById('smsStep1').style.display = 'none';
+        document.getElementById('smsStep2').style.display = 'none';
+        document.getElementById('smsStep3').style.display = 'block';
+        document.getElementById('smsOrderNumber').textContent = '#' + orderId;
+        const btn = document.getElementById('smsOkBtn');
+        const timerSpan = document.getElementById('smsOkTimer');
+        let sec = 5;
+        btn.disabled = true;
+        btn.style.opacity = '.5';
+        btn.style.cursor = 'not-allowed';
+        btn.innerHTML = 'OK (<span id="smsOkTimer">' + sec + '</span>)';
+        if (okTimerInterval) clearInterval(okTimerInterval);
+        okTimerInterval = setInterval(() => {
+            sec--;
+            if (sec > 0) {
+                btn.innerHTML = 'OK (<span id="smsOkTimer">' + sec + '</span>)';
+            } else {
+                clearInterval(okTimerInterval);
+                okTimerInterval = null;
+                btn.innerHTML = 'OK';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
+        }, 1000);
+    }
+
+    function closeOrderSuccess() {
+        if (okTimerInterval) { clearInterval(okTimerInterval); okTimerInterval = null; }
+        closeSmsModal();
+        closeCart();
+        document.getElementById('orderName').value = '';
+        document.getElementById('orderPhone').value = '';
+        document.getElementById('orderAddress').value = '';
+        document.getElementById('orderComment').value = '';
+        toggleOrderBtn();
     }
 
     function checkout() {
