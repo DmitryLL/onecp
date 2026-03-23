@@ -22,7 +22,20 @@ class CreateOrderRequest(BaseModel):
     items: list[OrderItemIn]
     comment: str | None = None
     address: str | None = None
-    customer_name: str | None = None
+    customer_name: str
+
+    @field_validator("customer_name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        import re
+        v = v.strip()
+        if not v:
+            raise ValueError("Укажите имя")
+        if len(v) > 30:
+            raise ValueError("Имя не более 30 символов")
+        if not re.match(r'^[a-zA-Zа-яА-ЯёЁ \-]+$', v):
+            raise ValueError("Имя может содержать только буквы, пробел и дефис")
+        return v
 
     @field_validator("phone")
     @classmethod

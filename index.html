@@ -1134,10 +1134,10 @@
             <input type="text" id="orderComment" placeholder="Комментарий к заказу">
             <!-- Step 1: name + phone + consent -->
             <div id="orderStep1">
-                <input type="text" id="orderName" placeholder="Ваше имя" style="margin-bottom:8px;">
+                <input type="text" id="orderName" placeholder="Ваше имя *" maxlength="30" oninput="this.value=this.value.replace(/[^a-zA-Zа-яА-ЯёЁ \-]/g,'');toggleOrderBtn()" style="margin-bottom:8px;">
                 <div style="display:flex;align-items:stretch;margin-bottom:8px;">
                     <span style="display:flex;align-items:center;padding:0 14px;background:var(--beige-dark);border:1.5px solid var(--beige-dark);border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-size:.95rem;font-weight:600;color:var(--text);white-space:nowrap;">+7</span>
-                    <input type="tel" id="orderPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')" style="flex:1;border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;margin-bottom:0;">
+                    <input type="tel" id="orderPhone" placeholder="9991234567 *" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'');toggleOrderBtn()" style="flex:1;border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;margin-bottom:0;">
                 </div>
                 <label style="display:flex;align-items:flex-start;gap:8px;margin:8px 0 12px;cursor:pointer;text-align:left;">
                     <input type="checkbox" id="orderConsent" onchange="toggleOrderBtn()" style="margin-top:3px;width:18px;height:18px;accent-color:var(--brown);flex-shrink:0;">
@@ -1415,10 +1415,13 @@
     // ===== ORDER: phone + SMS =====
     function toggleOrderBtn() {
         const btn = document.getElementById('orderSendCodeBtn');
+        const name = document.getElementById('orderName').value.trim();
+        const phone = document.getElementById('orderPhone').value.trim();
         const checked = document.getElementById('orderConsent').checked;
-        btn.disabled = !checked;
-        btn.style.opacity = checked ? '1' : '.5';
-        btn.style.cursor = checked ? 'pointer' : 'not-allowed';
+        const ok = name.length > 0 && phone.length === 10 && checked;
+        btn.disabled = !ok;
+        btn.style.opacity = ok ? '1' : '.5';
+        btn.style.cursor = ok ? 'pointer' : 'not-allowed';
     }
 
     function getOrderPhone() {
@@ -1427,6 +1430,8 @@
 
     async function orderSendCode() {
         if (document.getElementById('orderSendCodeBtn').disabled) return;
+        const orderName = document.getElementById('orderName').value.trim();
+        if (!orderName) { showToast('Введите ваше имя'); return; }
         const raw = document.getElementById('orderPhone').value.trim();
         if (raw.length !== 10) { showToast('Введите 10 цифр номера'); return; }
         const phone = getOrderPhone();
