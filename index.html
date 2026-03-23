@@ -1147,11 +1147,16 @@
 
 <!-- CONSENT MODAL -->
 <div class="detail-overlay" id="consentOverlay" onclick="if(event.target===event.currentTarget)closeConsentModal()">
-    <div class="detail-modal" style="padding:28px 24px;max-width:560px;">
-        <button class="detail-close" onclick="closeConsentModal()">&times;</button>
-        <h3 style="text-align:center;margin-bottom:16px;color:var(--text);font-size:1.1rem;">Согласие на обработку персональных данных</h3>
-        <div id="consentText" style="max-height:50vh;overflow-y:auto;font-size:.82rem;color:var(--text-light);line-height:1.6;text-align:left;padding:16px;background:var(--beige);border-radius:var(--radius-sm);margin-bottom:20px;"></div>
-        <button class="btn-checkout" onclick="acceptConsent()" style="width:100%;font-size:.92rem;">Я даю согласие на обработку персональных данных</button>
+    <div class="detail-modal" style="padding:0;max-width:560px;overflow:hidden;">
+        <button class="detail-close" onclick="closeConsentModal()" style="z-index:10;">&times;</button>
+        <div style="background:linear-gradient(135deg,var(--brown),var(--gold));padding:24px 28px;text-align:center;">
+            <div style="font-size:1.6rem;margin-bottom:6px;">&#9749;</div>
+            <h3 style="color:#fff;font-size:1.1rem;font-weight:700;margin:0;">Согласие на обработку<br>персональных данных</h3>
+        </div>
+        <div id="consentText" style="max-height:45vh;overflow-y:auto;font-size:.82rem;color:var(--text-light);line-height:1.7;text-align:left;padding:20px 24px;"></div>
+        <div style="padding:0 24px 24px;">
+            <button class="btn-checkout" onclick="acceptConsent()" style="width:100%;font-size:.9rem;padding:14px 20px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--brown),var(--gold));box-shadow:0 4px 16px rgba(139,90,43,.3);">Я даю согласие на обработку персональных данных</button>
+        </div>
     </div>
 </div>
 
@@ -1452,13 +1457,25 @@
         const raw = document.getElementById('orderPhone').value.trim();
         if (raw.length !== 10) { showToast('Введите 10 цифр номера'); return; }
         const phone = getOrderPhone();
-        const consentHtml = `<p>Я, <strong>${esc(orderName)}</strong>, номер телефона <strong>${esc(phone)}</strong>, пользователь сайта One coffee place (далее — Сайт), в\u00a0соответствии с\u00a0Федеральным законом №\u00a0152-ФЗ «О\u00a0персональных данных», свободно, своей волей и\u00a0в\u00a0своем интересе выражаю конкретное, информированное и\u00a0сознательное согласие на\u00a0обработку моих персональных данных Оператору: ИП\u00a0Паренчук\u00a0Д\u00a0В, ИНН\u00a0253904335130, адрес: 690025 г.\u00a0Владивосток ул.\u00a0Подгорная д.\u00a01 (далее — Оператор).</p>
-<p><strong>1. Перечень персональных данных</strong><br>Я даю согласие на обработку следующих данных:</p>
-<ul><li>Фамилия, имя, отчество;</li><li>Номер контактного телефона;</li><li>Адрес доставки (для заказов навынос или доставки);</li><li>Данные о заказах и предпочтениях (в рамках программы лояльности).</li></ul>
-<p><strong>2. Цели обработки</strong><br>Данные обрабатываются исключительно для:</p>
-<ul><li>Идентификации при оформлении заказа или регистрации в личном кабинете;</li><li>Связи для подтверждения бронирования заказа или уточнения деталей заказа;</li><li>Доставки заказов (в том числе с передачей данных курьерским службам);</li><li>Информирования об акциях, новинках и специальных предложениях кофейни (при условии подписки на рассылку);</li><li>Сбора статистики для улучшения работы Сайта.</li></ul>
-<p><strong>3. Перечень действий с данными</strong><br>Согласие дается на совершение следующих действий: сбор, запись, систематизацию, накопление, хранение, уточнение (обновление, изменение), извлечение, использование, передачу (предоставление, доступ третьим лицам для доставки), обезличивание, блокирование, удаление и уничтожение.</p>
-<p><strong>4. Срок действия и способ отзыва</strong><br>Настоящее согласие действует с момента его предоставления до момента отзыва. Я могу отозвать согласие, направив письменное заявление на электронную почту Оператора: <a href="mailto:2592233@gmail.com" style="color:var(--brown);">2592233@gmail.com</a> с пометкой «Отзыв согласия на обработку ПД».</p>`;
+        const consentHtml = `<p style="margin-bottom:14px;">Я, <strong style="color:var(--text);">${esc(orderName)}</strong>, номер телефона <strong style="color:var(--text);">${esc(phone)}</strong>, пользователь сайта <strong style="color:var(--brown);">One coffee place</strong> (далее\u00a0— Сайт), в\u00a0соответствии с\u00a0Федеральным законом №\u00a0152-ФЗ «О\u00a0персональных данных», свободно, своей волей и\u00a0в\u00a0своем интересе выражаю конкретное, информированное и\u00a0сознательное согласие на\u00a0обработку моих персональных данных Оператору: <strong style="color:var(--text);">ИП\u00a0Паренчук\u00a0Д\u00a0В, ИНН\u00a0253904335130, адрес: 690025 г.\u00a0Владивосток ул.\u00a0Подгорная д.\u00a01</strong> (далее\u00a0— Оператор).</p>
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:6px;">1. Перечень персональных данных</p>
+<p style="margin-bottom:8px;">Я даю согласие на обработку следующих данных:</p>
+<ul style="padding-left:18px;margin:0;"><li style="margin-bottom:4px;">Фамилия, имя, отчество;</li><li style="margin-bottom:4px;">Номер контактного телефона;</li><li style="margin-bottom:4px;">Адрес доставки (для заказов навынос или доставки);</li><li>Данные о заказах и предпочтениях (в рамках программы лояльности).</li></ul>
+</div>
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:6px;">2. Цели обработки</p>
+<p style="margin-bottom:8px;">Данные обрабатываются исключительно для:</p>
+<ul style="padding-left:18px;margin:0;"><li style="margin-bottom:4px;">Идентификации при оформлении заказа или регистрации в личном кабинете;</li><li style="margin-bottom:4px;">Связи для подтверждения бронирования заказа или уточнения деталей заказа;</li><li style="margin-bottom:4px;">Доставки заказов (в том числе с передачей данных курьерским службам);</li><li style="margin-bottom:4px;">Информирования об акциях, новинках и специальных предложениях кофейни (при условии подписки на рассылку);</li><li>Сбора статистики для улучшения работы Сайта.</li></ul>
+</div>
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:6px;">3. Перечень действий с данными</p>
+<p style="margin:0;">Согласие дается на совершение следующих действий: сбор, запись, систематизацию, накопление, хранение, уточнение (обновление, изменение), извлечение, использование, передачу (предоставление, доступ третьим лицам для доставки), обезличивание, блокирование, удаление и уничтожение.</p>
+</div>
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:6px;">4. Срок действия и способ отзыва</p>
+<p style="margin:0;">Настоящее согласие действует с момента его предоставления до момента отзыва. Я могу отозвать согласие, направив письменное заявление на электронную почту Оператора: <a href="mailto:2592233@gmail.com" style="color:var(--brown);font-weight:600;">2592233@gmail.com</a> с пометкой «Отзыв согласия на обработку ПД».</p>
+</div>`;
         document.getElementById('consentText').innerHTML = consentHtml;
         document.getElementById('consentOverlay').classList.add('open');
     }
