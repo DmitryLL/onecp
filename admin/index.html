@@ -375,6 +375,7 @@
                                 <th>Название</th>
                                 <th>Описание</th>
                                 <th>Вес/Объём</th>
+                                <th>Б / Ж / У</th>
                                 <th>Цена</th>
                                 <th>Действия</th>
                             </tr>
@@ -617,6 +618,14 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label>БЖУ (на порцию)</label>
+                    <div style="display:flex;gap:8px;">
+                        <input type="number" id="prodProteins" min="0" step="any" placeholder="Белки" style="flex:1;">
+                        <input type="number" id="prodFats" min="0" step="any" placeholder="Жиры" style="flex:1;">
+                        <input type="number" id="prodCarbs" min="0" step="any" placeholder="Углеводы" style="flex:1;">
+                    </div>
+                </div>
+                <div class="form-group">
                     <label>Картинка товара</label>
                     <div id="prodImagePreview" style="margin-bottom:8px;"></div>
                     <input type="file" id="prodImage" accept="image/*" style="width:100%;padding:8px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#ccc;font-size:.9rem;">
@@ -681,6 +690,7 @@
                     <td>${p.name}</td>
                     <td style="color:#888;font-size:.85rem;max-width:200px;">${p.description ? p.description : '—'}</td>
                     <td style="white-space:nowrap;">${p.weight ? p.weight + ' ' + (p.weightUnit || 'г') : '—'}</td>
+                    <td style="white-space:nowrap;font-size:.85rem;color:#aaa;">${(p.proteins != null || p.fats != null || p.carbs != null) ? (p.proteins ?? '—') + ' / ' + (p.fats ?? '—') + ' / ' + (p.carbs ?? '—') : '—'}</td>
                     <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
                     <td>
                         <div class="actions-cell">
@@ -711,6 +721,9 @@
             document.getElementById('prodDescription').value = '';
             document.getElementById('prodWeight').value = '';
             document.getElementById('prodWeightUnit').value = 'г';
+            document.getElementById('prodProteins').value = '';
+            document.getElementById('prodFats').value = '';
+            document.getElementById('prodCarbs').value = '';
             document.getElementById('prodPrice').value = '';
             clearImagePreview();
             document.getElementById('modalTitle').textContent = 'Добавить блюдо';
@@ -729,6 +742,9 @@
             document.getElementById('prodDescription').value = p.description || '';
             document.getElementById('prodWeight').value = p.weight || '';
             document.getElementById('prodWeightUnit').value = p.weightUnit || 'г';
+            document.getElementById('prodProteins').value = p.proteins ?? '';
+            document.getElementById('prodFats').value = p.fats ?? '';
+            document.getElementById('prodCarbs').value = p.carbs ?? '';
             document.getElementById('prodPrice').value = p.price;
             clearImagePreview();
             if (p.imageUrl) showImagePreview(p.imageUrl);
@@ -772,6 +788,9 @@
                 description: document.getElementById('prodDescription').value.trim() || null,
                 weight: parseFloat(document.getElementById('prodWeight').value) || null,
                 weight_unit: document.getElementById('prodWeightUnit').value || null,
+                proteins: parseFloat(document.getElementById('prodProteins').value) || null,
+                fats: parseFloat(document.getElementById('prodFats').value) || null,
+                carbs: parseFloat(document.getElementById('prodCarbs').value) || null,
                 price: parseFloat(document.getElementById('prodPrice').value) || 0,
             };
             try {

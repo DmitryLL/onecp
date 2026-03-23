@@ -27,6 +27,9 @@ def get_menu(db: Session = Depends(get_db)):
             "category": d.category,
             "weight": d.weight,
             "weightUnit": d.weight_unit,
+            "proteins": d.proteins,
+            "fats": d.fats,
+            "carbs": d.carbs,
         }
         for d in dishes
     ]

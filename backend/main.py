@@ -24,6 +24,17 @@ scheduler = BackgroundScheduler()
 def init_db():
     Base.metadata.create_all(bind=engine)
 
+    # Add new columns if they don't exist (no Alembic migrations)
+    from sqlalchemy import text, inspect
+    with engine.connect() as conn:
+        insp = inspect(engine)
+        existing = [c["name"] for c in insp.get_columns("dishes")]
+        for col, coltype in [("proteins", "DOUBLE PRECISION"), ("fats", "DOUBLE PRECISION"), ("carbs", "DOUBLE PRECISION")]:
+            if col not in existing:
+                conn.execute(text(f"ALTER TABLE dishes ADD COLUMN {col} {coltype}"))
+                logger.info(f"Added column dishes.{col}")
+        conn.commit()
+
     db = SessionLocal()
     try:
         # Create or update admin user

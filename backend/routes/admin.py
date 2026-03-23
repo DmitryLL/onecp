@@ -53,6 +53,9 @@ class DishIn(BaseModel):
     category: str | None = None
     weight: float | None = None
     weight_unit: str | None = None
+    proteins: float | None = None
+    fats: float | None = None
+    carbs: float | None = None
     available: bool = True
     sort_order: int = 0
 
@@ -96,6 +99,9 @@ def list_dishes(admin: AdminUser = Depends(get_admin), db: Session = Depends(get
             "category": d.category,
             "weight": d.weight,
             "weightUnit": d.weight_unit,
+            "proteins": d.proteins,
+            "fats": d.fats,
+            "carbs": d.carbs,
             "available": d.available,
             "sortOrder": d.sort_order,
         }
@@ -115,6 +121,9 @@ def create_dish(body: DishIn, admin: AdminUser = Depends(get_admin), db: Session
         category=body.category,
         weight=body.weight,
         weight_unit=body.weight_unit,
+        proteins=body.proteins,
+        fats=body.fats,
+        carbs=body.carbs,
         available=body.available,
         sort_order=body.sort_order,
     )
@@ -135,6 +144,9 @@ def update_dish(dish_id: int, body: DishIn, admin: AdminUser = Depends(get_admin
     dish.category = body.category
     dish.weight = body.weight
     dish.weight_unit = body.weight_unit
+    dish.proteins = body.proteins
+    dish.fats = body.fats
+    dish.carbs = body.carbs
     dish.available = body.available
     dish.sort_order = body.sort_order
     # image_url is managed by the upload/delete endpoints, not here

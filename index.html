@@ -1270,6 +1270,7 @@
         html += '<div class="detail-body">';
         html += '<h2>' + esc(p.name) + '</h2>';
         if (p.weight) html += '<div class="detail-weight">' + p.weight + ' ' + (p.weightUnit || '\u0433') + '</div>';
+        if (p.proteins != null || p.fats != null || p.carbs != null) html += '<div class="detail-weight" style="color:var(--text-muted);font-size:.85rem;">Б ' + (p.proteins ?? '—') + ' / Ж ' + (p.fats ?? '—') + ' / У ' + (p.carbs ?? '—') + '</div>';
         if (p.description) html += '<div class="detail-text">' + esc(p.description) + '</div>';
         html += '<div class="detail-price">' + p.price.toLocaleString('ru-RU') + ' \u20bd</div>';
         html += '<button class="btn-cart" style="width:100%;" id="detail-btn-' + p.id + '" onclick="addToCart(' + p.id + ')">В корзину</button>';
