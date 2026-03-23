@@ -1132,8 +1132,9 @@
         <div class="checkout-area" id="cartCheckout">
             <input type="text" id="orderAddress" placeholder="Адрес доставки">
             <input type="text" id="orderComment" placeholder="Комментарий к заказу">
-            <!-- Step 1: phone + consent -->
+            <!-- Step 1: name + phone + consent -->
             <div id="orderStep1">
+                <input type="text" id="orderName" placeholder="Ваше имя" style="margin-bottom:8px;">
                 <div style="display:flex;align-items:stretch;margin-bottom:8px;">
                     <span style="display:flex;align-items:center;padding:0 14px;background:var(--beige-dark);border:1.5px solid var(--beige-dark);border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-size:.95rem;font-weight:600;color:var(--text);white-space:nowrap;">+7</span>
                     <input type="tel" id="orderPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')" style="flex:1;border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;margin-bottom:0;">
@@ -1454,6 +1455,7 @@
         const comment = document.getElementById('orderComment')?.value || '';
         const address = document.getElementById('orderAddress')?.value || '';
         try {
+            const customerName = document.getElementById('orderName')?.value?.trim() || null;
             const res = await api('/api/orders/', {
                 method: 'POST',
                 body: {
@@ -1462,12 +1464,14 @@
                     items: cart.map(c => ({ dish_id: c.id, quantity: c.qty })),
                     comment: comment || null,
                     address: address || null,
+                    customer_name: customerName,
                 }
             });
             cart = [];
             updateCartBadge();
             closeCart();
             resetOrderStep();
+            document.getElementById('orderName').value = '';
             document.getElementById('orderConsent').checked = false;
             toggleOrderBtn();
             showToast('Заказ #' + res.order.id + ' оформлен!');

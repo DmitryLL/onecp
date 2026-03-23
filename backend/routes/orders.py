@@ -22,6 +22,7 @@ class CreateOrderRequest(BaseModel):
     items: list[OrderItemIn]
     comment: str | None = None
     address: str | None = None
+    customer_name: str | None = None
 
     @field_validator("phone")
     @classmethod
@@ -57,6 +58,8 @@ def create_order(
         customer = Customer(phone=body.phone)
         db.add(customer)
         db.flush()
+    if body.customer_name and body.customer_name.strip():
+        customer.name = body.customer_name.strip()
 
     dish_ids = [item.dish_id for item in body.items]
     dishes = db.query(Dish).filter(Dish.id.in_(dish_ids), Dish.available == True).all()
