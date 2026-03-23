@@ -1139,13 +1139,19 @@
                     <span style="display:flex;align-items:center;padding:0 14px;background:var(--beige-dark);border:1.5px solid var(--beige-dark);border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-size:.95rem;font-weight:600;color:var(--text);white-space:nowrap;">+7</span>
                     <input type="tel" id="orderPhone" placeholder="9991234567 *" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'');toggleOrderBtn()" style="flex:1;border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;margin-bottom:0;">
                 </div>
-                <label style="display:flex;align-items:flex-start;gap:8px;margin:8px 0 12px;cursor:pointer;text-align:left;">
-                    <input type="checkbox" id="orderConsent" onchange="toggleOrderBtn()" style="margin-top:3px;width:18px;height:18px;accent-color:var(--brown);flex-shrink:0;">
-                    <span style="font-size:.78rem;color:var(--text-light);line-height:1.4;">Я согласен на обработку персональных данных</span>
-                </label>
-                <button class="btn-checkout" id="orderSendCodeBtn" onclick="showSmsModal()" disabled style="opacity:.5;cursor:not-allowed;">Сделать заказ</button>
+                <button class="btn-checkout" id="orderSendCodeBtn" onclick="showConsentModal()" disabled style="opacity:.5;cursor:not-allowed;">Сделать заказ</button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- CONSENT MODAL -->
+<div class="detail-overlay" id="consentOverlay" onclick="if(event.target===event.currentTarget)closeConsentModal()">
+    <div class="detail-modal" style="padding:28px 24px;max-width:560px;">
+        <button class="detail-close" onclick="closeConsentModal()">&times;</button>
+        <h3 style="text-align:center;margin-bottom:16px;color:var(--text);font-size:1.1rem;">Согласие на обработку персональных данных</h3>
+        <div id="consentText" style="max-height:50vh;overflow-y:auto;font-size:.82rem;color:var(--text-light);line-height:1.6;text-align:left;padding:16px;background:var(--beige);border-radius:var(--radius-sm);margin-bottom:20px;"></div>
+        <button class="btn-checkout" onclick="acceptConsent()" style="width:100%;font-size:.92rem;">Я даю согласие на обработку персональных данных</button>
     </div>
 </div>
 
@@ -1429,8 +1435,7 @@
         const btn = document.getElementById('orderSendCodeBtn');
         const name = document.getElementById('orderName').value.trim();
         const phone = document.getElementById('orderPhone').value.trim();
-        const checked = document.getElementById('orderConsent').checked;
-        const ok = name.length > 0 && phone.length === 10 && checked;
+        const ok = name.length > 0 && phone.length === 10;
         btn.disabled = !ok;
         btn.style.opacity = ok ? '1' : '.5';
         btn.style.cursor = ok ? 'pointer' : 'not-allowed';
@@ -1440,12 +1445,30 @@
         return '+7' + document.getElementById('orderPhone').value.trim();
     }
 
-    function showSmsModal() {
+    function showConsentModal() {
         if (document.getElementById('orderSendCodeBtn').disabled) return;
         const orderName = document.getElementById('orderName').value.trim();
         if (!orderName) { showToast('Введите ваше имя'); return; }
         const raw = document.getElementById('orderPhone').value.trim();
         if (raw.length !== 10) { showToast('Введите 10 цифр номера'); return; }
+        const phone = getOrderPhone();
+        const consentHtml = `<p>Я, <strong>${esc(orderName)}</strong>, номер телефона <strong>${esc(phone)}</strong>, пользователь сайта One coffee place (далее — Сайт), в\u00a0соответствии с\u00a0Федеральным законом №\u00a0152-ФЗ «О\u00a0персональных данных», свободно, своей волей и\u00a0в\u00a0своем интересе выражаю конкретное, информированное и\u00a0сознательное согласие на\u00a0обработку моих персональных данных Оператору: ИП\u00a0Паренчук\u00a0Д\u00a0В, ИНН\u00a0253904335130, адрес: 690025 г.\u00a0Владивосток ул.\u00a0Подгорная д.\u00a01 (далее — Оператор).</p>
+<p><strong>1. Перечень персональных данных</strong><br>Я даю согласие на обработку следующих данных:</p>
+<ul><li>Фамилия, имя, отчество;</li><li>Номер контактного телефона;</li><li>Адрес доставки (для заказов навынос или доставки);</li><li>Данные о заказах и предпочтениях (в рамках программы лояльности).</li></ul>
+<p><strong>2. Цели обработки</strong><br>Данные обрабатываются исключительно для:</p>
+<ul><li>Идентификации при оформлении заказа или регистрации в личном кабинете;</li><li>Связи для подтверждения бронирования заказа или уточнения деталей заказа;</li><li>Доставки заказов (в том числе с передачей данных курьерским службам);</li><li>Информирования об акциях, новинках и специальных предложениях кофейни (при условии подписки на рассылку);</li><li>Сбора статистики для улучшения работы Сайта.</li></ul>
+<p><strong>3. Перечень действий с данными</strong><br>Согласие дается на совершение следующих действий: сбор, запись, систематизацию, накопление, хранение, уточнение (обновление, изменение), извлечение, использование, передачу (предоставление, доступ третьим лицам для доставки), обезличивание, блокирование, удаление и уничтожение.</p>
+<p><strong>4. Срок действия и способ отзыва</strong><br>Настоящее согласие действует с момента его предоставления до момента отзыва. Я могу отозвать согласие, направив письменное заявление на электронную почту Оператора: <a href="mailto:2592233@gmail.com" style="color:var(--brown);">2592233@gmail.com</a> с пометкой «Отзыв согласия на обработку ПД».</p>`;
+        document.getElementById('consentText').innerHTML = consentHtml;
+        document.getElementById('consentOverlay').classList.add('open');
+    }
+
+    function closeConsentModal() {
+        document.getElementById('consentOverlay').classList.remove('open');
+    }
+
+    function acceptConsent() {
+        closeConsentModal();
         document.getElementById('smsStep1').style.display = 'block';
         document.getElementById('smsStep2').style.display = 'none';
         document.getElementById('smsOverlay').classList.add('open');
@@ -1503,7 +1526,6 @@
             document.getElementById('orderPhone').value = '';
             document.getElementById('orderAddress').value = '';
             document.getElementById('orderComment').value = '';
-            document.getElementById('orderConsent').checked = false;
             toggleOrderBtn();
             showToast('Заказ #' + res.order.id + ' оформлен!');
         } catch (e) {
