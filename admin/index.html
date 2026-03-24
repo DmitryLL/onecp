@@ -554,7 +554,7 @@
             font-size: .85rem;
             color: #ccc;
         }
-        .set-item-row .item-cat { color: #c8956c; font-size: .8rem; font-weight: 600; min-width: 75px; }
+        .set-item-row .item-cat { font-size: .8rem; font-weight: 600; min-width: 75px; }
         .set-item-row .item-name { flex: 1; }
         .set-item-row .item-qty { color: #888; font-size: .8rem; min-width: 30px; text-align: center; }
         .set-item-row .remove-item {
@@ -1064,6 +1064,7 @@
 
         // ===== RENDER TABLE =====
         const categoryOrder = ['Суп', 'Салат', 'Горячее', 'Десерт', 'Напиток', 'Мучное'];
+        const categoryColors = {'Суп':'#e88a4a','Салат':'#66bb6a','Горячее':'#ef5350','Десерт':'#ab47bc','Напиток':'#42a5f5','Мучное':'#ffa726'};
         let productsTab = 'active';
 
         function showProductsTab(tab) {
@@ -1525,7 +1526,7 @@
                                 return (ci === -1 ? 999 : ci) - (cj === -1 ? 999 : cj);
                             }).map(it => `
                                 <div class="set-item-row">
-                                    <span class="item-cat">${escH(it.dishCategory || 'Без типа')}</span>
+                                    <span class="item-cat" style="color:${categoryColors[it.dishCategory] || '#888'}">${escH(it.dishCategory || 'Без типа')}</span>
                                     <span class="item-name">${escH(it.dishName)}</span>
                                     ${it.quantity > 1 ? '<span class="item-qty">&times; ' + it.quantity + '</span>' : ''}
                                     <span class="remove-item" onclick="removeSetDish(${s.id}, ${it.id})" title="Убрать">&times;</span>
@@ -1544,15 +1545,21 @@
             const existingIds = new Set((setData?.items || []).map(it => it.dishId));
             const available = products.filter(p => p.available !== false && !existingIds.has(p.id));
             const filtered = q ? available.filter(p => p.name.toLowerCase().includes(q)) : available;
-            if (!filtered.length) {
+            const sorted = filtered.slice().sort((a,b) => {
+                const ci = categoryOrder.indexOf(a.category || '');
+                const cj = categoryOrder.indexOf(b.category || '');
+                return (ci === -1 ? 999 : ci) - (cj === -1 ? 999 : cj);
+            });
+            if (!sorted.length) {
                 dropdown.innerHTML = '<div class="dish-search-item" style="color:#555;cursor:default;">Ничего не найдено</div>';
             } else {
-                dropdown.innerHTML = filtered.slice(0, 15).map(p => `
-                    <div class="dish-search-item" onmousedown="addDishToSet(${setId}, ${p.id})">
-                        <span>${escH(p.category || 'Без типа')} · ${escH(p.name)}${p.weight ? ' · ' + escH(p.weight) + (p.weightUnit ? ' ' + escH(p.weightUnit) : '') : ''}</span>
+                dropdown.innerHTML = sorted.slice(0, 15).map(p => {
+                    const catColor = categoryColors[p.category] || '#888';
+                    return `<div class="dish-search-item" onmousedown="addDishToSet(${setId}, ${p.id})">
+                        <span><span style="color:${catColor};font-weight:600;">${escH(p.category || 'Без типа')}</span> · ${escH(p.name)}${p.weight ? ' · ' + escH(p.weight) + (p.weightUnit ? ' ' + escH(p.weightUnit) : '') : ''}</span>
                         <span class="price">${p.price} ₽</span>
-                    </div>
-                `).join('');
+                    </div>`;
+                }).join('');
             }
             dropdown.classList.add('open');
             const rect = dropdown.getBoundingClientRect();
