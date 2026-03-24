@@ -1663,7 +1663,7 @@
                             <span style="color:#c8956c;font-weight:700;font-size:.95rem;">Заказ #${o.id}</span>
                             <span style="color:#555;font-size:.8rem;">${o.createdAt ? new Date(o.createdAt).toLocaleString('ru-RU') : '—'}</span>
                         </div>
-                        <div style="color:#bbb;font-size:.88rem;line-height:1.6;margin-bottom:8px;">${o.items.map(it => '<span style="color:#ddd;">' + escH(it.name) + '</span> <span style="color:#555;">×' + it.qty + '</span>').join('<span style="color:#333;"> · </span>')}</div>
+                        <div style="font-size:.88rem;line-height:1.8;margin-bottom:8px;">${o.items.map(it => '<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:#1a1a1a;">' + escH(it.name) + ' ×' + it.qty + '</span><span style="color:#555;white-space:nowrap;">' + (it.price * it.qty).toLocaleString('ru-RU') + '&nbsp;₽</span></div>').join('')}</div>
                         <div style="display:flex;align-items:center;justify-content:space-between;">
                             <span style="color:#1a1a1a;font-weight:700;font-size:.95rem;">${o.total.toLocaleString('ru-RU')} ₽</span>
                             ${o.comment ? '<span style="color:#555;font-size:.82rem;font-style:italic;">' + escH(o.comment) + '</span>' : ''}
