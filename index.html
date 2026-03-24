@@ -409,10 +409,13 @@
             text-decoration: underline;
         }
 
+        .card-bottom {
+            margin-top: auto;
+        }
+
         .card-buttons {
             display: flex;
             gap: 10px;
-            margin-top: auto;
         }
 
         .btn-cart {
@@ -1294,12 +1297,14 @@
                 </div>
                 <div class="card-body">
                     <h3>${esc(p.name)}</h3>
-                    <div class="card-info-row">
-                        <div class="price">${p.price.toLocaleString('ru-RU')} \u20bd</div>
-                        ${p.description ? '<a class="link-detail" onclick="showDetail(' + p.id + ')">Подробнее</a>' : ''}
-                    </div>
-                    <div class="card-buttons">
-                        <button class="btn-cart" id="btn-${p.id}" onclick="addToCart(${p.id})">В корзину</button>
+                    <div class="card-bottom">
+                        <div class="card-info-row">
+                            <div class="price">${p.price.toLocaleString('ru-RU')} \u20bd</div>
+                            ${p.description ? '<a class="link-detail" onclick="showDetail(' + p.id + ')">Подробнее</a>' : ''}
+                        </div>
+                        <div class="card-buttons">
+                            <button class="btn-cart" id="btn-${p.id}" onclick="addToCart(${p.id})">В корзину</button>
+                        </div>
                     </div>
                 </div>
             </div>
