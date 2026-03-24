@@ -215,24 +215,30 @@
         .prod-section tr[data-id] { outline-offset: -1px; transition: outline .3s; }
 
         .inline-input {
-            background: #0d0d0d;
-            border: 1px solid #222;
+            background: linear-gradient(135deg, #111 0%, #0d0d0d 100%);
+            border: 1px solid #2a2a2a;
             color: #ddd;
             font-size: .86rem;
-            padding: 6px 10px;
-            border-radius: 8px;
+            padding: 8px 12px;
+            border-radius: 10px;
             width: 100%;
             font-family: inherit;
-            transition: border-color .2s, background .2s, box-shadow .2s;
+            transition: all .25s ease;
+            letter-spacing: .01em;
         }
-        .inline-input:hover { border-color: #444; background: #151515; }
+        .inline-input:hover {
+            border-color: #555;
+            background: #161616;
+            box-shadow: 0 2px 8px rgba(0,0,0,.3);
+        }
         .inline-input:focus {
             outline: none;
             border-color: #c8956c;
-            background: #1a1a1a;
-            box-shadow: 0 0 0 3px rgba(200,149,108,.12);
+            background: #1a1409;
+            box-shadow: 0 0 0 3px rgba(200,149,108,.15), 0 2px 12px rgba(200,149,108,.08);
+            color: #f0e6d8;
         }
-        .inline-input::placeholder { color: #333; }
+        .inline-input::placeholder { color: #3a3a3a; }
         .inline-num {
             width: 65px;
             text-align: center;
@@ -247,28 +253,39 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            background: #0d0d0d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E") no-repeat right 8px center;
-            border: 1px solid #222;
-            color: #bbb;
+            background: linear-gradient(135deg, #111 0%, #0d0d0d 100%);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c8956c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px 7px;
+            border: 1px solid #2a2a2a;
+            color: #ccc;
             font-size: .84rem;
-            padding: 6px 24px 6px 10px;
-            border-radius: 8px;
+            padding: 8px 30px 8px 12px;
+            border-radius: 10px;
             cursor: pointer;
             font-family: inherit;
-            transition: border-color .2s, background-color .2s, box-shadow .2s;
+            transition: all .25s ease;
             width: 100%;
+            letter-spacing: .02em;
         }
-        .inline-select:hover { border-color: #444; background-color: #151515; }
+        .inline-select:hover {
+            border-color: #555;
+            background-color: #161616;
+            color: #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,.3);
+        }
         .inline-select:focus {
             outline: none;
             border-color: #c8956c;
-            background-color: #1a1a1a;
-            box-shadow: 0 0 0 3px rgba(200,149,108,.12);
+            background-color: #1a1409;
+            box-shadow: 0 0 0 3px rgba(200,149,108,.15), 0 2px 12px rgba(200,149,108,.08);
+            color: #f0e6d8;
         }
         .inline-select option {
             background: #1a1a1a;
             color: #ddd;
-            padding: 8px;
+            padding: 10px 12px;
         }
 
         .archive-card {
