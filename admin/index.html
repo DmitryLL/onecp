@@ -785,7 +785,7 @@
                 <div class="form-group">
                     <label>Вес / Объём <span style="color:#c8956c;">*</span></label>
                     <div style="display:flex;gap:8px;">
-                        <input type="text" id="prodWeight" placeholder="Например: 150/80" required style="flex:1;">
+                        <input type="text" id="prodWeight" placeholder="Например: 150/80" required style="flex:1;" oninput="this.value=this.value.replace(/[^0-9\/]/g,'')">
                         <select id="prodWeightUnit" style="width:100px;padding:10px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;">
                             <option value="г">г</option>
                             <option value="мл">мл</option>
@@ -1053,7 +1053,7 @@
                                 </select></td>
                                 <td><textarea data-field="name" data-id="${p.id}" class="inline-input inline-ta" rows="1" onblur="inlineSave(this)" oninput="autoGrow(this)">${escH(p.name)}</textarea></td>
                                 <td><textarea data-field="description" data-id="${p.id}" class="inline-input inline-ta" rows="1" style="color:#888;" maxlength="600" placeholder="Описание..." onblur="inlineSave(this)" oninput="autoGrow(this)">${escH(p.description || '')}</textarea></td>
-                                <td><input type="text" value="${escH(p.weight || '')}" data-field="weight" data-id="${p.id}" class="inline-input inline-num" placeholder="—" onblur="inlineSave(this)"></td>
+                                <td><input type="text" value="${escH(p.weight || '')}" data-field="weight" data-id="${p.id}" class="inline-input inline-num" placeholder="—" oninput="this.value=this.value.replace(/[^0-9\/]/g,'')" onblur="inlineSave(this)"></td>
                                 <td><select data-field="weight_unit" data-id="${p.id}" onchange="inlineSave(this)" class="inline-select">
                                     ${['г','мл','л','кг'].map(u => '<option value="' + u + '"' + ((p.weightUnit || 'г') === u ? ' selected' : '') + '>' + u + '</option>').join('')}
                                 </select></td>
