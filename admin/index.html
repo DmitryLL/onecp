@@ -788,68 +788,19 @@
                     <span id="settingsSaveStatus" style="color:#4ade80;font-size:.85rem;opacity:0;transition:opacity .3s;"></span>
                 </div>
 
-                <div class="settings-card">
-                    <h3>Главная секция (Hero)</h3>
-                    <div class="form-group">
-                        <label>Заголовок</label>
-                        <textarea id="setHeroTitle" class="setting-field" rows="2"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Подзаголовок</label>
-                        <textarea id="setHeroSub" class="setting-field" rows="3"></textarea>
-                    </div>
-                </div>
-
-                <div class="settings-card">
-                    <h3>Каталог</h3>
-                    <div class="form-group">
-                        <label>Заголовок секции</label>
-                        <textarea id="setCatalogTitle" class="setting-field" rows="1"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Подзаголовок</label>
-                        <textarea id="setCatalogSub" class="setting-field" rows="2"></textarea>
-                    </div>
-                </div>
-
-                <div class="settings-card">
-                    <h3>О нас</h3>
-                    <div class="form-group">
-                        <label>Заголовок</label>
-                        <textarea id="setAboutTitle" class="setting-field" rows="1"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Подзаголовок</label>
-                        <textarea id="setAboutSub" class="setting-field" rows="2"></textarea>
-                    </div>
-                </div>
-
-                <div class="settings-card">
-                    <h3>Контакты</h3>
-                    <div class="form-group">
-                        <label>Адрес</label>
-                        <textarea id="setAddress" class="setting-field" rows="2"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Телефон</label>
-                        <textarea id="setPhone" class="setting-field" rows="1"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <textarea id="setEmail" class="setting-field" rows="1"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Режим работы</label>
-                        <textarea id="setSchedule" class="setting-field" rows="3"></textarea>
-                    </div>
-                </div>
-
-                <div class="settings-card">
-                    <h3>Футер</h3>
-                    <div class="form-group">
-                        <label>Текст копирайта</label>
-                        <textarea id="setFooter" class="setting-field" rows="2"></textarea>
-                    </div>
+                <!-- Hidden fields to preserve existing settings values -->
+                <div style="display:none;">
+                    <textarea id="setHeroTitle" class="setting-field"></textarea>
+                    <textarea id="setHeroSub" class="setting-field"></textarea>
+                    <textarea id="setCatalogTitle" class="setting-field"></textarea>
+                    <textarea id="setCatalogSub" class="setting-field"></textarea>
+                    <textarea id="setAboutTitle" class="setting-field"></textarea>
+                    <textarea id="setAboutSub" class="setting-field"></textarea>
+                    <textarea id="setAddress" class="setting-field"></textarea>
+                    <textarea id="setPhone" class="setting-field"></textarea>
+                    <textarea id="setEmail" class="setting-field"></textarea>
+                    <textarea id="setSchedule" class="setting-field"></textarea>
+                    <textarea id="setFooter" class="setting-field"></textarea>
                 </div>
 
                 <div class="settings-card">
@@ -876,22 +827,26 @@
                         <label>Пароль приложения</label>
                         <input type="password" id="setReportSmtpPassword" class="setting-field" placeholder="Пароль от почты или пароль приложения">
                     </div>
-                    <p style="font-size:.8rem;color:#888;margin-bottom:12px;">По одному адресу на каждой строке</p>
+                    <p style="font-size:.8rem;color:#888;margin-bottom:12px;">Каждая строчка — отдельный адрес. Каждый получатель получит своё отдельное письмо с отчётом.</p>
                     <div class="form-group">
-                        <label>Все точки (общий отчёт)</label>
+                        <label>Все точки — общий отчёт по кухне</label>
                         <textarea id="setReportRecipient" class="setting-field" rows="3" placeholder="owner@mail.ru&#10;manager@mail.ru" style="resize:vertical;"></textarea>
+                        <span style="font-size:.75rem;color:#666;margin-top:4px;display:block;">Сводный отчёт для кухни по всем точкам</span>
                     </div>
                     <div class="form-group">
-                        <label>Фонтанная 18 (Sber)</label>
+                        <label>Фонтанная 18 (Sber) — отчёт по гостям</label>
                         <textarea id="setReportEmailSber" class="setting-field" rows="2" placeholder="sber@mail.ru" style="resize:vertical;"></textarea>
+                        <span style="font-size:.75rem;color:#666;margin-top:4px;display:block;">Отчёт по гостям только для этой точки</span>
                     </div>
                     <div class="form-group">
-                        <label>Алеутская 45 (Sky City)</label>
+                        <label>Алеутская 45 (Sky City) — отчёт по гостям</label>
                         <textarea id="setReportEmailSkycity" class="setting-field" rows="2" placeholder="skycity@mail.ru" style="resize:vertical;"></textarea>
+                        <span style="font-size:.75rem;color:#666;margin-top:4px;display:block;">Отчёт по гостям только для этой точки</span>
                     </div>
                     <div class="form-group">
-                        <label>Енисейская 23 (IBT)</label>
+                        <label>Енисейская 23 (IBT) — отчёт по гостям</label>
                         <textarea id="setReportEmailIbt" class="setting-field" rows="2" placeholder="ibt@mail.ru" style="resize:vertical;"></textarea>
+                        <span style="font-size:.75rem;color:#666;margin-top:4px;display:block;">Отчёт по гостям только для этой точки</span>
                     </div>
                     <div class="form-group">
                         <label>Время отправки</label>
