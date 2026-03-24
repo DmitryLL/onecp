@@ -1719,38 +1719,14 @@
             .hero h1 { font-size: 2.2rem; }
             .hero p { font-size: 1rem; }
 
-            nav.desktop { display: none; }
-            .burger { display: flex; }
-
-            .mobile-menu {
-                display: none;
-                position: fixed;
-                top: 72px;
-                left: 0;
-                right: 0;
-                background: rgba(26,22,18,.95);
-                backdrop-filter: blur(20px);
-                padding: 16px 20px 20px;
-                flex-direction: column;
-                gap: 4px;
-                z-index: 999;
-                border-bottom: 1px solid rgba(201,169,110,.15);
-                animation: slideDown .3s;
-            }
-
-            .mobile-menu.open { display: flex; }
-
-            .mobile-menu a {
-                display: block;
-                padding: 14px 16px;
-                text-decoration: none;
-                color: rgba(245,239,230,.8);
-                border-radius: var(--radius-sm);
-                font-size: 1rem;
-                font-weight: 500;
-            }
-
-            .mobile-menu a:hover { background: rgba(228,217,204,.15); color: var(--beige); }
+            .header-inner { padding: 0 12px; height: 56px; }
+            .logo img { height: 30px; }
+            nav.desktop { display: flex; gap: 2px; }
+            nav.desktop a { padding: 6px 8px; font-size: .75rem; }
+            .nav-cart { padding: 6px 12px !important; font-size: .75rem; gap: 4px !important; }
+            .cart-badge { min-width: 16px; height: 16px; font-size: .6rem; padding: 0 3px; }
+            .burger { display: none; }
+            .mobile-menu { display: none !important; }
 
             .mobile-cart-fab.visible {
                 display: flex;
@@ -1790,7 +1766,15 @@
 
             .section-title { font-size: 1.8rem; }
 
-            .catalog-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+            .catalog-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .card-img { height: 140px; }
+            .card-body { padding: 12px 12px 14px; }
+            .card-body h3 { font-size: .9rem; margin-bottom: 6px; }
+            .card-info-row { margin-bottom: 10px; gap: 6px; flex-wrap: wrap; }
+            .card-info-row .price { font-size: 1.1rem; }
+            .card-info-row .link-detail { font-size: .75rem; }
+            .card-buttons .btn { padding: 10px 8px; font-size: .8rem; }
+            .card-img .card-weight { top: 8px; right: 8px; font-size: .65rem; padding: 3px 8px; }
 
             .contacts-layout { grid-template-columns: 1fr; }
 
