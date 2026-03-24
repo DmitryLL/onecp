@@ -1267,13 +1267,20 @@
     }
 
     // ===== RENDER CATALOG =====
+    const catOrder = ['Суп','Горячее','Салат','Напиток','Десерт','Мучное'];
+
     function renderCatalog() {
         const grid = document.getElementById('catalogGrid');
         if (!products.length) {
             grid.innerHTML = '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:40px 0;">Загрузка меню...</p>';
             return;
         }
-        grid.innerHTML = products.map((p, i) => `
+        const sorted = products.slice().sort((a, b) => {
+            const ia = catOrder.indexOf(a.category || '');
+            const ib = catOrder.indexOf(b.category || '');
+            return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        });
+        grid.innerHTML = sorted.map((p, i) => `
             <div class="card animate-on-scroll" style="transition-delay:${i * 60}ms">
                 <div class="card-img">
                     ${p.imageUrl ? '<img src="' + p.imageUrl + '" alt="' + esc(p.name) + '">' : ''}
