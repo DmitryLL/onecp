@@ -716,6 +716,24 @@
         </div>
     </div>
 
+    <!-- CONFIRM MODAL -->
+    <div id="confirmOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:10000;align-items:center;justify-content:center;" onclick="if(event.target===event.currentTarget)closeConfirm()">
+        <div style="background:#111;border:1px solid #222;border-radius:16px;max-width:400px;width:90%;overflow:hidden;animation:modalUp .3s ease;">
+            <div style="background:linear-gradient(135deg,#c8956c,#e8c47c);padding:20px 24px;text-align:center;">
+                <div style="font-size:2rem;margin-bottom:4px;">📦</div>
+                <h3 id="confirmTitle" style="color:#fff;font-size:1.05rem;font-weight:700;margin:0;">Отправить в архив?</h3>
+            </div>
+            <div style="padding:20px 24px;">
+                <p id="confirmText" style="color:#aaa;font-size:.9rem;line-height:1.5;text-align:center;margin-bottom:20px;">Блюдо будет скрыто с сайта и убрано из наборов. Вы сможете восстановить его в любой момент.</p>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-secondary" onclick="closeConfirm()" style="flex:1;padding:12px;">Отмена</button>
+                    <button class="btn" id="confirmBtn" onclick="confirmAction()" style="flex:1;padding:12px;background:#c8956c;color:#fff;font-weight:700;">В архив</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>@keyframes modalUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}</style>
+
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
@@ -1033,13 +1051,40 @@
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
-        async function archiveProduct(id) {
-            if (!confirm('Переместить блюдо в архив?')) return;
-            try {
-                await api('/api/admin/dishes/' + id + '/archive', { method: 'PUT' });
-                showToast('Блюдо перемещено в архив');
-                await loadDishes();
-            } catch (e) { showToast('Ошибка: ' + e.message); }
+        let pendingConfirmAction = null;
+
+        function showConfirm(title, text, btnLabel, action) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmText').textContent = text;
+            document.getElementById('confirmBtn').textContent = btnLabel;
+            pendingConfirmAction = action;
+            document.getElementById('confirmOverlay').style.display = 'flex';
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmOverlay').style.display = 'none';
+            pendingConfirmAction = null;
+        }
+
+        async function confirmAction() {
+            if (pendingConfirmAction) await pendingConfirmAction();
+            closeConfirm();
+        }
+
+        function archiveProduct(id) {
+            const p = products.find(x => x.id === id);
+            showConfirm(
+                'Отправить в архив?',
+                (p ? '«' + p.name + '» будет скрыто' : 'Блюдо будет скрыто') + ' с сайта и убрано из наборов. Вы сможете восстановить его в любой момент.',
+                'В архив',
+                async () => {
+                    try {
+                        await api('/api/admin/dishes/' + id + '/archive', { method: 'PUT' });
+                        showToast('Блюдо перемещено в архив');
+                        await loadDishes();
+                    } catch (e) { showToast('Ошибка: ' + e.message); }
+                }
+            );
         }
 
         async function restoreProduct(id) {
