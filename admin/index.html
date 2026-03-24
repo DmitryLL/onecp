@@ -722,11 +722,11 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Телефон</th>
                                 <th>Имя</th>
+                                <th>Телефон</th>
                                 <th>Дата регистрации</th>
                                 <th>Заказов</th>
-                                <th>Действия</th>
+                                <th>История</th>
                             </tr>
                         </thead>
                         <tbody id="customersBody"></tbody>
@@ -1639,8 +1639,8 @@
             const page = filtered.slice(start, start + CUSTOMERS_PER_PAGE);
             tbody.innerHTML = page.map(c => {
                 return `<tr>
-                    <td>${escH(c.phone)}</td>
                     <td>${escH(c.name || '—')}</td>
+                    <td>${escH(c.phone)}</td>
                     <td style="color:#888;font-size:.85rem;">${c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '—'}</td>
                     <td>${c.orderCount || 0}${c.totalSpent ? ' <span style="color:#888;font-size:.8rem;">(' + c.totalSpent.toLocaleString('ru-RU') + ' ₽)</span>' : ''}</td>
                     <td>
