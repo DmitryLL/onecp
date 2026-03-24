@@ -10,7 +10,7 @@ from jose import jwt
 from passlib.hash import pbkdf2_sha256
 
 from database import get_db
-from models import Customer, SmsCode
+from models import Customer, SmsCode, Order, OrderItem
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger("onecp")
@@ -219,6 +219,33 @@ def update_me(body: UpdateNameRequest, customer: Customer = Depends(get_current_
     customer.name = body.name.strip()
     db.commit()
     return {"ok": True, "name": customer.name}
+
+
+@router.get("/my-orders")
+def get_my_orders(customer: Customer = Depends(get_current_customer_dep), db: Session = Depends(get_db)):
+    from sqlalchemy.orm import joinedload
+    orders = (
+        db.query(Order)
+        .filter(Order.customer_id == customer.id)
+        .options(joinedload(Order.items).joinedload(OrderItem.dish))
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": o.id,
+            "status": o.status,
+            "total": o.total,
+            "comment": o.comment,
+            "address": o.address,
+            "createdAt": o.created_at.isoformat() if o.created_at else None,
+            "items": [
+                {"name": it.dish.name if it.dish else "—", "qty": it.quantity, "price": it.price}
+                for it in o.items
+            ],
+        }
+        for o in orders
+    ]
 
 
 class RegisterRequest(BaseModel):
