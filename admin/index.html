@@ -368,11 +368,23 @@
                     <button class="btn btn-primary" onclick="openModal()">+ Добавить товар</button>
                 </div>
 
+                <div style="margin-bottom:16px;">
+                    <select id="prodCategoryFilter" onchange="renderTable()" style="padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;min-width:200px;">
+                        <option value="">Все типы</option>
+                        <option value="Суп">Суп</option>
+                        <option value="Салат">Салат</option>
+                        <option value="Горячее">Горячее</option>
+                        <option value="Десерт">Десерт</option>
+                        <option value="Напиток">Напиток</option>
+                    </select>
+                </div>
+
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
                                 <th>Фото</th>
+                                <th>Тип</th>
                                 <th>Название</th>
                                 <th>Описание</th>
                                 <th>Вес/Объём</th>
@@ -626,6 +638,17 @@
                 </div>
                 <input type="hidden" id="prodEmoji" value="">
                 <div class="form-group">
+                    <label>Тип</label>
+                    <select id="prodCategory" style="width:100%;padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;">
+                        <option value="">— Не указан —</option>
+                        <option value="Суп">Суп</option>
+                        <option value="Салат">Салат</option>
+                        <option value="Горячее">Горячее</option>
+                        <option value="Десерт">Десерт</option>
+                        <option value="Напиток">Напиток</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Описание</label>
                     <textarea id="prodDescription" rows="2" style="width:100%;padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;font-family:inherit;resize:vertical;"></textarea>
                 </div>
@@ -756,12 +779,15 @@
 
         // ===== RENDER TABLE =====
         function renderTable() {
+            const filter = document.getElementById('prodCategoryFilter').value;
+            const filtered = filter ? products.filter(p => p.category === filter) : products;
             const tbody = document.getElementById('productsBody');
-            tbody.innerHTML = products.map(p => `
+            tbody.innerHTML = filtered.map(p => `
                 <tr>
                     <td>${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
-                    <td>${p.name}</td>
-                    <td style="color:#888;font-size:.85rem;max-width:200px;">${p.description ? p.description : '—'}</td>
+                    <td style="white-space:nowrap;font-size:.85rem;">${p.category ? '<span style="background:#2a2a2a;padding:3px 10px;border-radius:6px;">' + escH(p.category) + '</span>' : '<span style="color:#444;">—</span>'}</td>
+                    <td>${escH(p.name)}</td>
+                    <td style="color:#888;font-size:.85rem;max-width:200px;">${p.description ? escH(p.description) : '—'}</td>
                     <td style="white-space:nowrap;">${p.weight ? p.weight + ' ' + (p.weightUnit || 'г') : '—'}</td>
                     <td style="white-space:nowrap;font-size:.85rem;color:#aaa;">${(p.proteins != null || p.fats != null || p.carbs != null) ? (p.proteins ?? '—') + ' / ' + (p.fats ?? '—') + ' / ' + (p.carbs ?? '—') : '—'}</td>
                     <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
@@ -791,6 +817,7 @@
             document.getElementById('editId').value = '';
             document.getElementById('prodName').value = '';
             document.getElementById('prodEmoji').value = '';
+            document.getElementById('prodCategory').value = '';
             document.getElementById('prodDescription').value = '';
             document.getElementById('prodWeight').value = '';
             document.getElementById('prodWeightUnit').value = 'г';
@@ -812,6 +839,7 @@
             document.getElementById('editId').value = id;
             document.getElementById('prodName').value = p.name;
             document.getElementById('prodEmoji').value = p.emoji || '';
+            document.getElementById('prodCategory').value = p.category || '';
             document.getElementById('prodDescription').value = p.description || '';
             document.getElementById('prodWeight').value = p.weight || '';
             document.getElementById('prodWeightUnit').value = p.weightUnit || 'г';
@@ -858,6 +886,7 @@
             const data = {
                 name: document.getElementById('prodName').value.trim(),
                 emoji: document.getElementById('prodEmoji').value.trim() || null,
+                category: document.getElementById('prodCategory').value || null,
                 description: document.getElementById('prodDescription').value.trim() || null,
                 weight: parseFloat(document.getElementById('prodWeight').value) || null,
                 weight_unit: document.getElementById('prodWeightUnit').value || null,
