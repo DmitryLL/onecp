@@ -40,8 +40,12 @@ server {
     }
 
     location / {
-        try_files $uri $uri/ =404;
+        try_files $uri $uri/ /index.html;
     }
+
+    location = /Sber { rewrite ^ /index.html last; }
+    location = /Skycity { rewrite ^ /index.html last; }
+    location = /InternationalBayViewtowers { rewrite ^ /index.html last; }
 }
 NGINX
 
