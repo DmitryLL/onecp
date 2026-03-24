@@ -1773,13 +1773,10 @@
         async function exportOrdersExcel() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { showToast('Выберите дату'); return; }
-            // Reload orders for selected date if not loaded
-            if (!dateOrders.length) {
-                try {
-                    const orders = await api('/api/admin/orders');
-                    dateOrders = orders.filter(o => o.createdAt && o.createdAt.substring(0, 10) === dateStr);
-                } catch (e) { showToast('Ошибка загрузки: ' + e.message); return; }
-            }
+            try {
+                const orders = await api('/api/admin/orders');
+                dateOrders = orders.filter(o => o.createdAt && o.createdAt.substring(0, 10) === dateStr);
+            } catch (e) { showToast('Ошибка загрузки: ' + e.message); return; }
             if (!dateOrders.length) { showToast('Нет заказов за эту дату'); return; }
             showToast('Загрузка...');
             try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
@@ -1814,12 +1811,10 @@
         async function exportKitchenExcel() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { showToast('Выберите дату'); return; }
-            if (!dateOrders.length) {
-                try {
-                    const orders = await api('/api/admin/orders');
-                    dateOrders = orders.filter(o => o.createdAt && o.createdAt.substring(0, 10) === dateStr);
-                } catch (e) { showToast('Ошибка загрузки: ' + e.message); return; }
-            }
+            try {
+                const orders = await api('/api/admin/orders');
+                dateOrders = orders.filter(o => o.createdAt && o.createdAt.substring(0, 10) === dateStr);
+            } catch (e) { showToast('Ошибка загрузки: ' + e.message); return; }
             if (!dateOrders.length) { showToast('Нет заказов за эту дату'); return; }
             try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
 
