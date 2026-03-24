@@ -840,6 +840,10 @@
                     <input type="number" id="setPrice" min="0" required>
                 </div>
                 <div class="form-group">
+                    <label>Порядок появления</label>
+                    <input type="number" id="setSortOrder" min="0" max="9999" placeholder="0" style="width:120px;" class="no-spin">
+                </div>
+                <div class="form-group">
                     <label>Состав набора</label>
                     <div id="setItemsList" style="margin-bottom:8px;"></div>
                     <div style="display:flex;gap:8px;">
@@ -1388,6 +1392,7 @@
             document.getElementById('setName').value = '';
             document.getElementById('setDescription').value = '';
             document.getElementById('setPrice').value = '';
+            document.getElementById('setSortOrder').value = '';
             document.getElementById('setAvailable').checked = true;
             document.getElementById('setImagePreview').innerHTML = '';
             document.getElementById('setImage').value = '';
@@ -1409,6 +1414,7 @@
             document.getElementById('setName').value = s.name;
             document.getElementById('setDescription').value = s.description || '';
             document.getElementById('setPrice').value = s.price;
+            document.getElementById('setSortOrder').value = s.sortOrder || '';
             document.getElementById('setAvailable').checked = s.available;
             document.getElementById('setImagePreview').innerHTML = '';
             document.getElementById('setImage').value = '';
@@ -1432,7 +1438,7 @@
                 description: document.getElementById('setDescription').value.trim() || null,
                 price: parseFloat(document.getElementById('setPrice').value) || 0,
                 available: document.getElementById('setAvailable').checked,
-                sort_order: 0,
+                sort_order: parseInt(document.getElementById('setSortOrder').value) || 0,
                 items: setItems.map(i => ({ dish_id: i.dishId, quantity: i.quantity })),
             };
             try {
