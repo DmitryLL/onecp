@@ -78,6 +78,43 @@
         }
 
         /* ===== HEADER ===== */
+        /* ===== SBER HERO ===== */
+        .hero.hero-sber {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 40%, #1a1a1a 100%);
+            overflow: hidden;
+        }
+        .sber-logo-bg {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .sber-logo-bg .sber-shield {
+            flex-shrink: 0;
+        }
+        .sber-logo-bg .sber-text {
+            font-family: 'Arial Black', 'Arial', sans-serif;
+            font-size: clamp(4rem, 10vw, 9rem);
+            font-weight: 900;
+            letter-spacing: 4px;
+            background: linear-gradient(180deg, #21d14b 0%, #0fa83a 40%, #2beb5a 60%, #0fa83a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 40px rgba(33,209,75,.4)) drop-shadow(0 0 80px rgba(33,209,75,.15));
+            text-transform: uppercase;
+            line-height: 1;
+        }
+        .sber-shield svg {
+            width: clamp(60px, 8vw, 120px);
+            height: auto;
+            filter: drop-shadow(0 0 30px rgba(33,209,75,.5));
+        }
+
         .hero-slogan {
             display: inline-block;
             background: linear-gradient(135deg, rgba(139,90,43,.85), rgba(201,169,110,.85));
@@ -2174,7 +2211,7 @@
 
     // ===== LOCATION PAGES =====
     const LOCATIONS = {
-        '/Sber': { name: 'Sber', address: 'Фонтанная 18', description: 'Точка выдачи в бизнес-центре Sber', heroBg: 'images/sber-bg.jpg' },
+        '/Sber': { name: 'Sber', address: 'Фонтанная 18', description: 'Точка выдачи в бизнес-центре Sber', heroCss: 'hero-sber', heroHtml: '<div class="sber-logo-bg"><span class="sber-shield"><svg viewBox="0 0 56 56" fill="none"><path d="M28 2C13.64 2 2 13.64 2 28s11.64 26 26 26 26-11.64 26-26S42.36 2 28 2z" fill="url(#sg1)"/><path d="M17.5 28.8l-4.2-2.4v-5l21.2-12.2 4.2 2.4v5L17.5 28.8z" fill="url(#sg2)"/><path d="M38.5 27.2l4.2 2.4v5L21.5 46.8l-4.2-2.4v-5L38.5 27.2z" fill="url(#sg3)"/><path d="M38.7 16.6l4.2 2.4L28 28l-4.2-2.4 14.9-9z" fill="url(#sg4)"/><path d="M17.3 39.4l-4.2-2.4L28 28l4.2 2.4-14.9 9z" fill="url(#sg5)"/><defs><linearGradient id="sg1" x1="2" y1="2" x2="54" y2="54"><stop stop-color="#21d14b"/><stop offset="1" stop-color="#0fa83a"/></linearGradient><linearGradient id="sg2" x1="13" y1="9" x2="39" y2="29"><stop stop-color="#5ff77f"/><stop offset="1" stop-color="#21d14b"/></linearGradient><linearGradient id="sg3" x1="17" y1="27" x2="43" y2="47"><stop stop-color="#21d14b"/><stop offset="1" stop-color="#0d8a2e"/></linearGradient><linearGradient id="sg4" x1="24" y1="17" x2="43" y2="19"><stop stop-color="#5ff77f"/><stop offset="1" stop-color="#21d14b"/></linearGradient><linearGradient id="sg5" x1="13" y1="37" x2="32" y2="39"><stop stop-color="#21d14b"/><stop offset="1" stop-color="#0d8a2e"/></linearGradient></defs></svg></span><span class="sber-text">Сбербанк</span></div>' },
         '/Skycity': { name: 'Sky City', address: 'Алеутская 45', description: 'Точка выдачи в БЦ Sky City' },
         '/InternationalBayViewtowers': { name: 'International BayView Towers', address: 'Енисейская 23', description: 'Точка выдачи в International BayView Towers' },
     };
@@ -2183,7 +2220,11 @@
     if (locInfo) {
         document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
         document.getElementById('orderAddress').value = locInfo.address;
-        if (locInfo.heroBg) {
+        if (locInfo.heroCss) {
+            var hero = document.querySelector('.hero');
+            hero.classList.add(locInfo.heroCss);
+            hero.insertAdjacentHTML('afterbegin', locInfo.heroHtml || '');
+        } else if (locInfo.heroBg) {
             document.querySelector('.hero').style.background = '#000 url(' + locInfo.heroBg + ') center/cover no-repeat';
         }
         document.getElementById('siteHeroTitle').innerHTML = locInfo.description;
