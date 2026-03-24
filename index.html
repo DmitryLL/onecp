@@ -2183,7 +2183,12 @@
         document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
         document.getElementById('orderAddress').value = locInfo.address;
         if (locInfo.heroBg) {
-            document.querySelector('.hero').style.background = '#000 url(' + locInfo.heroBg + ') center/cover no-repeat';
+            var hero = document.querySelector('.hero');
+            hero.style.backgroundImage = 'url(' + locInfo.heroBg + ')';
+            hero.style.backgroundSize = '100% auto';
+            hero.style.backgroundPosition = 'center top';
+            hero.style.backgroundRepeat = 'no-repeat';
+            hero.style.backgroundColor = '#333';
         }
         document.getElementById('siteHeroTitle').innerHTML = locInfo.description;
         document.getElementById('siteHeroSub').innerHTML =
