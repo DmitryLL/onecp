@@ -938,6 +938,148 @@
 
         .toast.show { transform: translateY(0); opacity: 1; }
 
+        /* ===== LOCATION PICKER ===== */
+        .location-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--black);
+        }
+        .loc-header {
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .loc-header img { height: 44px; width: auto; }
+        .loc-body {
+            flex: 1;
+            background: var(--beige);
+            border-radius: 32px 32px 0 0;
+            padding: 56px 24px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .loc-body h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 6px;
+            text-align: center;
+            letter-spacing: -.3px;
+        }
+        .loc-body .loc-sub {
+            color: var(--text-light);
+            font-size: .95rem;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        .location-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 880px;
+            width: 100%;
+        }
+        .loc-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            text-decoration: none;
+            transition: all .4s cubic-bezier(.22,1,.36,1);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+        .loc-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--gold-light);
+        }
+        .loc-card-top {
+            padding: 28px 24px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid var(--beige);
+        }
+        .loc-card-top .loc-emoji {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--brown-light), var(--gold));
+            color: var(--white);
+            font-weight: 700;
+        }
+        .loc-card:nth-child(2) .loc-emoji {
+            background: linear-gradient(135deg, var(--gold), var(--brown));
+        }
+        .loc-card:nth-child(3) .loc-emoji {
+            background: linear-gradient(135deg, var(--brown-dark), var(--brown-light));
+        }
+        .loc-card-top h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.3;
+        }
+        .loc-card-top .loc-addr-small {
+            font-size: .82rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        .loc-card-bottom {
+            padding: 16px 24px 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .loc-card .loc-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--brown), var(--brown-dark));
+            color: var(--white);
+            font-size: .9rem;
+            font-weight: 600;
+            padding: 13px 20px;
+            border-radius: var(--radius-sm);
+            transition: all .3s;
+        }
+        .loc-card:hover .loc-btn {
+            background: linear-gradient(135deg, var(--gold), var(--brown));
+            box-shadow: 0 4px 16px rgba(201,169,110,.3);
+        }
+        .loc-card .loc-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform .3s;
+        }
+        .loc-card:hover .loc-btn svg { transform: translateX(4px); }
+        .loc-footer {
+            background: var(--black);
+            color: rgba(245,239,230,.4);
+            text-align: center;
+            padding: 24px;
+            font-size: .85rem;
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .hero { padding: 80px 20px 60px; }
@@ -998,153 +1140,6 @@
                 transition: transform .2s;
             }
             .mobile-cart-fab:active { transform: scale(.95); }
-
-            /* ===== LOCATION PICKER ===== */
-            .location-page {
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-                background: var(--black);
-            }
-            .loc-header {
-                padding: 24px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .loc-header img { height: 44px; width: auto; }
-            .loc-body {
-                flex: 1;
-                background: var(--beige);
-                border-radius: 32px 32px 0 0;
-                padding: 56px 24px 60px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-            .loc-body h1 {
-                font-size: 1.8rem;
-                font-weight: 800;
-                color: var(--text);
-                margin-bottom: 6px;
-                text-align: center;
-                letter-spacing: -.3px;
-            }
-            .loc-body .loc-sub {
-                color: var(--text-light);
-                font-size: .95rem;
-                margin-bottom: 40px;
-                text-align: center;
-            }
-            .location-cards {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 24px;
-                max-width: 880px;
-                width: 100%;
-            }
-            .loc-card {
-                background: var(--white);
-                border-radius: var(--radius-lg);
-                box-shadow: var(--shadow-card);
-                text-decoration: none;
-                transition: all .4s cubic-bezier(.22,1,.36,1);
-                cursor: pointer;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                border: 2px solid transparent;
-            }
-            .loc-card:hover {
-                transform: translateY(-6px);
-                box-shadow: var(--shadow-lg);
-                border-color: var(--gold-light);
-            }
-            .loc-card-top {
-                padding: 28px 24px 20px;
-                display: flex;
-                align-items: center;
-                gap: 14px;
-                border-bottom: 1px solid var(--beige);
-            }
-            .loc-card-top .loc-emoji {
-                width: 52px;
-                height: 52px;
-                border-radius: 14px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.5rem;
-                flex-shrink: 0;
-                background: linear-gradient(135deg, var(--brown-light), var(--gold));
-                color: var(--white);
-                font-weight: 700;
-            }
-            .loc-card:nth-child(2) .loc-emoji {
-                background: linear-gradient(135deg, var(--gold), var(--brown));
-            }
-            .loc-card:nth-child(3) .loc-emoji {
-                background: linear-gradient(135deg, var(--brown-dark), var(--brown-light));
-            }
-            .loc-card-top h3 {
-                font-size: 1.1rem;
-                font-weight: 700;
-                color: var(--text);
-                line-height: 1.3;
-            }
-            .loc-card-top .loc-addr-small {
-                font-size: .82rem;
-                color: var(--text-muted);
-                font-weight: 400;
-                margin-top: 2px;
-            }
-            .loc-card-bottom {
-                padding: 16px 24px 24px;
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-end;
-            }
-            .loc-card .loc-btn {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                background: linear-gradient(135deg, var(--brown), var(--brown-dark));
-                color: var(--white);
-                font-size: .9rem;
-                font-weight: 600;
-                padding: 13px 20px;
-                border-radius: var(--radius-sm);
-                transition: all .3s;
-            }
-            .loc-card:hover .loc-btn {
-                background: linear-gradient(135deg, var(--gold), var(--brown));
-                box-shadow: 0 4px 16px rgba(201,169,110,.3);
-            }
-            .loc-card .loc-btn svg {
-                width: 16px;
-                height: 16px;
-                fill: none;
-                stroke: currentColor;
-                stroke-width: 2.5;
-                stroke-linecap: round;
-                stroke-linejoin: round;
-                transition: transform .3s;
-            }
-            .loc-card:hover .loc-btn svg { transform: translateX(4px); }
-            .loc-footer {
-                background: var(--black);
-                color: rgba(245,239,230,.4);
-                text-align: center;
-                padding: 24px;
-                font-size: .85rem;
-            }
-            @media (max-width: 768px) {
-                .location-cards { grid-template-columns: 1fr; max-width: 400px; gap: 16px; }
-                .loc-body { padding: 36px 16px 40px; border-radius: 24px 24px 0 0; }
-                .loc-body h1 { font-size: 1.5rem; }
-            }
             .mobile-cart-fab .fab-badge {
                 background: #fff;
                 color: var(--brown-dark);
@@ -1165,6 +1160,10 @@
             .catalog-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
 
             .contacts-layout { grid-template-columns: 1fr; }
+
+            .location-cards { grid-template-columns: 1fr; max-width: 400px; gap: 16px; }
+            .loc-body { padding: 36px 16px 40px; border-radius: 24px 24px 0 0; }
+            .loc-body h1 { font-size: 1.5rem; }
         }
     </style>
 </head>
