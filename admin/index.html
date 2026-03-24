@@ -1857,7 +1857,7 @@
                         <span style="cursor:pointer;color:#555;font-size:.75rem;margin-left:6px;" onclick="deleteQuestion(${q.id})" title="Удалить">✕</span>
                     </td>
                 </tr>
-                <tr id="qComment_row_${q.id}" style="display:none;">
+                <tr id="qComment_row_${q.id}" style="${hasComment ? '' : 'display:none;'}">
                     <td colspan="6" style="padding:4px 16px 10px;">
                         <div style="display:flex;gap:8px;align-items:flex-start;">
                             <textarea id="qComment_${q.id}" rows="1" placeholder="Комментарий..." style="flex:1;padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#fff;font-size:.82rem;font-family:inherit;resize:vertical;">${escH(q.comment || '')}</textarea>
