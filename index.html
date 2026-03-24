@@ -2508,11 +2508,18 @@
         if (okTimerInterval) { clearInterval(okTimerInterval); okTimerInterval = null; }
         closeSmsModal();
         closeCart();
+        // Clear form fields
         document.getElementById('orderName').value = '';
         document.getElementById('orderPhone').value = '';
         document.getElementById('orderAddress').value = currentLocation || '';
         document.getElementById('orderComment').value = '';
+        clearSmsDigits();
         toggleOrderBtn();
+        // Clear cart and update UI
+        cart = [];
+        updateCartBadge();
+        renderCart();
+        renderCatalog();
     }
 
     function checkout() {
