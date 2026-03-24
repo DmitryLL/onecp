@@ -2591,13 +2591,18 @@
     const isRootPage = window.location.pathname === '/';
 
     // ===== INIT =====
-    // Set tomorrow's date in catalog title
+    // Set menu date: tomorrow if before 14:00 Vladivostok, day after tomorrow if 14:00+
     (function() {
-        var tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
+        var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
+        var menuDate = new Date(now);
+        if (now.getHours() >= 14) {
+            menuDate.setDate(menuDate.getDate() + 2);
+        } else {
+            menuDate.setDate(menuDate.getDate() + 1);
+        }
         var months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
         var dayNames = ['воскресенье','понедельник','вторник','среду','четверг','пятницу','субботу'];
-        var dateStr = tomorrow.getDate() + ' ' + months[tomorrow.getMonth()] + ', ' + dayNames[tomorrow.getDay()];
+        var dateStr = menuDate.getDate() + ' ' + months[menuDate.getMonth()] + ', ' + dayNames[menuDate.getDay()];
         document.getElementById('siteCatalogTitle').textContent = 'Меню на ' + dateStr;
     })();
 
