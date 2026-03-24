@@ -4,112 +4,204 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <title>Вход — OneCp Admin</title>
+    <title>Вход — One Coffee Place</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #000;
+            background: #0c0a08;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
+
+        /* Ambient glow behind card */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 50%; left: 50%;
+            width: 600px; height: 600px;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(228,217,204,.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
         .login-card {
-            background: #111;
-            border: 1px solid #222;
-            border-radius: 16px;
-            padding: 48px 40px;
+            position: relative;
+            background: linear-gradient(145deg, #161310, #1a1612);
+            border: 1px solid rgba(228,217,204,.12);
+            border-radius: 24px;
+            padding: 52px 44px 44px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             margin: 20px;
+            box-shadow:
+                0 4px 24px rgba(0,0,0,.4),
+                0 0 80px rgba(228,217,204,.03);
         }
+
+        .logo-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #e4d9cc 0%, #d5c8b8 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(228,217,204,.15);
+        }
+        .logo-icon svg { width: 32px; height: 32px; color: #1a1612; }
+
         .login-card h1 {
-            color: #fff;
-            font-size: 1.8rem;
+            color: #f5efe6;
+            font-size: 1.5rem;
+            font-weight: 700;
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
+            letter-spacing: .5px;
         }
+
         .login-card .subtitle {
-            color: #888;
+            color: rgba(228,217,204,.4);
             text-align: center;
-            font-size: .95rem;
-            margin-bottom: 32px;
+            font-size: .88rem;
+            margin-bottom: 36px;
+            font-weight: 400;
         }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 22px;
+            position: relative;
         }
         .form-group label {
             display: block;
-            color: #aaa;
-            font-size: .85rem;
-            margin-bottom: 6px;
+            color: rgba(228,217,204,.5);
+            font-size: .8rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            letter-spacing: .3px;
+            text-transform: uppercase;
         }
         .form-group input {
             width: 100%;
-            padding: 12px 16px;
-            background: #1a1a1a;
-            border: 1.5px solid #333;
-            border-radius: 10px;
-            color: #fff;
+            padding: 14px 18px;
+            background: rgba(255,255,255,.04);
+            border: 1.5px solid rgba(228,217,204,.1);
+            border-radius: 12px;
+            color: #f5efe6;
             font-size: 1rem;
             font-family: inherit;
-            transition: border-color .2s;
+            transition: border-color .3s, background .3s, box-shadow .3s;
         }
         .form-group input:focus {
             outline: none;
-            border-color: #f5efe6;
+            border-color: rgba(228,217,204,.35);
+            background: rgba(255,255,255,.06);
+            box-shadow: 0 0 0 4px rgba(228,217,204,.06);
         }
-        .form-group input::placeholder { color: #555; }
+        .form-group input::placeholder { color: rgba(228,217,204,.2); }
+
         .btn-login {
             width: 100%;
-            padding: 14px;
-            background: #f5efe6;
-            color: #111;
+            padding: 15px;
+            background: linear-gradient(135deg, #e4d9cc 0%, #d5c8b8 100%);
+            color: #1a1612;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background .2s, transform .1s;
-            margin-top: 8px;
+            transition: all .3s;
+            margin-top: 12px;
+            letter-spacing: .3px;
+            box-shadow: 0 4px 16px rgba(228,217,204,.12);
         }
-        .btn-login:hover { background: #e8ddd0; }
-        .btn-login:active { transform: scale(.98); }
+        .btn-login:hover {
+            background: linear-gradient(135deg, #efe8de 0%, #e4d9cc 100%);
+            box-shadow: 0 6px 24px rgba(228,217,204,.18);
+            transform: translateY(-1px);
+        }
+        .btn-login:active {
+            transform: translateY(0) scale(.99);
+            box-shadow: 0 2px 8px rgba(228,217,204,.1);
+        }
+        .btn-login:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .error-msg {
             color: #e74c3c;
-            font-size: .9rem;
+            font-size: .88rem;
             text-align: center;
-            margin-top: 16px;
+            margin-top: 18px;
             display: none;
+            padding: 10px 16px;
+            background: rgba(231,76,60,.08);
+            border-radius: 10px;
+            border: 1px solid rgba(231,76,60,.15);
         }
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-            text-decoration: none;
-            font-size: .9rem;
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(228,217,204,.1), transparent);
+            margin: 28px 0 0;
         }
-        .back-link:hover { color: #aaa; }
+
+        /* Subtle floating particles */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+        .particle {
+            position: fixed;
+            width: 3px; height: 3px;
+            background: rgba(228,217,204,.15);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float linear infinite;
+        }
     </style>
 </head>
 <body>
+    <div class="particle" style="left:10%;bottom:-10px;animation-duration:12s;animation-delay:0s;"></div>
+    <div class="particle" style="left:25%;bottom:-10px;animation-duration:18s;animation-delay:3s;"></div>
+    <div class="particle" style="left:50%;bottom:-10px;animation-duration:15s;animation-delay:6s;"></div>
+    <div class="particle" style="left:70%;bottom:-10px;animation-duration:20s;animation-delay:2s;"></div>
+    <div class="particle" style="left:85%;bottom:-10px;animation-duration:14s;animation-delay:8s;"></div>
+    <div class="particle" style="left:40%;bottom:-10px;animation-duration:16s;animation-delay:4s;"></div>
+
     <div class="login-card">
+        <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 8h1a4 4 0 1 1 0 8h-1"/>
+                <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/>
+                <line x1="6" y1="2" x2="6" y2="4"/>
+                <line x1="10" y1="2" x2="10" y2="4"/>
+                <line x1="14" y1="2" x2="14" y2="4"/>
+            </svg>
+        </div>
         <h1>One Coffee Place</h1>
-        <p class="subtitle">Вход в панель управления</p>
+        <p class="subtitle">Панель управления</p>
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="form-group">
                 <label for="username">Логин</label>
-                <input type="text" id="username" placeholder="admin" autocomplete="username" required>
+                <input type="text" id="username" placeholder="Введите логин" autocomplete="username" required>
             </div>
             <div class="form-group">
                 <label for="password">Пароль</label>
                 <input type="password" id="password" placeholder="Введите пароль" autocomplete="current-password" required>
             </div>
-            <button type="submit" class="btn-login">Войти</button>
+            <button type="submit" class="btn-login" id="btnLogin">Войти</button>
         </form>
-        <p class="error-msg" id="errorMsg">Неверный логин или пароль</p>
+        <p class="error-msg" id="errorMsg"></p>
+        <div class="divider"></div>
     </div>
 
     <script>
@@ -121,6 +213,9 @@
             e.preventDefault();
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value;
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+            btn.textContent = 'Вход...';
 
             try {
                 const res = await fetch('/api/admin/login', {
@@ -136,7 +231,9 @@
                 const el = document.getElementById('errorMsg');
                 el.textContent = err.message;
                 el.style.display = 'block';
-                setTimeout(() => el.style.display = 'none', 3000);
+                btn.disabled = false;
+                btn.textContent = 'Войти';
+                setTimeout(() => el.style.display = 'none', 4000);
             }
         }
     </script>
