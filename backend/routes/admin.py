@@ -456,6 +456,7 @@ def format_dish_set(s: DishSet) -> dict:
                 "id": item.id,
                 "dishId": item.dish_id,
                 "dishName": item.dish.name if item.dish else "—",
+                "dishCategory": item.dish.category if item.dish else None,
                 "quantity": item.quantity,
                 "dishPrice": item.dish.price if item.dish else 0,
             }

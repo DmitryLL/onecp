@@ -554,6 +554,7 @@
             font-size: .85rem;
             color: #ccc;
         }
+        .set-item-row .item-cat { color: #c8956c; font-size: .8rem; font-weight: 600; min-width: 75px; }
         .set-item-row .item-name { flex: 1; }
         .set-item-row .item-qty { color: #888; font-size: .8rem; min-width: 30px; text-align: center; }
         .set-item-row .remove-item {
@@ -1517,8 +1518,13 @@
                             <div class="dish-search-results" id="setDishSearch_${s.id}"></div>
                         </div>
                         <div id="setItems_${s.id}">
-                            ${items.length ? items.map(it => `
+                            ${items.length ? items.slice().sort((a,b) => {
+                                const ci = categoryOrder.indexOf(a.dishCategory || '');
+                                const cj = categoryOrder.indexOf(b.dishCategory || '');
+                                return (ci === -1 ? 999 : ci) - (cj === -1 ? 999 : cj);
+                            }).map(it => `
                                 <div class="set-item-row">
+                                    <span class="item-cat">${escH(it.dishCategory || 'Без типа')}</span>
                                     <span class="item-name">${escH(it.dishName)}</span>
                                     ${it.quantity > 1 ? '<span class="item-qty">&times; ' + it.quantity + '</span>' : ''}
                                     <span class="remove-item" onclick="removeSetDish(${s.id}, ${it.id})" title="Убрать">&times;</span>
