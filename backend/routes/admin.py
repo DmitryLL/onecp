@@ -51,7 +51,7 @@ class DishIn(BaseModel):
     emoji: str | None = None
     image_url: str | None = None
     category: str | None = None
-    weight: float | None = None
+    weight: str | None = None
     weight_unit: str | None = None
     proteins: float | None = None
     fats: float | None = None

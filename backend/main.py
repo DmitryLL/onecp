@@ -33,6 +33,11 @@ def init_db():
             if col not in existing:
                 conn.execute(text(f"ALTER TABLE dishes ADD COLUMN {col} {coltype}"))
                 logger.info(f"Added column dishes.{col}")
+        # Migrate weight from float to varchar if needed
+        weight_cols = {c["name"]: c for c in insp.get_columns("dishes")}
+        if "weight" in weight_cols and str(weight_cols["weight"]["type"]) != "VARCHAR(50)":
+            conn.execute(text("ALTER TABLE dishes ALTER COLUMN weight TYPE VARCHAR(50) USING weight::text"))
+            logger.info("Migrated dishes.weight to VARCHAR(50)")
         conn.commit()
 
     db = SessionLocal()

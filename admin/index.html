@@ -790,7 +790,7 @@
                 <div class="form-group">
                     <label>Вес / Объём</label>
                     <div style="display:flex;gap:8px;">
-                        <input type="number" id="prodWeight" min="0" step="any" placeholder="Количество" style="flex:1;" class="no-spin">
+                        <input type="text" id="prodWeight" placeholder="Например: 150/80" style="flex:1;">
                         <select id="prodWeightUnit" style="width:100px;padding:10px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;">
                             <option value="г">г</option>
                             <option value="мл">мл</option>
@@ -1030,7 +1030,7 @@
                                 </select></td>
                                 <td><textarea data-field="name" data-id="${p.id}" class="inline-input inline-ta" rows="1" onblur="inlineSave(this)" oninput="autoGrow(this)">${escH(p.name)}</textarea></td>
                                 <td><textarea data-field="description" data-id="${p.id}" class="inline-input inline-ta" rows="1" style="color:#888;" maxlength="150" placeholder="Описание..." onblur="inlineSave(this)" oninput="autoGrow(this)">${escH(p.description || '')}</textarea></td>
-                                <td><input type="number" value="${p.weight ?? ''}" data-field="weight" data-id="${p.id}" step="any" min="0" class="inline-input inline-num" onblur="inlineSave(this)"></td>
+                                <td><input type="text" value="${escH(p.weight || '')}" data-field="weight" data-id="${p.id}" class="inline-input inline-num" placeholder="—" onblur="inlineSave(this)"></td>
                                 <td><select data-field="weight_unit" data-id="${p.id}" onchange="inlineSave(this)" class="inline-select">
                                     ${['г','мл','л','кг'].map(u => '<option value="' + u + '"' + ((p.weightUnit || 'г') === u ? ' selected' : '') + '>' + u + '</option>').join('')}
                                 </select></td>
@@ -1071,7 +1071,7 @@
                     name: get('name') || 'Без названия',
                     category: get('category') || null,
                     description: get('description') || null,
-                    weight: parseFloat(get('weight')) || null,
+                    weight: get('weight')?.trim() || null,
                     weight_unit: get('weight_unit') || null,
                     proteins: parseFloat(get('proteins')) || null,
                     fats: parseFloat(get('fats')) || null,
@@ -1207,7 +1207,7 @@
                 emoji: document.getElementById('prodEmoji').value.trim() || null,
                 category: document.getElementById('prodCategory').value || null,
                 description: document.getElementById('prodDescription').value.trim() || null,
-                weight: parseFloat(document.getElementById('prodWeight').value) || null,
+                weight: document.getElementById('prodWeight').value.trim() || null,
                 weight_unit: document.getElementById('prodWeightUnit').value || null,
                 proteins: parseFloat(document.getElementById('prodProteins').value) || null,
                 fats: parseFloat(document.getElementById('prodFats').value) || null,

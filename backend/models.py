@@ -45,7 +45,7 @@ class Dish(Base):
     emoji = Column(String(10), nullable=True)
     image_url = Column(String(500), nullable=True)
     category = Column(String(100), nullable=True, index=True)
-    weight = Column(Float, nullable=True)
+    weight = Column(String(50), nullable=True)
     weight_unit = Column(String(10), nullable=True)  # г, мл, л, кг
     proteins = Column(Float, nullable=True)
     fats = Column(Float, nullable=True)
