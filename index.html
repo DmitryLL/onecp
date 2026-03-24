@@ -169,6 +169,8 @@
             padding: 0 5px;
         }
 
+        .mobile-cart-fab { display: none; }
+
         /* burger */
         .burger {
             display: none;
@@ -975,6 +977,40 @@
 
             .mobile-menu a:hover { background: rgba(245,239,230,.1); color: var(--beige); }
 
+            .mobile-cart-fab.visible {
+                display: flex;
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 998;
+                background: linear-gradient(135deg, var(--gold), var(--brown));
+                color: #fff;
+                border: none;
+                border-radius: 50px;
+                padding: 14px 22px;
+                font-size: 1rem;
+                font-weight: 700;
+                font-family: inherit;
+                cursor: pointer;
+                box-shadow: 0 6px 24px rgba(0,0,0,.35);
+                align-items: center;
+                gap: 8px;
+                transition: transform .2s;
+            }
+            .mobile-cart-fab:active { transform: scale(.95); }
+            .mobile-cart-fab .fab-badge {
+                background: #fff;
+                color: var(--brown-dark);
+                border-radius: 50%;
+                min-width: 22px;
+                height: 22px;
+                font-size: .75rem;
+                font-weight: 800;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
             section { padding: 60px 16px; }
 
             .section-title { font-size: 1.8rem; }
@@ -1010,6 +1046,11 @@
     <a href="#contacts" onclick="closeMobile()">Контакты</a>
     <a href="#" onclick="openCart(); closeMobile(); return false;" style="color:var(--gold);">Корзина (<span id="cartBadgeMob">0</span>)</a>
 </div>
+
+<!-- MOBILE FLOATING CART -->
+<button class="mobile-cart-fab" id="mobileCartFab" onclick="openCart()">
+    🛒 Корзина <span class="fab-badge" id="cartBadgeFab">0</span>
+</button>
 
 <!-- HERO -->
 <section class="hero">
@@ -1384,6 +1425,10 @@
         document.getElementById('cartBadge').textContent = count;
         const mob = document.getElementById('cartBadgeMob');
         if (mob) mob.textContent = count;
+        const fab = document.getElementById('cartBadgeFab');
+        if (fab) fab.textContent = count;
+        const fabBtn = document.getElementById('mobileCartFab');
+        if (fabBtn) { count > 0 ? fabBtn.classList.add('visible') : fabBtn.classList.remove('visible'); }
     }
 
     function renderCart() {
