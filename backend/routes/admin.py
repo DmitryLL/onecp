@@ -10,7 +10,7 @@ from passlib.hash import pbkdf2_sha256
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/onecp/uploads")
 
 from database import get_db
-from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question
+from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question, SmsCode
 from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -291,6 +291,20 @@ def update_order_status(order_id: int, body: OrderStatusUpdate, admin: AdminUser
     if body.status not in ("new", "confirmed", "cooking", "ready", "delivered", "cancelled"):
         raise HTTPException(status_code=400, detail="Неверный статус")
     order.status = body.status
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/purge-all")
+def purge_all(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    db.query(OrderItem).delete()
+    db.query(Order).delete()
+    db.query(SmsCode).delete()
+    db.query(Customer).delete()
+    db.query(DishSetItem).delete()
+    db.query(DishSet).delete()
+    db.query(Dish).delete()
+    db.query(Question).delete()
     db.commit()
     return {"ok": True}
 
