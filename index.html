@@ -1068,8 +1068,11 @@
                     <input type="text" id="name" placeholder="Иван Иванов" required>
                 </div>
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" placeholder="ivan@mail.ru" required>
+                    <label for="qPhone">Телефон</label>
+                    <div style="display:flex;">
+                        <span style="padding:12px 10px;background:var(--beige-dark);border:2px solid var(--beige-dark);border-right:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-weight:600;color:var(--text);">+7</span>
+                        <input type="tel" id="qPhone" placeholder="9991234567" maxlength="10" required oninput="this.value=this.value.replace(/\D/g,'')" style="border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="message">Сообщение</label>
@@ -1589,11 +1592,11 @@
     async function submitForm(e) {
         e.preventDefault();
         const name = document.getElementById('name').value.trim();
-        const email = document.getElementById('email').value.trim();
+        const phone = '+7' + document.getElementById('qPhone').value.trim();
         const message = document.getElementById('message').value.trim();
-        if (!name || !email || !message) { showToast('Заполните все поля'); return; }
+        if (!name || phone.length !== 12 || !message) { showToast('Заполните все поля'); return; }
         try {
-            await api('/api/menu/question', { method: 'POST', body: { name, email, message } });
+            await api('/api/menu/question', { method: 'POST', body: { name, phone, message } });
             showToast('Спасибо! Ваш вопрос отправлен.');
             e.target.reset();
         } catch (err) {

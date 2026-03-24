@@ -115,15 +115,15 @@ def get_site_settings(db: Session = Depends(get_db)):
 
 class QuestionIn(BaseModel):
     name: str
-    email: str
+    phone: str
     message: str
 
 
 @router.post("/question")
 def submit_question(body: QuestionIn, db: Session = Depends(get_db)):
-    if not body.name.strip() or not body.email.strip() or not body.message.strip():
+    if not body.name.strip() or not body.phone.strip() or not body.message.strip():
         raise HTTPException(status_code=400, detail="Заполните все поля")
-    q = Question(name=body.name.strip(), email=body.email.strip(), message=body.message.strip())
+    q = Question(name=body.name.strip(), phone=body.phone.strip(), message=body.message.strip())
     db.add(q)
     db.commit()
     return {"ok": True}

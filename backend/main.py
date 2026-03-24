@@ -38,6 +38,24 @@ def init_db():
         if "weight" in weight_cols and str(weight_cols["weight"]["type"]) != "VARCHAR(50)":
             conn.execute(text("ALTER TABLE dishes ALTER COLUMN weight TYPE VARCHAR(50) USING weight::text"))
             logger.info("Migrated dishes.weight to VARCHAR(50)")
+        # Migrate questions: email -> phone, add status/comment
+        if "questions" in insp.get_table_names():
+            q_cols = [c["name"] for c in insp.get_columns("questions")]
+            if "email" in q_cols and "phone" not in q_cols:
+                conn.execute(text("ALTER TABLE questions RENAME COLUMN email TO phone"))
+                logger.info("Renamed questions.email to questions.phone")
+            if "status" not in q_cols:
+                conn.execute(text("ALTER TABLE questions ADD COLUMN status VARCHAR(30) DEFAULT 'new'"))
+                logger.info("Added column questions.status")
+            if "comment" not in q_cols:
+                conn.execute(text("ALTER TABLE questions ADD COLUMN comment TEXT"))
+                logger.info("Added column questions.comment")
+            # Drop old columns if exist
+            q_cols2 = [c["name"] for c in insp.get_columns("questions")]
+            for old_col in ["answer", "answered_at"]:
+                if old_col in q_cols2:
+                    conn.execute(text(f"ALTER TABLE questions DROP COLUMN {old_col}"))
+                    logger.info(f"Dropped column questions.{old_col}")
         conn.commit()
 
     db = SessionLocal()
