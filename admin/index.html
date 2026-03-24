@@ -1402,6 +1402,8 @@
                 loadQuestions();
             } else if (panel === 'products') {
                 document.getElementById('productsPanel').style.display = 'block';
+                renderTable();
+                renderArchive();
             } else if (panel === 'sets') {
                 document.getElementById('setsPanel').style.display = 'block';
                 loadSets();
