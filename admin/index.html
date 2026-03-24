@@ -486,6 +486,125 @@
             color: #f5efe6;
         }
 
+        /* ===== SET CARDS ===== */
+        .set-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+        }
+        .set-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .set-card-order {
+            font-weight: 700;
+            color: #c8956c;
+            font-size: 1.1rem;
+            min-width: 36px;
+            text-align: center;
+        }
+        .set-card-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #f5efe6;
+            flex: 1;
+            min-width: 120px;
+        }
+        .set-card-desc {
+            color: #666;
+            font-size: .85rem;
+            margin-top: 4px;
+        }
+        .set-card-status {
+            font-size: .75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .set-card-status.active { background: rgba(76,175,80,.12); color: #4caf50; border: 1px solid rgba(76,175,80,.25); }
+        .set-card-status.active:hover { background: rgba(76,175,80,.25); }
+        .set-card-status.inactive { background: rgba(244,68,68,.08); color: #f44; border: 1px solid rgba(244,68,68,.2); }
+        .set-card-status.inactive:hover { background: rgba(244,68,68,.2); }
+        .set-card-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .set-card-actions .btn { padding: 5px 12px; font-size: .8rem; }
+        .set-card-items {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #1a1a1a;
+        }
+        .set-item-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #1a1a1a;
+            border: 1px solid #252525;
+            border-radius: 8px;
+            padding: 5px 10px;
+            margin: 2px 3px;
+            font-size: .85rem;
+            color: #ccc;
+        }
+        .set-item-tag .remove-item {
+            cursor: pointer;
+            color: #666;
+            font-size: .75rem;
+            transition: color .2s;
+            padding: 0 2px;
+        }
+        .set-item-tag .remove-item:hover { color: #f44; }
+        .set-add-dish {
+            margin-top: 8px;
+            position: relative;
+            max-width: 400px;
+        }
+        .set-add-dish input {
+            width: 100%;
+            padding: 8px 12px;
+            background: #1a1a1a;
+            border: 1.5px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: .85rem;
+            font-family: inherit;
+        }
+        .set-add-dish input:focus { border-color: #c8956c; outline: none; }
+        .dish-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        .dish-search-results.open { display: block; }
+        .dish-search-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: .85rem;
+            color: #ccc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background .15s;
+        }
+        .dish-search-item:hover { background: #252525; color: #f5efe6; }
+        .dish-search-item .price { color: #888; font-size: .8rem; }
+
         /* ===== CALENDAR ===== */
         .cal-list { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; max-width: 700px; }
         .cal-day {
@@ -581,20 +700,7 @@
                     <h1>Наборы</h1>
                     <button class="btn btn-primary" onclick="openSetModal()">+ Создать набор</button>
                 </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width:80px;">Порядок</th>
-                                <th>Название</th>
-                                <th>Описание</th>
-                                <th style="width:80px;">Активен</th>
-                                <th style="width:120px;">Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody id="setsBody"></tbody>
-                    </table>
-                </div>
+                <div id="setsList"></div>
             </div>
 
             <!-- CUSTOMERS PANEL -->
@@ -1372,68 +1478,106 @@
 
         // ===== SETS =====
         let dishSets = [];
-        let setItems = []; // temporary items for current set being edited
 
         async function loadSets() {
             try {
+                if (!products.length) await loadDishes();
                 dishSets = await api('/api/admin/sets');
                 renderSetsTable();
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
         function renderSetsTable() {
-            document.getElementById('setsBody').innerHTML = dishSets.map(s => `
-                <tr>
-                    <td style="text-align:center;font-weight:600;color:#c8956c;">${s.sortOrder || 0}</td>
-                    <td>${escH(s.name)}</td>
-                    <td style="font-size:.85rem;color:#888;">${escH(s.description || '—')}</td>
-                    <td>${s.available ? '<span style="color:#4caf50;">Да</span>' : '<span style="color:#f44;">Нет</span>'}</td>
-                    <td>
-                        <div class="actions-cell">
-                            <button class="btn btn-secondary btn-sm" onclick="editSet(${s.id})">Изменить</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteSet(${s.id})">Удалить</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function populateSetDishSelect() {
-            const sel = document.getElementById('setDishSelect');
-            sel.innerHTML = '<option value="">— Выберите товар —</option>' +
-                products.filter(p => p.available !== false).map(p => '<option value="' + p.id + '">' + escH(p.name) + ' (' + p.price + ' ₽)</option>').join('');
-        }
-
-        function renderSetItems() {
-            const container = document.getElementById('setItemsList');
-            if (!setItems.length) { container.innerHTML = '<p style="color:#666;font-size:.85rem;">Товары не добавлены</p>'; return; }
-            container.innerHTML = setItems.map((item, idx) => `
-                <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#1a1a1a;border-radius:8px;margin-bottom:4px;">
-                    <span style="flex:1;font-size:.9rem;">${escH(item.dishName)}${item.quantity > 1 ? ' × ' + item.quantity : ''}</span>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="removeSetItem(${idx})" style="padding:2px 8px;font-size:.8rem;">✕</button>
-                </div>
-            `).join('');
-        }
-
-        function addSetItem() {
-            const sel = document.getElementById('setDishSelect');
-            const dishId = parseInt(sel.value);
-            if (!dishId) return;
-            const qty = parseInt(document.getElementById('setDishQty').value) || 1;
-            const dish = products.find(p => p.id === dishId);
-            if (!dish) return;
-            const existing = setItems.find(i => i.dishId === dishId);
-            if (existing) { existing.quantity += qty; } else {
-                setItems.push({ dishId, dishName: dish.name, quantity: qty });
+            const container = document.getElementById('setsList');
+            if (!dishSets.length) {
+                container.innerHTML = '<p style="color:#666;padding:20px;">Наборы не созданы</p>';
+                return;
             }
-            renderSetItems();
-            sel.value = '';
-            document.getElementById('setDishQty').value = '1';
+            container.innerHTML = dishSets.map(s => {
+                const items = (s.items || []);
+                const statusClass = s.available ? 'active' : 'inactive';
+                const statusText = s.available ? 'Активен' : 'Неактивен';
+                return `
+                <div class="set-card" data-set-id="${s.id}">
+                    <div class="set-card-header">
+                        <span class="set-card-order">${s.sortOrder || 0}</span>
+                        <span class="set-card-name">${escH(s.name)}</span>
+                        <span class="set-card-status ${statusClass}" onclick="toggleSetStatus(${s.id})" title="Нажмите для переключения">${statusText}</span>
+                        <div class="set-card-actions">
+                            <button class="btn btn-secondary" onclick="editSet(${s.id})">Изменить</button>
+                            <button class="btn btn-danger" onclick="deleteSet(${s.id})">Удалить</button>
+                        </div>
+                    </div>
+                    ${s.description ? '<div class="set-card-desc">' + escH(s.description) + '</div>' : ''}
+                    <div class="set-card-items">
+                        <div class="set-items-tags" id="setItems_${s.id}">
+                            ${items.length ? items.map(it => `
+                                <span class="set-item-tag">
+                                    ${escH(it.dishName)}${it.quantity > 1 ? ' &times; ' + it.quantity : ''}
+                                    <span class="remove-item" onclick="removeSetDish(${s.id}, ${it.id})" title="Убрать">&times;</span>
+                                </span>
+                            `).join('') : '<span style="color:#555;font-size:.82rem;">Блюда не добавлены</span>'}
+                        </div>
+                        <div class="set-add-dish">
+                            <input type="text" placeholder="Поиск блюда для добавления..." oninput="searchDishForSet(${s.id}, this)" onfocus="searchDishForSet(${s.id}, this)" onblur="setTimeout(()=>closeSetDishSearch(${s.id}),200)">
+                            <div class="dish-search-results" id="setDishSearch_${s.id}"></div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
-        function removeSetItem(idx) {
-            setItems.splice(idx, 1);
-            renderSetItems();
+        function searchDishForSet(setId, input) {
+            const q = input.value.trim().toLowerCase();
+            const dropdown = document.getElementById('setDishSearch_' + setId);
+            const available = products.filter(p => p.available !== false);
+            const filtered = q ? available.filter(p => p.name.toLowerCase().includes(q)) : available;
+            if (!filtered.length) {
+                dropdown.innerHTML = '<div class="dish-search-item" style="color:#555;cursor:default;">Ничего не найдено</div>';
+            } else {
+                dropdown.innerHTML = filtered.slice(0, 15).map(p => `
+                    <div class="dish-search-item" onmousedown="addDishToSet(${setId}, ${p.id})">
+                        <span>${escH(p.name)}</span>
+                        <span class="price">${p.price} ₽</span>
+                    </div>
+                `).join('');
+            }
+            dropdown.classList.add('open');
+        }
+
+        function closeSetDishSearch(setId) {
+            const dd = document.getElementById('setDishSearch_' + setId);
+            if (dd) dd.classList.remove('open');
+        }
+
+        async function addDishToSet(setId, dishId) {
+            try {
+                const updated = await api('/api/admin/sets/' + setId + '/items', { method: 'POST', body: { dish_id: dishId, quantity: 1 } });
+                const idx = dishSets.findIndex(s => s.id === setId);
+                if (idx >= 0) dishSets[idx] = updated;
+                renderSetsTable();
+                showToast('Блюдо добавлено');
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        async function removeSetDish(setId, itemId) {
+            try {
+                const updated = await api('/api/admin/sets/' + setId + '/items/' + itemId, { method: 'DELETE' });
+                const idx = dishSets.findIndex(s => s.id === setId);
+                if (idx >= 0) dishSets[idx] = updated;
+                renderSetsTable();
+                showToast('Блюдо убрано');
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        async function toggleSetStatus(setId) {
+            try {
+                const res = await api('/api/admin/sets/' + setId + '/toggle', { method: 'PUT' });
+                const idx = dishSets.findIndex(s => s.id === setId);
+                if (idx >= 0) dishSets[idx].available = res.available;
+                renderSetsTable();
+                showToast(res.available ? 'Набор активирован' : 'Набор деактивирован');
+            } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
         function openSetModal() {
@@ -1468,7 +1612,6 @@
                 price: 0,
                 available: editId ? (dishSets.find(x => x.id === parseInt(editId))?.available ?? false) : false,
                 sort_order: parseInt(document.getElementById('setSortOrder').value) || 0,
-                items: [],
             };
             try {
                 if (editId) {
@@ -1479,18 +1622,6 @@
                 showToast(editId ? 'Набор обновлён' : 'Набор создан');
                 await loadSets();
                 closeSetModal();
-            } catch (e) { showToast('Ошибка: ' + e.message); }
-        }
-
-        async function deleteSetImage() {
-            const editId = document.getElementById('setEditId').value;
-            if (!editId) return;
-            try {
-                await api('/api/admin/sets/' + editId + '/image', { method: 'DELETE' });
-                document.getElementById('setImagePreview').innerHTML = '';
-                document.getElementById('setImageDeleteBtn').style.display = 'none';
-                await loadSets();
-                showToast('Картинка удалена');
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 

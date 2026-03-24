@@ -497,10 +497,11 @@ def update_set(set_id: int, body: DishSetIn, admin: AdminUser = Depends(get_admi
     ds.price = body.price
     ds.available = body.available
     ds.sort_order = body.sort_order
-    # Replace items
-    db.query(DishSetItem).filter(DishSetItem.set_id == set_id).delete()
-    for item in body.items:
-        db.add(DishSetItem(set_id=set_id, dish_id=item.dish_id, quantity=item.quantity))
+    # Only replace items if explicitly provided
+    if body.items:
+        db.query(DishSetItem).filter(DishSetItem.set_id == set_id).delete()
+        for item in body.items:
+            db.add(DishSetItem(set_id=set_id, dish_id=item.dish_id, quantity=item.quantity))
     db.commit()
     return {"ok": True}
 
@@ -550,6 +551,50 @@ def delete_set(set_id: int, admin: AdminUser = Depends(get_admin), db: Session =
     db.delete(ds)
     db.commit()
     return {"ok": True}
+
+
+class SetItemAddIn(BaseModel):
+    dish_id: int
+    quantity: int = 1
+
+
+@router.post("/sets/{set_id}/items")
+def add_set_item(set_id: int, body: SetItemAddIn, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    ds = db.query(DishSet).filter(DishSet.id == set_id).first()
+    if not ds:
+        raise HTTPException(status_code=404, detail="Набор не найден")
+    dish = db.query(Dish).filter(Dish.id == body.dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Блюдо не найдено")
+    existing = db.query(DishSetItem).filter(DishSetItem.set_id == set_id, DishSetItem.dish_id == body.dish_id).first()
+    if existing:
+        existing.quantity += body.quantity
+    else:
+        db.add(DishSetItem(set_id=set_id, dish_id=body.dish_id, quantity=body.quantity))
+    db.commit()
+    ds = db.query(DishSet).filter(DishSet.id == set_id).options(joinedload(DishSet.items).joinedload(DishSetItem.dish)).first()
+    return format_dish_set(ds)
+
+
+@router.delete("/sets/{set_id}/items/{item_id}")
+def remove_set_item(set_id: int, item_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    item = db.query(DishSetItem).filter(DishSetItem.id == item_id, DishSetItem.set_id == set_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Элемент не найден")
+    db.delete(item)
+    db.commit()
+    ds = db.query(DishSet).filter(DishSet.id == set_id).options(joinedload(DishSet.items).joinedload(DishSetItem.dish)).first()
+    return format_dish_set(ds)
+
+
+@router.put("/sets/{set_id}/toggle")
+def toggle_set(set_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    ds = db.query(DishSet).filter(DishSet.id == set_id).first()
+    if not ds:
+        raise HTTPException(status_code=404, detail="Набор не найден")
+    ds.available = not ds.available
+    db.commit()
+    return {"ok": True, "available": ds.available}
 
 
 # ===== CALENDAR =====
