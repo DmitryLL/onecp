@@ -84,6 +84,7 @@ def get_current_customer_dep(request: Request, db: Session = Depends(get_db)) ->
 
 
 def send_sms(phone: str, code: str):
+    """Send SMS via configured provider. Raises Exception on failure."""
     if SMS_PROVIDER == "mock":
         logger.info(f"[MOCK SMS] Phone: {phone}, Code: {code}")
         return
@@ -91,25 +92,44 @@ def send_sms(phone: str, code: str):
     if SMS_PROVIDER == "smsru":
         import urllib.request
         import urllib.parse
+        import urllib.error
         import json
+        phone_digits = phone.lstrip("+")
         params = urllib.parse.urlencode({
             "api_id": SMSRU_API_KEY,
-            "to": phone.lstrip("+"),
-            "msg": f"OneCp: ваш код подтверждения {code}",
+            "to": phone_digits,
+            "msg": f"One Coffee Place: ваш код {code}",
             "json": 1,
         })
         try:
-            resp = urllib.request.urlopen(f"https://sms.ru/sms/send?{params}", timeout=10)
+            resp = urllib.request.urlopen(f"https://sms.ru/sms/send?{params}", timeout=15)
             body = resp.read().decode("utf-8")
-            logger.info(f"[SMS.RU] Response: {body}")
-            try:
-                data = json.loads(body)
-                if data.get("status") != "OK":
-                    logger.error(f"[SMS.RU] Send failed: {data.get('status_text', body)}")
-            except Exception:
-                pass
-        except Exception as e:
-            logger.error(f"[SMS.RU] Request error: {e}")
+            logger.info(f"[SMS.RU] Phone: {phone_digits}, Response: {body}")
+            data = json.loads(body)
+
+            # Check overall request status
+            if data.get("status") != "OK":
+                error_msg = data.get("status_text", body)
+                logger.error(f"[SMS.RU] Request failed: {error_msg}")
+                raise Exception(f"SMS.RU error: {error_msg}")
+
+            # Check per-phone delivery status
+            sms_data = data.get("sms", {})
+            phone_status = sms_data.get(phone_digits, {})
+            if isinstance(phone_status, dict) and phone_status.get("status") == "ERROR":
+                error_msg = phone_status.get("status_text", "Unknown error")
+                status_code = phone_status.get("status_code", "")
+                logger.error(f"[SMS.RU] Delivery failed for {phone_digits}: {error_msg} (code: {status_code})")
+                raise Exception(f"SMS не доставлена: {error_msg}")
+
+            logger.info(f"[SMS.RU] SMS sent OK to {phone_digits}")
+
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"[SMS.RU] Bad response: {e}")
+            raise Exception("Ошибка ответа от SMS провайдера")
+        except urllib.error.URLError as e:
+            logger.error(f"[SMS.RU] Network error: {e}")
+            raise Exception("Не удалось подключиться к SMS провайдеру")
 
 
 @router.post("/send-code")
@@ -130,7 +150,11 @@ def send_code(body: SendCodeRequest, db: Session = Depends(get_db)):
     db.add(sms_code)
     db.commit()
 
-    send_sms(body.phone, code)
+    try:
+        send_sms(body.phone, code)
+    except Exception as e:
+        logger.error(f"[SMS] Failed to send to {body.phone}: {e}")
+        raise HTTPException(status_code=502, detail=f"Не удалось отправить SMS: {e}")
 
     result = {"ok": True, "message": "Код отправлен"}
     if SMS_PROVIDER == "mock":
