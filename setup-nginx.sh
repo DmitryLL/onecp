@@ -43,7 +43,8 @@ server {
         try_files $uri /login/index.html;
     }
 
-    location /admin/ {
+    # Admin panel routes
+    location ~ ^/(orders|questions|products|sets|calendar|customers|settings)(/|$) {
         try_files $uri /admin/index.html;
     }
 
