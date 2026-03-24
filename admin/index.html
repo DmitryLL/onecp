@@ -756,6 +756,7 @@
                     <label style="color:#aaa;font-size:.9rem;">Дата:</label>
                     <input type="date" id="ordersDate" onchange="loadOrdersByDate()" style="padding:8px 14px;background:#f5f5f5;border:1.5px solid #d0d0d0;border-radius:8px;color:#333;font-size:.9rem;font-family:inherit;">
                     <button class="btn btn-primary btn-sm" onclick="exportOrdersExcel()">Скачать Excel</button>
+                    <button class="btn btn-sm" onclick="exportKitchenExcel()" style="background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;">Отчёт для кухни</button>
                 </div>
 
                 <div id="ordersDateContent"></div>
@@ -1808,6 +1809,40 @@
             XLSX.utils.book_append_sheet(wb, ws, 'Заказы');
             XLSX.writeFile(wb, 'orders_' + dateStr + '.xlsx');
             showToast('Файл скачан');
+        }
+
+        async function exportKitchenExcel() {
+            const dateStr = document.getElementById('ordersDate').value;
+            if (!dateStr) { showToast('Выберите дату'); return; }
+            if (!dateOrders.length) {
+                try {
+                    const orders = await api('/api/admin/orders');
+                    dateOrders = orders.filter(o => o.createdAt && o.createdAt.substring(0, 10) === dateStr);
+                } catch (e) { showToast('Ошибка загрузки: ' + e.message); return; }
+            }
+            if (!dateOrders.length) { showToast('Нет заказов за эту дату'); return; }
+            try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
+
+            // Aggregate dishes
+            const totals = {};
+            dateOrders.forEach(o => {
+                o.items.forEach(it => {
+                    if (totals[it.name]) totals[it.name] += it.qty;
+                    else totals[it.name] = it.qty;
+                });
+            });
+
+            const data = [['Блюдо', 'Количество']];
+            Object.keys(totals).sort().forEach(name => {
+                data.push([name, totals[name]]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [{ wch: 40 }, { wch: 14 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Кухня');
+            XLSX.writeFile(wb, 'kitchen_' + dateStr + '.xlsx');
+            showToast('Отчёт для кухни скачан');
         }
 
         // ===== QUESTIONS =====
