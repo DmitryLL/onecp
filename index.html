@@ -1285,10 +1285,6 @@
 <section class="hero">
     <h1 id="siteHeroTitle">Добро пожаловать в OneCp</h1>
     <p id="siteHeroSub">Качественные товары по лучшим ценам с быстрой доставкой по всей России</p>
-    <a href="#catalog" class="hero-btn" id="siteHeroBtn">
-        <span>Перейти к каталогу</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-    </a>
 </section>
 
 <!-- BEIGE WRAPPER -->
@@ -1896,7 +1892,6 @@
             }
             if (s.heroTitle && !locInfo) document.getElementById('siteHeroTitle').innerHTML = nl2br(s.heroTitle);
             if (s.heroSub && !locInfo) document.getElementById('siteHeroSub').innerHTML = nl2br(s.heroSub);
-            if (s.heroBtn) document.getElementById('siteHeroBtn').querySelector('span').textContent = s.heroBtn;
             if (s.catalogTitle) document.getElementById('siteCatalogTitle').innerHTML = nl2br(s.catalogTitle);
             if (s.catalogSub) document.getElementById('siteCatalogSub').innerHTML = nl2br(s.catalogSub);
             if (s.aboutTitle) document.getElementById('siteAboutTitle').innerHTML = nl2br(s.aboutTitle);
