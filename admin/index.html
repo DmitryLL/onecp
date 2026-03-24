@@ -483,9 +483,9 @@
             <div class="sidebar-logo"><img src="/images/logo.png" alt="One Coffee Place" style="height:36px;width:auto;"></div>
             <div class="sidebar-sub">Панель управления</div>
             <nav class="sidebar-nav">
-                <a href="#" class="active" onclick="showPanel('orders'); return false;">📋 Заказы</a>
+                <a href="#" onclick="showPanel('orders'); return false;">📋 Заказы</a>
                 <a href="#" onclick="showPanel('questions'); return false;">💬 Вопросы</a>
-                <a href="#" onclick="showPanel('products'); return false;">📦 Товары</a>
+                <a href="#" class="active" onclick="showPanel('products'); return false;">📦 Товары</a>
                 <a href="#" onclick="showPanel('sets'); return false;">🎁 Наборы</a>
                 <a href="#" onclick="showPanel('customers'); return false;">👥 Клиенты</a>
                 <a href="#" onclick="showPanel('settings'); return false;">⚙️ Настройки сайта</a>
@@ -578,7 +578,7 @@
             </div>
 
             <!-- ORDERS PANEL -->
-            <div id="ordersPanel" style="display:block;">
+            <div id="ordersPanel" style="display:none;">
                 <div class="page-header">
                     <h1>Заказы</h1>
                 </div>
@@ -1806,9 +1806,8 @@
         }
 
         // ===== INIT =====
-        // Set today as default orders date and load orders first
         document.getElementById('ordersDate').value = new Date().toISOString().substring(0, 10);
-        loadOrdersByDate();
+        showPanel('products');
         loadDishes();
     </script>
 </body>
