@@ -969,16 +969,34 @@
                         <h2>${escH(cat)}</h2>
                         <span class="count">${groups[cat].length}</span>
                     </div>
-                    ${groups[cat].map(p => `
-                        <div class="archive-card">
-                            ${p.imageUrl ? '<img src="' + p.imageUrl + '">' : '<div style="width:48px;height:48px;background:#1a1a1a;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#333;font-size:1.2rem;">📦</div>'}
-                            <div class="info">
-                                <h4>${escH(p.name)}</h4>
-                                <span>${p.price.toLocaleString('ru-RU')} ₽</span>
-                            </div>
-                            <button class="btn btn-sm" onclick="restoreProduct(${p.id})" style="background:rgba(200,149,108,.15);color:#c8956c;border:1px solid rgba(200,149,108,.2);padding:8px 16px;font-weight:600;white-space:nowrap;">Восстановить</button>
-                        </div>
-                    `).join('')}
+                    <table style="font-size:.82rem;">
+                        <thead><tr>
+                            <th style="width:40px;">Фото</th>
+                            <th>Название</th>
+                            <th>Описание</th>
+                            <th style="width:60px;">Вес</th>
+                            <th style="width:45px;">Ед.</th>
+                            <th style="width:40px;">Б</th>
+                            <th style="width:40px;">Ж</th>
+                            <th style="width:40px;">У</th>
+                            <th style="width:65px;">Цена</th>
+                            <th style="width:90px;"></th>
+                        </tr></thead>
+                        <tbody>
+                        ${groups[cat].map(p => `<tr style="opacity:.7;">
+                            <td style="text-align:center;font-size:0;line-height:0;">${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:32px;height:32px;object-fit:cover;border-radius:6px;">' : '<div style="width:32px;height:32px;background:#1a1a1a;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#333;font-size:.7rem;">📦</div>'}</td>
+                            <td style="color:#bbb;">${escH(p.name)}</td>
+                            <td style="color:#666;max-width:200px;word-wrap:break-word;white-space:pre-wrap;">${escH(p.description || '—')}</td>
+                            <td style="color:#888;text-align:center;">${escH(p.weight || '—')}</td>
+                            <td style="color:#888;text-align:center;">${escH(p.weightUnit || 'г')}</td>
+                            <td style="color:#888;text-align:center;">${p.proteins ?? '—'}</td>
+                            <td style="color:#888;text-align:center;">${p.fats ?? '—'}</td>
+                            <td style="color:#888;text-align:center;">${p.carbs ?? '—'}</td>
+                            <td style="color:#aaa;font-weight:600;text-align:center;">${p.price.toLocaleString('ru-RU')} ₽</td>
+                            <td style="text-align:center;"><button class="btn btn-sm" onclick="restoreProduct(${p.id})" style="padding:4px 10px;font-size:.75rem;background:rgba(200,149,108,.15);color:#c8956c;border:1px solid rgba(200,149,108,.2);font-weight:600;white-space:nowrap;">Восстановить</button></td>
+                        </tr>`).join('')}
+                        </tbody>
+                    </table>
                 </div>
             `).join('');
         }
