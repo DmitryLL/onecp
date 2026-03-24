@@ -608,21 +608,23 @@ def get_available_sets(db: Session):
 
 
 def generate_calendar_day(db: Session, target_date: date):
-    """Generate a single calendar day based on counter logic."""
+    """Generate a single calendar day based on sortOrder rotation logic.
+
+    Looks at the previous day's set sortOrder, then picks the next available
+    set with a higher sortOrder. If none found, wraps around to the lowest.
+    """
     existing = db.query(CalendarDay).filter(CalendarDay.date == target_date).first()
     if existing:
         return existing
 
-    available = get_available_sets(db)
+    available = get_available_sets(db)  # sorted by sort_order, id
     if not available:
         day = CalendarDay(date=target_date)
         db.add(day)
         db.flush()
         return day
 
-    total = len(available)
-
-    # Find previous day to determine count
+    # Find previous day's set sortOrder
     prev_day = (
         db.query(CalendarDay)
         .filter(CalendarDay.date < target_date)
@@ -630,21 +632,22 @@ def generate_calendar_day(db: Session, target_date: date):
         .first()
     )
 
-    if prev_day:
-        prev_count = len(prev_day.sets)
-        if prev_count >= total:
-            new_count = 1  # reset
+    next_set = available[0]  # default: first by sortOrder
+    if prev_day and prev_day.sets:
+        prev_set_id = prev_day.sets[0].set_id
+        prev_set = db.query(DishSet).filter(DishSet.id == prev_set_id).first()
+        prev_order = prev_set.sort_order if prev_set else 0
+        # Find next available set with sortOrder > prev_order
+        candidates = [s for s in available if s.sort_order > prev_order]
+        if candidates:
+            next_set = candidates[0]
         else:
-            new_count = prev_count + 1
-    else:
-        new_count = 1
+            next_set = available[0]  # wrap around to first
 
     day = CalendarDay(date=target_date)
     db.add(day)
     db.flush()
-
-    for i in range(min(new_count, total)):
-        db.add(CalendarDaySet(calendar_day_id=day.id, set_id=available[i].id))
+    db.add(CalendarDaySet(calendar_day_id=day.id, set_id=next_set.id))
 
     return day
 
