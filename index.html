@@ -80,8 +80,14 @@
         /* ===== HEADER ===== */
         /* ===== SBER HERO ===== */
         .hero.hero-sber {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 40%, #1a1a1a 100%);
+            background: radial-gradient(ellipse at 30% 50%, #1e2a1e 0%, #151515 50%, #0d0d0d 100%);
             overflow: hidden;
+        }
+        .hero.hero-sber::before {
+            background: linear-gradient(to bottom, #151515, transparent);
+        }
+        .hero.hero-sber::after {
+            background: linear-gradient(to bottom, transparent, var(--beige));
         }
         .sber-logo-bg {
             position: absolute;
@@ -89,30 +95,39 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 24px;
+            gap: clamp(16px, 3vw, 36px);
             pointer-events: none;
             z-index: 0;
         }
-        .sber-logo-bg .sber-shield {
+        .sber-logo-bg .sber-icon {
             flex-shrink: 0;
+            width: clamp(80px, 12vw, 160px);
+            height: clamp(80px, 12vw, 160px);
+            filter: drop-shadow(0 0 60px rgba(33,209,75,.35));
         }
         .sber-logo-bg .sber-text {
-            font-family: 'Arial Black', 'Arial', sans-serif;
-            font-size: clamp(4rem, 10vw, 9rem);
+            font-family: 'SB Sans Display', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: clamp(3.5rem, 9vw, 8rem);
             font-weight: 900;
-            letter-spacing: 4px;
-            background: linear-gradient(180deg, #21d14b 0%, #0fa83a 40%, #2beb5a 60%, #0fa83a 100%);
+            letter-spacing: 2px;
+            background: linear-gradient(180deg, #4eff78 0%, #21d14b 35%, #0fa83a 65%, #21d14b 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            filter: drop-shadow(0 0 40px rgba(33,209,75,.4)) drop-shadow(0 0 80px rgba(33,209,75,.15));
+            filter: drop-shadow(0 0 50px rgba(33,209,75,.3));
             text-transform: uppercase;
             line-height: 1;
         }
-        .sber-shield svg {
-            width: clamp(60px, 8vw, 120px);
-            height: auto;
-            filter: drop-shadow(0 0 30px rgba(33,209,75,.5));
+        .sber-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(33,209,75,.12) 0%, transparent 70%);
+            pointer-events: none;
+            top: 50%;
+            left: 30%;
+            transform: translate(-50%, -50%);
         }
 
         .hero-slogan {
@@ -2211,7 +2226,7 @@
 
     // ===== LOCATION PAGES =====
     const LOCATIONS = {
-        '/Sber': { name: 'Sber', address: 'Фонтанная 18', description: 'Точка выдачи в бизнес-центре Sber', heroCss: 'hero-sber', heroHtml: '<div class="sber-logo-bg"><span class="sber-shield"><svg viewBox="0 0 56 56" fill="none"><path d="M28 2C13.64 2 2 13.64 2 28s11.64 26 26 26 26-11.64 26-26S42.36 2 28 2z" fill="url(#sg1)"/><path d="M17.5 28.8l-4.2-2.4v-5l21.2-12.2 4.2 2.4v5L17.5 28.8z" fill="url(#sg2)"/><path d="M38.5 27.2l4.2 2.4v5L21.5 46.8l-4.2-2.4v-5L38.5 27.2z" fill="url(#sg3)"/><path d="M38.7 16.6l4.2 2.4L28 28l-4.2-2.4 14.9-9z" fill="url(#sg4)"/><path d="M17.3 39.4l-4.2-2.4L28 28l4.2 2.4-14.9 9z" fill="url(#sg5)"/><defs><linearGradient id="sg1" x1="2" y1="2" x2="54" y2="54"><stop stop-color="#21d14b"/><stop offset="1" stop-color="#0fa83a"/></linearGradient><linearGradient id="sg2" x1="13" y1="9" x2="39" y2="29"><stop stop-color="#5ff77f"/><stop offset="1" stop-color="#21d14b"/></linearGradient><linearGradient id="sg3" x1="17" y1="27" x2="43" y2="47"><stop stop-color="#21d14b"/><stop offset="1" stop-color="#0d8a2e"/></linearGradient><linearGradient id="sg4" x1="24" y1="17" x2="43" y2="19"><stop stop-color="#5ff77f"/><stop offset="1" stop-color="#21d14b"/></linearGradient><linearGradient id="sg5" x1="13" y1="37" x2="32" y2="39"><stop stop-color="#21d14b"/><stop offset="1" stop-color="#0d8a2e"/></linearGradient></defs></svg></span><span class="sber-text">Сбербанк</span></div>' },
+        '/Sber': { name: 'Sber', address: 'Фонтанная 18', description: 'Точка выдачи в бизнес-центре Sber', heroCss: 'hero-sber', heroHtml: '<div class="sber-glow"></div><div class="sber-logo-bg"><svg class="sber-icon" viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="96" fill="url(#sc1)" stroke="url(#sc2)" stroke-width="2"/><path d="M60 102l-20-12V72l80-46 20 12v18L60 102z" fill="url(#sc3)"/><path d="M140 98l20 12v18l-80 46-20-12v-18L140 98z" fill="url(#sc4)"/><path d="M140 56l20 12-60 36-20-12 60-36z" fill="url(#sc5)"/><path d="M60 144l-20-12 60-36 20 12-60 36z" fill="url(#sc6)"/><defs><radialGradient id="sc1" cx="100" cy="100" r="96" gradientUnits="userSpaceOnUse"><stop stop-color="#2bdb55"/><stop offset="1" stop-color="#0d9a2e"/></radialGradient><linearGradient id="sc2" x1="20" y1="20" x2="180" y2="180"><stop stop-color="#4eff78"/><stop offset="1" stop-color="#0fa83a"/></linearGradient><linearGradient id="sc3" x1="40" y1="26" x2="140" y2="102"><stop stop-color="#b8ffc9"/><stop offset=".5" stop-color="#4eff78"/><stop offset="1" stop-color="#21d14b"/></linearGradient><linearGradient id="sc4" x1="60" y1="98" x2="160" y2="174"><stop stop-color="#21d14b"/><stop offset="1" stop-color="#0a7a24"/></linearGradient><linearGradient id="sc5" x1="80" y1="56" x2="160" y2="68"><stop stop-color="#b8ffc9"/><stop offset="1" stop-color="#21d14b"/></linearGradient><linearGradient id="sc6" x1="40" y1="132" x2="120" y2="144"><stop stop-color="#21d14b"/><stop offset="1" stop-color="#0a7a24"/></linearGradient></defs></svg><span class="sber-text">Сбербанк</span></div>' },
         '/Skycity': { name: 'Sky City', address: 'Алеутская 45', description: 'Точка выдачи в БЦ Sky City' },
         '/InternationalBayViewtowers': { name: 'International BayView Towers', address: 'Енисейская 23', description: 'Точка выдачи в International BayView Towers' },
     };
