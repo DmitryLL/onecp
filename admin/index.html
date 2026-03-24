@@ -138,6 +138,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         th {
@@ -155,6 +156,9 @@
             padding: 14px 16px;
             border-top: 1px solid #1a1a1a;
             font-size: .95rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-wrap: break-word;
         }
 
         tr:hover td { background: rgba(245,239,230,.03); }
@@ -225,6 +229,9 @@
             font-family: inherit;
             transition: all .25s ease;
             letter-spacing: .01em;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
         }
         .inline-input:hover {
             border-color: #555;
@@ -237,6 +244,8 @@
             background: #1a1409;
             box-shadow: 0 0 0 3px rgba(200,149,108,.15), 0 2px 12px rgba(200,149,108,.08);
             color: #f0e6d8;
+            white-space: normal;
+            overflow: visible;
         }
         .inline-input::placeholder { color: #3a3a3a; }
         .inline-num {
@@ -483,12 +492,12 @@
             <div class="sidebar-logo"><img src="/images/logo.png" alt="One Coffee Place" style="height:36px;width:auto;"></div>
             <div class="sidebar-sub">Панель управления</div>
             <nav class="sidebar-nav">
-                <a href="#" onclick="showPanel('orders'); return false;">📋 Заказы</a>
-                <a href="#" onclick="showPanel('questions'); return false;">💬 Вопросы</a>
-                <a href="#" class="active" onclick="showPanel('products'); return false;">📦 Товары</a>
-                <a href="#" onclick="showPanel('sets'); return false;">🎁 Наборы</a>
-                <a href="#" onclick="showPanel('customers'); return false;">👥 Клиенты</a>
-                <a href="#" onclick="showPanel('settings'); return false;">⚙️ Настройки сайта</a>
+                <a href="#orders" onclick="showPanel('orders');">📋 Заказы</a>
+                <a href="#questions" onclick="showPanel('questions');">💬 Вопросы</a>
+                <a href="#products" onclick="showPanel('products');">📦 Товары</a>
+                <a href="#sets" onclick="showPanel('sets');">🎁 Наборы</a>
+                <a href="#customers" onclick="showPanel('customers');">👥 Клиенты</a>
+                <a href="#settings" onclick="showPanel('settings');">⚙️ Настройки сайта</a>
             </nav>
             <div class="sidebar-bottom">
                 <a href="/" class="sidebar-nav" style="color:#666;text-decoration:none;padding:10px 14px;font-size:.9rem;">← На сайт</a>
@@ -988,9 +997,9 @@
                         <thead>
                             <tr>
                                 <th style="width:56px;">Фото</th>
-                                <th style="width:120px;">Тип</th>
-                                <th>Название</th>
-                                <th>Описание</th>
+                                <th style="width:140px;">Тип</th>
+                                <th style="min-width:120px;">Название</th>
+                                <th style="min-width:140px;">Описание</th>
                                 <th style="width:70px;">Вес</th>
                                 <th style="width:50px;">Ед.</th>
                                 <th style="width:55px;">Б</th>
@@ -1254,7 +1263,10 @@
         }
 
         // ===== PANELS =====
+        const panelMap = {orders:0, questions:1, products:2, sets:3, customers:4, settings:5};
         function showPanel(panel) {
+            if (!panelMap.hasOwnProperty(panel)) panel = 'products';
+            location.hash = panel;
             const links = document.querySelectorAll('.sidebar-nav a');
             links.forEach(a => a.classList.remove('active'));
             document.getElementById('productsPanel').style.display = 'none';
@@ -1266,29 +1278,28 @@
 
             if (panel === 'orders') {
                 document.getElementById('ordersPanel').style.display = 'block';
-                links[0]?.classList.add('active');
                 loadOrdersByDate();
             } else if (panel === 'questions') {
                 document.getElementById('questionsPanel').style.display = 'block';
-                links[1]?.classList.add('active');
                 loadQuestions();
             } else if (panel === 'products') {
                 document.getElementById('productsPanel').style.display = 'block';
-                links[2]?.classList.add('active');
             } else if (panel === 'sets') {
                 document.getElementById('setsPanel').style.display = 'block';
-                links[3]?.classList.add('active');
                 loadSets();
             } else if (panel === 'customers') {
                 document.getElementById('customersPanel').style.display = 'block';
-                links[4]?.classList.add('active');
                 loadCustomers();
             } else {
                 document.getElementById('settingsPanel').classList.add('active');
-                links[5]?.classList.add('active');
                 loadSettingsForm();
             }
+            links[panelMap[panel]]?.classList.add('active');
         }
+        window.addEventListener('hashchange', () => {
+            const h = location.hash.replace('#', '') || 'products';
+            showPanel(h);
+        });
 
         // ===== SETS =====
         let dishSets = [];
@@ -1807,7 +1818,8 @@
 
         // ===== INIT =====
         document.getElementById('ordersDate').value = new Date().toISOString().substring(0, 10);
-        showPanel('products');
+        const initPanel = location.hash.replace('#', '') || 'products';
+        showPanel(initPanel);
         loadDishes();
     </script>
 </body>
