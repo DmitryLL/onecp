@@ -1861,8 +1861,8 @@
                 d.textContent = text;
                 return d.innerHTML.replace(/\n/g, '<br>');
             }
-            if (s.heroTitle) document.getElementById('siteHeroTitle').innerHTML = nl2br(s.heroTitle);
-            if (s.heroSub) document.getElementById('siteHeroSub').innerHTML = nl2br(s.heroSub);
+            if (s.heroTitle && !locInfo) document.getElementById('siteHeroTitle').innerHTML = nl2br(s.heroTitle);
+            if (s.heroSub && !locInfo) document.getElementById('siteHeroSub').innerHTML = nl2br(s.heroSub);
             if (s.heroBtn) document.getElementById('siteHeroBtn').querySelector('span').textContent = s.heroBtn;
             if (s.catalogTitle) document.getElementById('siteCatalogTitle').innerHTML = nl2br(s.catalogTitle);
             if (s.catalogSub) document.getElementById('siteCatalogSub').innerHTML = nl2br(s.catalogSub);
@@ -1884,15 +1884,17 @@
 
     // ===== LOCATION PAGES =====
     const LOCATIONS = {
-        '/Sber': { name: 'Sber', address: 'Фонтанная 18' },
-        '/Skycity': { name: 'Sky City', address: 'Алеутская 45' },
-        '/InternationalBayViewtowers': { name: 'International BayView Towers', address: 'Енисейская 23' },
+        '/Sber': { name: 'Sber', address: 'Фонтанная 18', description: 'Точка выдачи в бизнес-центре Sber' },
+        '/Skycity': { name: 'Sky City', address: 'Алеутская 45', description: 'Точка выдачи в ЖК Sky City' },
+        '/InternationalBayViewtowers': { name: 'International BayView Towers', address: 'Енисейская 23', description: 'Точка выдачи в International BayView Towers' },
     };
     const locInfo = LOCATIONS[window.location.pathname];
     const currentLocation = locInfo ? locInfo.address : '';
     if (locInfo) {
         document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
         document.getElementById('orderAddress').value = locInfo.address;
+        document.getElementById('siteHeroTitle').innerHTML = locInfo.description;
+        document.getElementById('siteHeroSub').innerHTML = locInfo.address + '&ensp;·&ensp;Закажите обед на завтра и заберите в удобное время';
     } else if (window.location.pathname !== '/') {
         window.location.replace('/');
     } else {
