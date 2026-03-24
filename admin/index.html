@@ -771,6 +771,7 @@
                         <option value="Горячее">Горячее</option>
                         <option value="Десерт">Десерт</option>
                         <option value="Напиток">Напиток</option>
+                        <option value="Мучное">Мучное</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -925,7 +926,7 @@
         }
 
         // ===== RENDER TABLE =====
-        const categoryOrder = ['Суп', 'Салат', 'Горячее', 'Десерт', 'Напиток'];
+        const categoryOrder = ['Суп', 'Салат', 'Горячее', 'Десерт', 'Напиток', 'Мучное'];
         let productsTab = 'active';
 
         function showProductsTab(tab) {
@@ -960,7 +961,7 @@
                 if (ib === -1) return -1;
                 return ia - ib;
             });
-            const catIcons = {'Суп':'🍲','Салат':'🥗','Горячее':'🍽','Десерт':'🍰','Напиток':'☕','Без типа':'📋'};
+            const catIcons = {'Суп':'🍲','Салат':'🥗','Горячее':'🍽','Десерт':'🍰','Напиток':'☕','Мучное':'🥖','Без типа':'📋'};
             container.innerHTML = sortedKeys.map(cat => `
                 <div class="prod-section" style="margin-bottom:24px;">
                     <div class="prod-section-header">
@@ -998,7 +999,7 @@
                 return ia - ib;
             });
             const container = document.getElementById('productsSections');
-            const catIcons = {'Суп':'🍲','Салат':'🥗','Горячее':'🍽','Десерт':'🍰','Напиток':'☕','Без типа':'📋'};
+            const catIcons = {'Суп':'🍲','Салат':'🥗','Горячее':'🍽','Десерт':'🍰','Напиток':'☕','Мучное':'🥖','Без типа':'📋'};
             container.innerHTML = sortedKeys.map(cat => `
                 <div class="prod-section">
                     <div class="prod-section-header">
