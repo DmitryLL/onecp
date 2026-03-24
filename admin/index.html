@@ -988,7 +988,7 @@
                         <thead>
                             <tr>
                                 <th style="width:56px;">Фото</th>
-                                <th style="width:90px;">Тип</th>
+                                <th style="width:120px;">Тип</th>
                                 <th>Название</th>
                                 <th>Описание</th>
                                 <th style="width:70px;">Вес</th>
@@ -1055,10 +1055,16 @@
                     price: parseFloat(get('price')) || 0,
                 };
                 try {
+                    const oldP = products.find(x => x.id === parseInt(id));
+                    const oldCat = oldP ? oldP.category : null;
                     await api('/api/admin/dishes/' + id, { method: 'PUT', body: data });
-                    // Update local data without re-render
-                    const p = products.find(x => x.id === parseInt(id));
-                    if (p) { Object.assign(p, { ...data, weightUnit: data.weight_unit }); }
+                    // Update local data
+                    if (oldP) { Object.assign(oldP, { ...data, weightUnit: data.weight_unit }); }
+                    // If category changed, re-render table so dish moves to correct section
+                    if (data.category !== oldCat) {
+                        renderTable();
+                        return;
+                    }
                     // Flash green border briefly
                     row.style.outline = '1px solid #4caf50';
                     setTimeout(() => { row.style.outline = ''; }, 600);
