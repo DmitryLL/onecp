@@ -13,9 +13,9 @@
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --beige: #f5efe6;
-            --beige-dark: #e8ddd0;
-            --beige-light: #faf7f2;
+            --beige: #e4d9cc;
+            --beige-dark: #d5c8b8;
+            --beige-light: #efe8de;
             --brown: #8b7355;
             --brown-dark: #6b5740;
             --brown-light: #a89279;
@@ -130,7 +130,7 @@
             transition: all .25s;
         }
 
-        nav a:hover { background: rgba(245,239,230,.1); color: var(--beige); }
+        nav a:hover { background: rgba(228,217,204,.15); color: var(--beige); }
 
         .nav-cart {
             display: flex;
@@ -925,7 +925,18 @@
         .bottom-banner {
             width: 100%;
             position: relative;
-            background: var(--beige);
+            background: var(--beige-dark);
+        }
+
+        .bottom-banner::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(to bottom, var(--beige), var(--beige-dark));
+            pointer-events: none;
         }
 
         .bottom-banner img {
@@ -1144,7 +1155,7 @@
                 font-weight: 500;
             }
 
-            .mobile-menu a:hover { background: rgba(245,239,230,.1); color: var(--beige); }
+            .mobile-menu a:hover { background: rgba(228,217,204,.15); color: var(--beige); }
 
             .mobile-cart-fab.visible {
                 display: flex;
