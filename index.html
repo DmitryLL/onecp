@@ -1002,115 +1002,108 @@
             /* ===== LOCATION PICKER ===== */
             .location-page {
                 min-height: 100vh;
-                background: var(--beige);
                 display: flex;
                 flex-direction: column;
-            }
-            .location-page header {
                 background: var(--black);
-                padding: 0 24px;
+            }
+            .loc-header {
+                padding: 24px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                height: 72px;
-                border-bottom: 1px solid rgba(201,169,110,.15);
             }
-            .location-page header img {
-                height: 40px;
-                width: auto;
-            }
-            .location-main {
+            .loc-header img { height: 44px; width: auto; }
+            .loc-body {
                 flex: 1;
+                background: var(--beige);
+                border-radius: 32px 32px 0 0;
+                padding: 56px 24px 60px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                padding: 60px 24px;
             }
-            .location-main h1 {
-                font-size: 2.2rem;
+            .loc-body h1 {
+                font-size: 1.8rem;
                 font-weight: 800;
                 color: var(--text);
-                margin-bottom: 8px;
-                letter-spacing: -.5px;
+                margin-bottom: 6px;
                 text-align: center;
+                letter-spacing: -.3px;
             }
-            .location-main .loc-sub {
+            .loc-body .loc-sub {
                 color: var(--text-light);
-                font-size: 1.05rem;
-                margin-bottom: 48px;
+                font-size: .95rem;
+                margin-bottom: 40px;
                 text-align: center;
             }
             .location-cards {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
-                gap: 28px;
-                max-width: 960px;
+                gap: 24px;
+                max-width: 880px;
                 width: 100%;
             }
             .loc-card {
                 background: var(--white);
                 border-radius: var(--radius-lg);
-                overflow: hidden;
                 box-shadow: var(--shadow-card);
                 text-decoration: none;
                 transition: all .4s cubic-bezier(.22,1,.36,1);
                 cursor: pointer;
                 display: flex;
                 flex-direction: column;
+                overflow: hidden;
+                border: 2px solid transparent;
             }
             .loc-card:hover {
-                transform: translateY(-8px);
+                transform: translateY(-6px);
                 box-shadow: var(--shadow-lg);
+                border-color: var(--gold-light);
             }
             .loc-card-top {
-                height: 160px;
-                background: linear-gradient(135deg, var(--brown-light), var(--gold));
+                padding: 28px 24px 20px;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                border-bottom: 1px solid var(--beige);
+            }
+            .loc-card-top .loc-emoji {
+                width: 52px;
+                height: 52px;
+                border-radius: 14px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                position: relative;
-                overflow: hidden;
+                font-size: 1.5rem;
+                flex-shrink: 0;
+                background: linear-gradient(135deg, var(--brown-light), var(--gold));
+                color: var(--white);
+                font-weight: 700;
             }
-            .loc-card:nth-child(2) .loc-card-top {
+            .loc-card:nth-child(2) .loc-emoji {
                 background: linear-gradient(135deg, var(--gold), var(--brown));
             }
-            .loc-card:nth-child(3) .loc-card-top {
+            .loc-card:nth-child(3) .loc-emoji {
                 background: linear-gradient(135deg, var(--brown-dark), var(--brown-light));
             }
-            .loc-card-top svg {
-                width: 56px;
-                height: 56px;
-                stroke: rgba(255,255,255,.85);
-                fill: none;
-                stroke-width: 1.5;
+            .loc-card-top h3 {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: var(--text);
+                line-height: 1.3;
             }
-            .loc-card-body {
-                padding: 24px;
+            .loc-card-top .loc-addr-small {
+                font-size: .82rem;
+                color: var(--text-muted);
+                font-weight: 400;
+                margin-top: 2px;
+            }
+            .loc-card-bottom {
+                padding: 16px 24px 24px;
                 flex: 1;
                 display: flex;
                 flex-direction: column;
-            }
-            .loc-card h3 {
-                font-size: 1.2rem;
-                font-weight: 700;
-                color: var(--text);
-                margin-bottom: 10px;
-            }
-            .loc-card .loc-addr {
-                color: var(--text-light);
-                font-size: .92rem;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                margin-bottom: 20px;
-                flex: 1;
-            }
-            .loc-card .loc-addr svg {
-                width: 16px;
-                height: 16px;
-                flex-shrink: 0;
-                stroke: var(--brown);
+                justify-content: flex-end;
             }
             .loc-card .loc-btn {
                 display: flex;
@@ -1119,9 +1112,9 @@
                 gap: 8px;
                 background: linear-gradient(135deg, var(--brown), var(--brown-dark));
                 color: var(--white);
-                font-size: .92rem;
+                font-size: .9rem;
                 font-weight: 600;
-                padding: 14px 24px;
+                padding: 13px 20px;
                 border-radius: var(--radius-sm);
                 transition: all .3s;
             }
@@ -1130,24 +1123,27 @@
                 box-shadow: 0 4px 16px rgba(201,169,110,.3);
             }
             .loc-card .loc-btn svg {
-                width: 18px;
-                height: 18px;
+                width: 16px;
+                height: 16px;
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 2.5;
+                stroke-linecap: round;
+                stroke-linejoin: round;
                 transition: transform .3s;
             }
             .loc-card:hover .loc-btn svg { transform: translateX(4px); }
-            .location-page footer {
+            .loc-footer {
                 background: var(--black);
                 color: rgba(245,239,230,.4);
                 text-align: center;
-                padding: 28px 24px;
+                padding: 24px;
                 font-size: .85rem;
             }
             @media (max-width: 768px) {
-                .location-cards { grid-template-columns: 1fr; max-width: 400px; gap: 20px; }
-                .location-main h1 { font-size: 1.7rem; }
-                .location-main { padding: 40px 16px; }
-                .loc-card-top { height: 120px; }
-                .loc-card-top svg { width: 44px; height: 44px; }
+                .location-cards { grid-template-columns: 1fr; max-width: 400px; gap: 16px; }
+                .loc-body { padding: 36px 16px 40px; border-radius: 24px 24px 0 0; }
+                .loc-body h1 { font-size: 1.5rem; }
             }
             .mobile-cart-fab .fab-badge {
                 background: #fff;
@@ -1176,64 +1172,52 @@
 
 <!-- LOCATION PICKER (shown only on /) -->
 <div class="location-page" id="locationPicker" style="display:none;">
-    <header>
+    <div class="loc-header">
         <img src="images/logo.png" alt="One Coffee Place">
-    </header>
-    <div class="location-main">
+    </div>
+    <div class="loc-body">
         <h1>Выберите точку выдачи</h1>
-        <p class="loc-sub">Выберите ближайшую точку для оформления заказа</p>
+        <p class="loc-sub">Укажите, где вам удобно забрать заказ</p>
         <div class="location-cards">
             <a class="loc-card" href="/Sber">
                 <div class="loc-card-top">
-                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18.01"/><path d="M8 6h8M8 10h8M8 14h4"/></svg>
+                    <div class="loc-emoji">S</div>
+                    <div>
+                        <h3>Sber</h3>
+                        <div class="loc-addr-small">Фонтанная 18</div>
+                    </div>
                 </div>
-                <div class="loc-card-body">
-                    <h3>Sber</h3>
-                    <div class="loc-addr">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        Фонтанная 18
-                    </div>
-                    <div class="loc-btn">
-                        Заказать здесь
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </div>
+                <div class="loc-card-bottom">
+                    <div class="loc-btn">Заказать здесь <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
                 </div>
             </a>
             <a class="loc-card" href="/Skycity">
                 <div class="loc-card-top">
-                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M13 21V3l6 4v14"/><path d="M9 9v.01M9 13v.01M9 17v.01M15 11v.01M15 15v.01"/></svg>
+                    <div class="loc-emoji">SC</div>
+                    <div>
+                        <h3>Sky City</h3>
+                        <div class="loc-addr-small">Алеутская 45</div>
+                    </div>
                 </div>
-                <div class="loc-card-body">
-                    <h3>Sky City</h3>
-                    <div class="loc-addr">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        Алеутская 45
-                    </div>
-                    <div class="loc-btn">
-                        Заказать здесь
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </div>
+                <div class="loc-card-bottom">
+                    <div class="loc-btn">Заказать здесь <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
                 </div>
             </a>
             <a class="loc-card" href="/InternationalBayViewtowers">
                 <div class="loc-card-top">
-                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M9 21V6l-6 3v12M15 21V6l6 3v12M9 6l6 0M9 10h6M9 14h6M9 18h6"/></svg>
+                    <div class="loc-emoji">IB</div>
+                    <div>
+                        <h3>International BayView Towers</h3>
+                        <div class="loc-addr-small">Енисейская 23</div>
+                    </div>
                 </div>
-                <div class="loc-card-body">
-                    <h3>International BayView Towers</h3>
-                    <div class="loc-addr">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        Енисейская 23
-                    </div>
-                    <div class="loc-btn">
-                        Заказать здесь
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </div>
+                <div class="loc-card-bottom">
+                    <div class="loc-btn">Заказать здесь <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
                 </div>
             </a>
         </div>
     </div>
-    <footer id="locFooter"></footer>
+    <div class="loc-footer" id="locFooter"></div>
 </div>
 
 <!-- HEADER -->
@@ -1916,7 +1900,7 @@
         document.getElementById('siteHeader').style.display = 'none';
         document.querySelector('.hero').style.display = 'none';
         document.querySelector('.beige-wrapper').style.display = 'none';
-        document.querySelector('footer:not(.location-page footer)').style.display = 'none';
+        document.getElementById('siteFooter')?.closest('footer')?.style && (document.getElementById('siteFooter').closest('footer').style.display = 'none');
         document.getElementById('mobileCartFab').style.display = 'none';
         document.getElementById('cartOverlay').style.display = 'none';
     }
