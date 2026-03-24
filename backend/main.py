@@ -8,7 +8,7 @@ from passlib.hash import pbkdf2_sha256
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from database import engine, SessionLocal, Base
-from models import AdminUser, Dish, DishSet, DishSetItem, SiteSettings, Question
+from models import AdminUser, Dish, DishSet, DishSetItem, SiteSettings, Question, CalendarDay, CalendarDaySet
 from routes.auth import router as auth_router
 from routes.menu import router as menu_router
 from routes.orders import router as orders_router
@@ -100,6 +100,19 @@ def init_db():
         db.close()
 
 
+def generate_calendar_daily():
+    """Called at 3:00 AM Vladivostok — creates new calendar day."""
+    from routes.admin import ensure_calendar_14_days
+    db = SessionLocal()
+    try:
+        ensure_calendar_14_days(db)
+        logger.info("[SCHEDULER] Calendar days generated")
+    except Exception as e:
+        logger.error(f"[SCHEDULER] Calendar error: {e}")
+    finally:
+        db.close()
+
+
 def check_report_schedule():
     """Called every minute — sends report if current time matches configured time."""
     from datetime import datetime, timezone, timedelta
@@ -120,6 +133,7 @@ def check_report_schedule():
 async def lifespan(app: FastAPI):
     init_db()
     scheduler.add_job(check_report_schedule, "interval", minutes=1, id="email_report_check")
+    scheduler.add_job(generate_calendar_daily, "cron", hour=3, minute=0, timezone="Asia/Vladivostok", id="calendar_daily")
     scheduler.start()
     logger.info("Scheduler started")
     yield

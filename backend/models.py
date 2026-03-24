@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Date, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -119,6 +119,27 @@ class DishSetItem(Base):
 
     dish_set = relationship("DishSet", back_populates="items")
     dish = relationship("Dish")
+
+
+class CalendarDay(Base):
+    __tablename__ = "calendar_days"
+
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(Date, unique=True, nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    sets = relationship("CalendarDaySet", back_populates="calendar_day", cascade="all, delete-orphan")
+
+
+class CalendarDaySet(Base):
+    __tablename__ = "calendar_day_sets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    calendar_day_id = Column(Integer, ForeignKey("calendar_days.id"), nullable=False)
+    set_id = Column(Integer, ForeignKey("dish_sets.id"), nullable=False)
+
+    calendar_day = relationship("CalendarDay", back_populates="sets")
+    dish_set = relationship("DishSet")
 
 
 class Question(Base):

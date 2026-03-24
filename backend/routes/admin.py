@@ -10,7 +10,7 @@ from passlib.hash import pbkdf2_sha256
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/onecp/uploads")
 
 from database import get_db
-from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question, SmsCode
+from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question, SmsCode, CalendarDay, CalendarDaySet
 from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -549,4 +549,145 @@ def delete_set(set_id: int, admin: AdminUser = Depends(get_admin), db: Session =
         raise HTTPException(status_code=404, detail="Набор не найден")
     db.delete(ds)
     db.commit()
+    return {"ok": True}
+
+
+# ===== CALENDAR =====
+
+from datetime import date, timedelta
+
+
+def get_available_sets(db: Session):
+    return db.query(DishSet).filter(DishSet.available == True).order_by(DishSet.sort_order, DishSet.id).all()
+
+
+def generate_calendar_day(db: Session, target_date: date):
+    """Generate a single calendar day based on counter logic."""
+    existing = db.query(CalendarDay).filter(CalendarDay.date == target_date).first()
+    if existing:
+        return existing
+
+    available = get_available_sets(db)
+    if not available:
+        day = CalendarDay(date=target_date)
+        db.add(day)
+        db.flush()
+        return day
+
+    total = len(available)
+
+    # Find previous day to determine count
+    prev_day = (
+        db.query(CalendarDay)
+        .filter(CalendarDay.date < target_date)
+        .order_by(CalendarDay.date.desc())
+        .first()
+    )
+
+    if prev_day:
+        prev_count = len(prev_day.sets)
+        if prev_count >= total:
+            new_count = 1  # reset
+        else:
+            new_count = prev_count + 1
+    else:
+        new_count = 1
+
+    day = CalendarDay(date=target_date)
+    db.add(day)
+    db.flush()
+
+    for i in range(min(new_count, total)):
+        db.add(CalendarDaySet(calendar_day_id=day.id, set_id=available[i].id))
+
+    return day
+
+
+def ensure_calendar_14_days(db: Session):
+    """Generate calendar days for 14 days ahead if missing."""
+    from datetime import datetime, timezone, timedelta as td
+    vlad_tz = timezone(td(hours=10))
+    today = datetime.now(vlad_tz).date()
+
+    for i in range(14):
+        target = today + timedelta(days=i)
+        generate_calendar_day(db, target)
+    db.commit()
+
+
+@router.get("/calendar")
+def get_calendar(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    ensure_calendar_14_days(db)
+    from datetime import datetime, timezone, timedelta as td
+    vlad_tz = timezone(td(hours=10))
+    today = datetime.now(vlad_tz).date()
+    end = today + timedelta(days=14)
+
+    days = (
+        db.query(CalendarDay)
+        .filter(CalendarDay.date >= today, CalendarDay.date < end)
+        .options(joinedload(CalendarDay.sets).joinedload(CalendarDaySet.dish_set))
+        .order_by(CalendarDay.date)
+        .all()
+    )
+
+    available = get_available_sets(db)
+
+    return {
+        "days": [
+            {
+                "id": d.id,
+                "date": d.date.isoformat(),
+                "sets": [
+                    {"id": cs.set_id, "name": cs.dish_set.name if cs.dish_set else "—", "price": cs.dish_set.price if cs.dish_set else 0}
+                    for cs in d.sets if cs.dish_set
+                ],
+            }
+            for d in days
+        ],
+        "availableSets": [
+            {"id": s.id, "name": s.name, "price": s.price}
+            for s in available
+        ],
+    }
+
+
+class CalendarDayUpdate(BaseModel):
+    set_ids: list[int]
+
+
+@router.put("/calendar/{day_date}")
+def update_calendar_day(day_date: str, body: CalendarDayUpdate, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    target = date.fromisoformat(day_date)
+    day = db.query(CalendarDay).filter(CalendarDay.date == target).first()
+    if not day:
+        day = CalendarDay(date=target)
+        db.add(day)
+        db.flush()
+
+    # Clear existing sets
+    db.query(CalendarDaySet).filter(CalendarDaySet.calendar_day_id == day.id).delete()
+
+    # Add new sets
+    for sid in body.set_ids:
+        db.add(CalendarDaySet(calendar_day_id=day.id, set_id=sid))
+
+    db.commit()
+    return {"ok": True}
+
+
+@router.post("/calendar/regenerate")
+def regenerate_calendar(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    """Delete all future days and regenerate."""
+    from datetime import datetime, timezone, timedelta as td
+    vlad_tz = timezone(td(hours=10))
+    today = datetime.now(vlad_tz).date()
+
+    future_days = db.query(CalendarDay).filter(CalendarDay.date >= today).all()
+    for d in future_days:
+        db.query(CalendarDaySet).filter(CalendarDaySet.calendar_day_id == d.id).delete()
+        db.delete(d)
+    db.commit()
+
+    ensure_calendar_14_days(db)
     return {"ok": True}

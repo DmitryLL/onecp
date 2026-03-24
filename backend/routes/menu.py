@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Dish, DishSet, DishSetItem, SiteSettings, Question
+from models import Dish, DishSet, DishSetItem, SiteSettings, Question, CalendarDay, CalendarDaySet
 from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/menu", tags=["menu"])
@@ -38,13 +38,38 @@ def get_menu(db: Session = Depends(get_db)):
 
 @router.get("/sets")
 def get_sets(db: Session = Depends(get_db)):
-    sets = (
-        db.query(DishSet)
-        .filter(DishSet.available == True)
-        .options(joinedload(DishSet.items).joinedload(DishSetItem.dish))
-        .order_by(DishSet.sort_order, DishSet.id)
-        .all()
+    from datetime import datetime, timezone, timedelta
+    vlad_tz = timezone(timedelta(hours=10))
+    today = datetime.now(vlad_tz).date()
+
+    # Get today's calendar day
+    cal_day = (
+        db.query(CalendarDay)
+        .filter(CalendarDay.date == today)
+        .options(joinedload(CalendarDay.sets))
+        .first()
     )
+
+    if cal_day and cal_day.sets:
+        # Show only sets assigned to today
+        set_ids = [cs.set_id for cs in cal_day.sets]
+        sets = (
+            db.query(DishSet)
+            .filter(DishSet.id.in_(set_ids), DishSet.available == True)
+            .options(joinedload(DishSet.items).joinedload(DishSetItem.dish))
+            .order_by(DishSet.sort_order, DishSet.id)
+            .all()
+        )
+    else:
+        # Fallback: show all available sets
+        sets = (
+            db.query(DishSet)
+            .filter(DishSet.available == True)
+            .options(joinedload(DishSet.items).joinedload(DishSetItem.dish))
+            .order_by(DishSet.sort_order, DishSet.id)
+            .all()
+        )
+
     return [
         {
             "id": s.id,
