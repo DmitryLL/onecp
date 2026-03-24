@@ -1903,18 +1903,18 @@
         async function loadSettingsForm() {
             try {
                 const s = await api('/api/admin/settings');
-                document.getElementById('setHeroTitle').value = s.heroTitle || '';
-                document.getElementById('setHeroSub').value = s.heroSub || '';
-                document.getElementById('setHeroBtn').value = s.heroBtn || '';
-                document.getElementById('setCatalogTitle').value = s.catalogTitle || '';
-                document.getElementById('setCatalogSub').value = s.catalogSub || '';
+                document.getElementById('setHeroTitle').value = s.heroTitle || 'Забронируйте\nСВОЙ ОБЕД\nНА ЗАВТРА';
+                document.getElementById('setHeroSub').value = s.heroSub || 'Свежие блюда каждый день — закажите сегодня, заберите завтра с 11:00 до 14:00';
+                document.getElementById('setHeroBtn').value = s.heroBtn || 'Перейти к каталогу';
+                document.getElementById('setCatalogTitle').value = s.catalogTitle || 'Каталог товаров';
+                document.getElementById('setCatalogSub').value = s.catalogSub || 'Выберите товар и добавьте в корзину';
                 document.getElementById('setAboutTitle').value = s.aboutTitle || '';
                 document.getElementById('setAboutSub').value = s.aboutSub || '';
-                document.getElementById('setAddress').value = s.address || '';
+                document.getElementById('setAddress').value = s.address || 'г. Владивосток';
                 document.getElementById('setPhone').value = s.phone || '';
                 document.getElementById('setEmail').value = s.email || '';
-                document.getElementById('setSchedule').value = s.schedule || '';
-                document.getElementById('setFooter').value = s.footer || '';
+                document.getElementById('setSchedule').value = s.schedule || 'с 11:00 — 14:00';
+                document.getElementById('setFooter').value = s.footer || '© 2026 OneCp. Все права защищены.';
                 // Email report
                 document.getElementById('setReportEnabled').checked = s.reportEnabled === '1';
                 document.getElementById('setReportSmtpHost').value = s.reportSmtpHost || '';
