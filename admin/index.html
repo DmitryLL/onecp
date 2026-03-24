@@ -558,26 +558,19 @@
                     </table>
                 </div>
 
-                <!-- Order history for selected customer -->
-                <div id="customerOrdersBlock" style="display:none;">
-                    <div class="page-header">
-                        <h1 id="customerOrdersTitle">Заказы клиента</h1>
+            </div>
+
+            <!-- Order history modal -->
+            <div id="ordersHistoryOverlay" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+                <div style="background:#111;border:1px solid #222;border-radius:20px;padding:0;width:95%;max-width:720px;margin:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6);">
+                    <div style="padding:24px 28px 16px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <h2 id="ordersHistoryTitle" style="color:#fff;font-size:1.2rem;margin:0;">Заказы клиента</h2>
+                            <p id="ordersHistorySub" style="color:#555;font-size:.82rem;margin:4px 0 0;"></p>
+                        </div>
+                        <button onclick="document.getElementById('ordersHistoryOverlay').classList.remove('open')" style="background:rgba(255,255,255,.06);border:none;color:#666;font-size:1.3rem;width:36px;height:36px;border-radius:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='#666'">&times;</button>
                     </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Заказ #</th>
-                                    <th>Дата</th>
-                                    <th>Состав</th>
-                                    <th>Сумма</th>
-                                    <th>Статус</th>
-                                    <th>Комментарий</th>
-                                </tr>
-                            </thead>
-                            <tbody id="customerOrdersBody"></tbody>
-                        </table>
-                    </div>
+                    <div id="ordersHistoryContent" style="padding:16px 28px 28px;max-height:60vh;overflow-y:auto;"></div>
                 </div>
             </div>
 
@@ -1473,8 +1466,7 @@
             const tbody = document.getElementById('customersBody');
             if (!filtered.length) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:24px;">Клиенты не найдены</td></tr>';
-                document.getElementById('customerOrdersBlock').style.display = 'none';
-                return;
+                    return;
             }
             tbody.innerHTML = filtered.map(c => {
                 const orderCount = allOrders.filter(o => o.customerPhone === c.phone).length;
@@ -1491,34 +1483,34 @@
                     </td>
                 </tr>`;
             }).join('');
-            document.getElementById('customerOrdersBlock').style.display = 'none';
         }
 
         function escH(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
         function showCustomerOrders(phone, name) {
             const orders = allOrders.filter(o => o.customerPhone === phone);
-            document.getElementById('customerOrdersTitle').textContent = 'Заказы: ' + name;
-            const tbody = document.getElementById('customerOrdersBody');
+            document.getElementById('ordersHistoryTitle').textContent = name;
+            const totalSum = orders.reduce((s, o) => s + o.total, 0);
+            document.getElementById('ordersHistorySub').textContent = phone + (orders.length ? '  ·  ' + orders.length + ' заказ(ов)  ·  ' + totalSum.toLocaleString('ru-RU') + ' ₽' : '');
+            const content = document.getElementById('ordersHistoryContent');
             if (!orders.length) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:24px;">Нет заказов</td></tr>';
+                content.innerHTML = '<div style="text-align:center;padding:40px 0;"><div style="font-size:2.2rem;margin-bottom:10px;opacity:.3;">📋</div><p style="color:#444;font-size:.92rem;">Нет заказов</p></div>';
             } else {
-                tbody.innerHTML = orders.map(o => `<tr>
-                    <td>#${o.id}</td>
-                    <td style="color:#888;font-size:.85rem;">${o.createdAt ? new Date(o.createdAt).toLocaleString('ru-RU') : '—'}</td>
-                    <td style="font-size:.85rem;">${o.items.map(it => escH(it.name) + ' x' + it.qty).join(', ')}</td>
-                    <td class="price-cell">${o.total.toLocaleString('ru-RU')} &#8381;</td>
-                    <td>
-                        <select onchange="updateOrderStatus(${o.id}, this.value, 'customers')" style="padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#fff;font-size:.85rem;">
-                            ${['new','confirmed','cooking','ready','delivered','cancelled'].map(s =>
-                                '<option value="' + s + '"' + (s === o.status ? ' selected' : '') + '>' + statusLabel(s) + '</option>'
-                            ).join('')}
-                        </select>
-                    </td>
-                    <td style="color:#888;font-size:.85rem;">${escH(o.comment || '—')}</td>
-                </tr>`).join('');
+                content.innerHTML = orders.map(o => `
+                    <div style="background:#0d0d0d;border:1px solid #1a1a1a;border-radius:12px;padding:16px 20px;margin-bottom:10px;transition:background .2s;" onmouseover="this.style.background='#121212'" onmouseout="this.style.background='#0d0d0d'">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                            <span style="color:#c8956c;font-weight:700;font-size:.95rem;">Заказ #${o.id}</span>
+                            <span style="color:#555;font-size:.8rem;">${o.createdAt ? new Date(o.createdAt).toLocaleString('ru-RU') : '—'}</span>
+                        </div>
+                        <div style="color:#bbb;font-size:.88rem;line-height:1.6;margin-bottom:8px;">${o.items.map(it => '<span style="color:#ddd;">' + escH(it.name) + '</span> <span style="color:#555;">×' + it.qty + '</span>').join('<span style="color:#333;"> · </span>')}</div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <span style="color:#fff;font-weight:700;font-size:.95rem;">${o.total.toLocaleString('ru-RU')} ₽</span>
+                            ${o.comment ? '<span style="color:#555;font-size:.82rem;font-style:italic;">' + escH(o.comment) + '</span>' : ''}
+                        </div>
+                    </div>
+                `).join('');
             }
-            document.getElementById('customerOrdersBlock').style.display = 'block';
+            document.getElementById('ordersHistoryOverlay').classList.add('open');
         }
 
         function statusLabel(s) {
