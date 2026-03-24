@@ -28,7 +28,7 @@ def normalize_phone(phone: str) -> str:
     if digits.startswith("8") and len(digits) == 11:
         digits = "7" + digits[1:]
     if not digits.startswith("7") or len(digits) != 11:
-        raise ValueError("Invalid phone")
+        raise ValueError("Введите корректный номер телефона (10 цифр после +7)")
     return "+" + digits
 
 

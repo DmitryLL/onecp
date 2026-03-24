@@ -2319,7 +2319,15 @@
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             if (res.status === 401 && authToken) { logout(); }
-            throw new Error(err.detail || 'Error');
+            var detail = err.detail;
+            if (Array.isArray(detail)) {
+                detail = detail.map(function(d) {
+                    var m = d.msg || d.message || '';
+                    return m.replace(/^Value error,\s*/i, '').replace(/^value is not a valid/i, 'Некорректное значение');
+                }).join('; ');
+            }
+            if (typeof detail === 'object' && detail !== null) detail = JSON.stringify(detail);
+            throw new Error(detail || 'Произошла ошибка');
         }
         return res.json();
     }
