@@ -715,7 +715,7 @@
                 </div>
 
                 <div style="margin-bottom:20px;">
-                    <input type="text" id="customerSearch" placeholder="Поиск по номеру телефона..." oninput="filterCustomers()" style="padding:10px 14px;background:#f5f5f5;border:1.5px solid #d0d0d0;border-radius:8px;color:#333;font-size:.95rem;font-family:inherit;width:100%;max-width:400px;">
+                    <input type="text" id="customerSearch" placeholder="Поиск по телефону или имени..." oninput="filterCustomers()" style="padding:10px 14px;background:#f5f5f5;border:1.5px solid #d0d0d0;border-radius:8px;color:#333;font-size:.95rem;font-family:inherit;width:100%;max-width:400px;">
                 </div>
 
                 <div class="table-wrap" style="margin-bottom:32px;">
@@ -1607,7 +1607,6 @@
         async function loadCustomers() {
             try {
                 customers = await api('/api/admin/customers');
-                allOrders = await api('/api/admin/orders');
                 renderCustomers();
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
@@ -1618,20 +1617,19 @@
 
         function renderCustomers() {
             const search = (document.getElementById('customerSearch').value || '').trim();
-            const filtered = search ? customers.filter(c => c.phone.includes(search)) : customers;
+            const filtered = search ? customers.filter(c => c.phone.includes(search) || (c.name || '').toLowerCase().includes(search.toLowerCase())) : customers;
             const tbody = document.getElementById('customersBody');
             if (!filtered.length) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:24px;">Клиенты не найдены</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:24px;">Зарегистрированных клиентов нет</td></tr>';
                     return;
             }
             tbody.innerHTML = filtered.map(c => {
-                const orderCount = allOrders.filter(o => o.customerPhone === c.phone).length;
                 return `<tr>
                     <td>${c.id}</td>
                     <td>${escH(c.phone)}</td>
                     <td>${escH(c.name || '—')}</td>
                     <td style="color:#888;font-size:.85rem;">${c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '—'}</td>
-                    <td>${orderCount}</td>
+                    <td>${c.orderCount || 0}${c.totalSpent ? ' <span style="color:#888;font-size:.8rem;">(' + c.totalSpent.toLocaleString('ru-RU') + ' ₽)</span>' : ''}</td>
                     <td>
                         <button class="btn btn-secondary btn-sm" onclick="showCustomerOrders('${escH(c.phone)}', '${escH(c.name || c.phone)}')">
                             История заказов

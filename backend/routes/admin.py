@@ -5,6 +5,7 @@ from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 from jose import jwt
 from passlib.hash import pbkdf2_sha256
 from PIL import Image
@@ -367,11 +368,35 @@ def get_customer_orders(phone: str, admin: AdminUser = Depends(get_admin), db: S
 
 @router.get("/customers")
 def list_customers(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
-    customers = db.query(Customer).order_by(Customer.created_at.desc()).limit(200).all()
-    return [
-        {"id": c.id, "phone": c.phone, "name": c.name, "createdAt": c.created_at.isoformat() if c.created_at else None}
-        for c in customers
-    ]
+    customers = (
+        db.query(Customer)
+        .filter(Customer.password_hash.isnot(None))
+        .order_by(Customer.created_at.desc())
+        .all()
+    )
+    result = []
+    for c in customers:
+        order_count = db.query(Order).filter(Order.customer_id == c.id).count()
+        total_spent = db.query(func.coalesce(func.sum(Order.total), 0)).filter(Order.customer_id == c.id).scalar()
+        result.append({
+            "id": c.id,
+            "phone": c.phone,
+            "name": c.name,
+            "createdAt": c.created_at.isoformat() if c.created_at else None,
+            "orderCount": order_count,
+            "totalSpent": float(total_spent),
+        })
+    return result
+
+
+@router.delete("/customers-and-orders")
+def clear_customers_and_orders(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    db.query(OrderItem).delete()
+    db.query(Order).delete()
+    db.query(Customer).delete()
+    db.query(SmsCode).delete()
+    db.commit()
+    return {"ok": True}
 
 
 # ===== SETTINGS =====
