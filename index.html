@@ -517,6 +517,30 @@
 
         .logo:hover { opacity: .85; }
 
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1;
+        }
+        .logo-text .logo-one {
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        .logo-text .logo-cp {
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: .5rem;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            color: rgba(255,255,255,.7);
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
         nav.desktop { display: flex; gap: 4px; align-items: center; }
 
         nav a {
@@ -1838,7 +1862,7 @@
 <!-- HEADER -->
 <header id="siteHeader">
     <div class="header-inner">
-        <a href="#" class="logo"><img src="images/logo.png" alt="One Coffee Place"></a>
+        <a href="#" class="logo"><div class="logo-text"><span class="logo-one">ONE</span><span class="logo-cp">Coffee Place</span></div></a>
         <nav class="desktop">
             <a href="#catalog">Каталог</a>
             <a href="#contacts">Контакты</a>
