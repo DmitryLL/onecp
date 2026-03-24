@@ -1660,7 +1660,7 @@
                 content.innerHTML = orders.map(o => `
                     <div style="background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 20px;margin-bottom:10px;transition:background .2s;" onmouseover="this.style.background='#f8f8f8'" onmouseout="this.style.background='#fff'">
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                            <span style="color:#c8956c;font-weight:700;font-size:.95rem;">Заказ #${o.id}</span>
+                            <span style="color:#c8956c;font-weight:700;font-size:.95rem;">Заказ #${o.id}${o.address ? ' — ' + escH(o.address) : ''}</span>
                             <span style="color:#555;font-size:.8rem;">${o.createdAt ? new Date(o.createdAt).toLocaleString('ru-RU') : '—'}</span>
                         </div>
                         <div style="font-size:.88rem;line-height:1.8;margin-bottom:8px;">${o.items.map(it => '<div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:#1a1a1a;">' + escH(it.name) + ' ×' + it.qty + '</span><span style="color:#555;white-space:nowrap;">' + (it.price * it.qty).toLocaleString('ru-RU') + '&nbsp;₽</span></div>').join('')}</div>
