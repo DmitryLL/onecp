@@ -207,8 +207,16 @@ def delete_dish(dish_id: int, admin: AdminUser = Depends(get_admin), db: Session
     dish = db.query(Dish).filter(Dish.id == dish_id).first()
     if not dish:
         raise HTTPException(status_code=404, detail="Блюдо не найдено")
-    db.delete(dish)
-    db.commit()
+    # Check if dish is used in orders
+    used = db.query(OrderItem).filter(OrderItem.dish_id == dish_id).first()
+    if used:
+        raise HTTPException(status_code=400, detail="Нельзя удалить — блюдо есть в заказах. Можно скрыть его (снять available).")
+    try:
+        db.delete(dish)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Не удалось удалить блюдо — оно используется в других записях")
     return {"ok": True}
 
 
