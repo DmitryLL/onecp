@@ -928,15 +928,31 @@
             background: var(--beige-dark);
         }
 
-        .bottom-banner::before {
+        .bottom-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 40px 24px;
+            background: var(--beige);
+        }
+        .bottom-divider::before,
+        .bottom-divider::after {
             content: '';
-            position: absolute;
-            top: -80px;
-            left: 0;
-            right: 0;
-            height: 80px;
-            background: linear-gradient(to bottom, var(--beige), var(--beige-dark));
-            pointer-events: none;
+            flex: 1;
+            max-width: 260px;
+            height: 1px;
+            background: linear-gradient(to var(--dir), transparent, var(--brown-dark));
+            opacity: .18;
+        }
+        .bottom-divider::before { --dir: right; }
+        .bottom-divider::after  { --dir: left; }
+        .bottom-divider svg {
+            width: 28px;
+            height: 28px;
+            color: var(--brown-dark);
+            opacity: .25;
+            flex-shrink: 0;
         }
 
         .bottom-banner img {
@@ -1438,7 +1454,10 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- BOTTOM BANNER -->
+<!-- BOTTOM DIVIDER + BANNER -->
+<div class="bottom-divider">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 010 8h-1"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+</div>
 <div class="bottom-banner"><img src="images/bottom-banner.png" alt="One Coffee Place"></div>
 
 <!-- FOOTER -->
