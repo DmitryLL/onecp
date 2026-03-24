@@ -2547,7 +2547,7 @@
                         '<span style="font-size:.8rem;color:var(--text-light);">' + dateStr + '</span>' +
                     '</div>' +
                     '<div style="margin-bottom:10px;">' +
-                        o.items.map(function(it) { return '<div style="display:flex;justify-content:space-between;font-size:.88rem;line-height:1.8;"><span style="color:var(--text);">' + esc(it.name) + ' ×' + it.qty + '</span><span style="color:var(--text-light);">' + (it.price * it.qty).toLocaleString('ru-RU') + ' ₽</span></div>'; }).join('') +
+                        o.items.map(function(it) { return '<div style="display:flex;justify-content:space-between;gap:12px;font-size:.88rem;line-height:1.8;"><span style="color:var(--text);">' + esc(it.name) + ' ×' + it.qty + '</span><span style="color:var(--text-light);white-space:nowrap;flex-shrink:0;">' + (it.price * it.qty).toLocaleString('ru-RU') + '&nbsp;₽</span></div>'; }).join('') +
                     '</div>' +
                     '<div style="font-weight:700;color:var(--text);font-size:.95rem;">Итого: ' + o.total.toLocaleString('ru-RU') + ' ₽</div>' +
                     (o.address ? '<div style="font-size:.78rem;color:var(--text-light);margin-top:6px;">📍 ' + esc(o.address) + '</div>' : '') +
