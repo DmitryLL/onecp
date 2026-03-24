@@ -627,31 +627,19 @@
         .cal-date .date { color: #999; font-weight: 600; font-size: .82rem; }
         .cal-day.today .cal-date .date { color: #c8956c; }
         .cal-date .weekday { color: #444; font-size: .7rem; }
-        .cal-sets { flex: 1; display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
-        .cal-set-tag {
-            background: rgba(200,149,108,.1);
-            color: #b8865c;
-            font-size: .72rem;
-            padding: 2px 7px;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-        .cal-count { font-size: .68rem; color: #444; margin-left: 2px; }
-        .cal-set-tag { cursor: pointer; transition: all .2s; }
-        .cal-set-tag:hover { background: rgba(231,76,60,.15); color: #e74c3c; text-decoration: line-through; }
-        .cal-add-select {
-            background: #0d0d0d;
-            border: 1px dashed #2a2a2a;
-            color: #555;
-            font-size: .72rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            cursor: pointer;
+        .cal-day-select {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #ccc;
+            font-size: .85rem;
+            padding: 6px 10px;
             font-family: inherit;
-            flex-shrink: 0;
+            cursor: pointer;
             transition: border-color .2s;
         }
-        .cal-add-select:hover, .cal-add-select:focus { border-color: #c8956c; color: #999; outline: none; }
+        .cal-day-select:hover, .cal-day-select:focus { border-color: #c8956c; outline: none; }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
@@ -711,10 +699,9 @@
             <!-- CALENDAR PANEL -->
             <div id="calendarPanel" style="display:none;">
                 <div class="page-header">
-                    <h1>📅 Календарь наборов</h1>
-                    <button class="btn btn-secondary btn-sm" onclick="regenerateCalendar()">Перегенерировать</button>
+                    <h1>Календарь наборов</h1>
                 </div>
-                <p style="color:#666;font-size:.85rem;margin-bottom:16px;">Наборы на 2 недели вперёд. Каждый день добавляется по 1 набору, после последнего — сброс.</p>
+                <p style="color:#666;font-size:.85rem;margin-bottom:16px;">Наборы на 2 недели вперёд. Выберите набор для каждого дня.</p>
                 <div class="cal-list" id="calendarGrid"></div>
             </div>
 
@@ -2027,53 +2014,31 @@
             if (!calendarData) return;
             const grid = document.getElementById('calendarGrid');
             const todayStr = new Date().toLocaleDateString('sv-SE');
+            const activeSets = calendarData.availableSets || [];
             grid.innerHTML = calendarData.days.map(d => {
                 const dt = new Date(d.date + 'T00:00:00');
                 const isToday = d.date === todayStr;
                 const dayNum = dt.getDate();
                 const month = dt.toLocaleDateString('ru-RU', {month:'long'});
                 const wd = weekDays[dt.getDay()];
-                const usedIds = d.sets.map(s => s.id);
-                const available = calendarData.availableSets.filter(s => !usedIds.includes(s.id));
+                const currentSetId = d.sets.length ? d.sets[0].id : '';
                 return `<div class="cal-day${isToday ? ' today' : ''}">
                     <div class="cal-date">
                         <div class="date">${dayNum} ${month}</div>
                         <div class="weekday">${wd}${isToday ? ' · сегодня' : ''}</div>
                     </div>
-                    <div class="cal-sets">
-                        ${d.sets.map(s => '<span class="cal-set-tag" title="Нажмите чтобы убрать" onclick="calRemoveAndSave(\'' + d.date + '\',' + s.id + ')">' + escH(s.name) + '</span>').join('')}
-                        ${d.sets.length ? '<span class="cal-count">' + d.sets.length + '</span>' : ''}
-                    </div>
-                    ${available.length ? '<select class="cal-add-select" onchange="calAddAndSave(\'' + d.date + '\',this.value);this.selectedIndex=0"><option value="">+ набор</option>' + available.map(s => '<option value="' + s.id + '">' + escH(s.name) + '</option>').join('') + '</select>' : ''}
+                    <select class="cal-day-select" onchange="calSetDay('${d.date}', this.value)">
+                        <option value="">— нет набора —</option>
+                        ${activeSets.map(s => '<option value="' + s.id + '"' + (s.id === currentSetId ? ' selected' : '') + '>' + escH(s.name) + '</option>').join('')}
+                    </select>
                 </div>`;
             }).join('');
         }
 
-        async function calAddAndSave(dateStr, setId) {
-            if (!setId) return;
-            const day = calendarData.days.find(d => d.date === dateStr);
-            const ids = day ? day.sets.map(s => s.id) : [];
-            ids.push(parseInt(setId));
+        async function calSetDay(dateStr, setId) {
+            const ids = setId ? [parseInt(setId)] : [];
             try {
                 await api('/api/admin/calendar/' + dateStr, { method: 'PUT', body: { set_ids: ids } });
-                await loadCalendar();
-            } catch (e) { showToast('Ошибка: ' + e.message); }
-        }
-
-        async function calRemoveAndSave(dateStr, setId) {
-            const day = calendarData.days.find(d => d.date === dateStr);
-            if (!day) return;
-            const ids = day.sets.map(s => s.id).filter(id => id !== setId);
-            try {
-                await api('/api/admin/calendar/' + dateStr, { method: 'PUT', body: { set_ids: ids } });
-                await loadCalendar();
-            } catch (e) { showToast('Ошибка: ' + e.message); }
-        }
-
-        async function regenerateCalendar() {
-            try {
-                await api('/api/admin/calendar/regenerate', { method: 'POST' });
-                showToast('Календарь перегенерирован');
                 await loadCalendar();
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
