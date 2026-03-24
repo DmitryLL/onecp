@@ -487,61 +487,47 @@
         }
 
         /* ===== CALENDAR ===== */
-        .cal-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-            margin-top: 20px;
-        }
+        .cal-list { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
         .cal-day {
             background: #111;
             border: 1px solid #222;
             border-radius: 12px;
-            padding: 12px 10px;
-            min-height: 120px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
             transition: border-color .2s;
         }
         .cal-day:hover { border-color: #444; }
         .cal-day.today { border-color: #c8956c; background: #161209; }
-        .cal-day-header {
-            font-size: .78rem;
-            color: #666;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .cal-date {
+            min-width: 100px;
+            flex-shrink: 0;
         }
-        .cal-day-header .date { color: #aaa; font-weight: 600; font-size: .85rem; }
-        .cal-day.today .cal-day-header .date { color: #c8956c; }
-        .cal-day-header .weekday { font-size: .72rem; text-transform: uppercase; }
+        .cal-date .date { color: #aaa; font-weight: 700; font-size: .95rem; }
+        .cal-day.today .cal-date .date { color: #c8956c; }
+        .cal-date .weekday { color: #555; font-size: .78rem; }
+        .cal-sets { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
         .cal-set-tag {
             display: inline-block;
             background: rgba(200,149,108,.12);
             color: #c8956c;
-            font-size: .72rem;
-            padding: 3px 8px;
+            font-size: .8rem;
+            padding: 4px 10px;
             border-radius: 6px;
-            margin: 2px 2px 2px 0;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
         }
-        .cal-count {
-            font-size: .68rem;
-            color: #555;
-            margin-top: 6px;
-        }
+        .cal-count { font-size: .75rem; color: #555; margin-left: 4px; }
         .cal-edit-btn {
             background: none;
             border: 1px dashed #333;
             color: #555;
-            font-size: .7rem;
-            padding: 3px 8px;
+            font-size: .78rem;
+            padding: 5px 12px;
             border-radius: 6px;
             cursor: pointer;
-            margin-top: 6px;
             transition: all .2s;
+            flex-shrink: 0;
         }
         .cal-edit-btn:hover { border-color: #c8956c; color: #c8956c; }
 
@@ -621,7 +607,7 @@
                     <button class="btn btn-secondary btn-sm" onclick="regenerateCalendar()">Перегенерировать</button>
                 </div>
                 <p style="color:#666;font-size:.85rem;margin-bottom:16px;">Наборы на 2 недели вперёд. Каждый день добавляется по 1 набору, после последнего — сброс.</p>
-                <div class="cal-grid" id="calendarGrid"></div>
+                <div class="cal-list" id="calendarGrid"></div>
             </div>
 
             <!-- Calendar edit modal -->
@@ -1960,20 +1946,22 @@
         function renderCalendar() {
             if (!calendarData) return;
             const grid = document.getElementById('calendarGrid');
-            const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD
+            const todayStr = new Date().toLocaleDateString('sv-SE');
             grid.innerHTML = calendarData.days.map(d => {
                 const dt = new Date(d.date + 'T00:00:00');
                 const isToday = d.date === todayStr;
                 const dayNum = dt.getDate();
-                const month = dt.toLocaleDateString('ru-RU', {month:'short'});
+                const month = dt.toLocaleDateString('ru-RU', {month:'long'});
                 const wd = weekDays[dt.getDay()];
                 return `<div class="cal-day${isToday ? ' today' : ''}">
-                    <div class="cal-day-header">
-                        <span class="date">${dayNum} ${month}</span>
-                        <span class="weekday">${wd}</span>
+                    <div class="cal-date">
+                        <div class="date">${dayNum} ${month}</div>
+                        <div class="weekday">${wd}${isToday ? ' · сегодня' : ''}</div>
                     </div>
-                    <div>${d.sets.map(s => '<div class="cal-set-tag" title="' + escH(s.name) + '">' + escH(s.name) + '</div>').join('')}</div>
-                    <div class="cal-count">${d.sets.length} набор(ов)</div>
+                    <div class="cal-sets">
+                        ${d.sets.map(s => '<span class="cal-set-tag">' + escH(s.name) + '</span>').join('')}
+                        ${d.sets.length ? '<span class="cal-count">' + d.sets.length + ' шт.</span>' : '<span style="color:#444;font-size:.82rem;">—</span>'}
+                    </div>
                     <button class="cal-edit-btn" onclick="openCalEdit('${d.date}')">Изменить</button>
                 </div>`;
             }).join('');
