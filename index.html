@@ -924,20 +924,14 @@
         /* ===== BOTTOM BANNER ===== */
         .bottom-banner {
             width: 100%;
-            height: 420px;
-            background: #000 url('images/bottom-bg.jpg') center/cover no-repeat;
             position: relative;
+            background: var(--beige);
         }
 
-        .bottom-banner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 120px;
-            background: linear-gradient(to top, transparent, var(--beige));
-            pointer-events: none;
+        .bottom-banner img {
+            display: block;
+            width: 100%;
+            height: auto;
         }
 
         /* ===== FOOTER ===== */
@@ -1434,7 +1428,7 @@
 <div class="toast" id="toast"></div>
 
 <!-- BOTTOM BANNER -->
-<div class="bottom-banner"></div>
+<div class="bottom-banner"><img src="images/bottom-banner.png" alt="One Coffee Place"></div>
 
 <!-- FOOTER -->
 <footer>
