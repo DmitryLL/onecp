@@ -56,6 +56,11 @@ def init_db():
                 if old_col in q_cols2:
                     conn.execute(text(f"ALTER TABLE questions DROP COLUMN {old_col}"))
                     logger.info(f"Dropped column questions.{old_col}")
+        # Add password_hash to customers
+        cust_cols = [c["name"] for c in insp.get_columns("customers")]
+        if "password_hash" not in cust_cols:
+            conn.execute(text("ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255)"))
+            logger.info("Added column customers.password_hash")
         conn.commit()
 
     db = SessionLocal()

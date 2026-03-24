@@ -552,6 +552,159 @@
 
         nav a:hover { background: rgba(228,217,204,.15); color: var(--beige); }
 
+        .nav-login {
+            text-decoration: none;
+            color: rgba(245,239,230,.8);
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            font-size: .9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .25s;
+        }
+        .nav-login:hover { background: rgba(228,217,204,.15); color: var(--beige); }
+
+        .header-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(245,239,230,.8);
+            font-size: .85rem;
+        }
+        .header-user-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.3;
+        }
+        .header-user-name {
+            font-weight: 600;
+            color: var(--beige);
+            font-size: .85rem;
+        }
+        .header-user-phone {
+            font-size: .7rem;
+            opacity: .6;
+        }
+        .header-user .btn-logout {
+            background: none;
+            border: 1px solid rgba(245,239,230,.2);
+            color: rgba(245,239,230,.6);
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: .75rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all .25s;
+        }
+        .header-user .btn-logout:hover { border-color: rgba(245,239,230,.5); color: var(--beige); }
+
+        .auth-modal {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 32px 28px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        .auth-modal h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .auth-modal .auth-sub {
+            color: var(--text-light);
+            font-size: .9rem;
+            margin-bottom: 20px;
+        }
+        .auth-modal input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--beige-dark);
+            border-radius: var(--radius-sm);
+            font-size: .95rem;
+            font-family: inherit;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            background: #fafafa;
+            color: var(--text);
+        }
+        .auth-modal input:focus { outline: none; border-color: var(--gold); }
+        .auth-modal .auth-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--brown), var(--gold));
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: .95rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: all .3s;
+        }
+        .auth-modal .auth-btn:hover { box-shadow: 0 4px 16px rgba(139,90,43,.3); }
+        .auth-modal .auth-btn:disabled { opacity: .5; cursor: not-allowed; }
+        .auth-modal .auth-switch {
+            margin-top: 16px;
+            font-size: .85rem;
+            color: var(--text-light);
+        }
+        .auth-modal .auth-switch a {
+            color: var(--brown);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .auth-modal .auth-switch a:hover { text-decoration: underline; }
+        .auth-modal .auth-error {
+            color: #d32f2f;
+            font-size: .85rem;
+            margin-bottom: 10px;
+            min-height: 1.2em;
+        }
+        .auth-modal .auth-phone-row {
+            display: flex;
+            align-items: stretch;
+            margin-bottom: 10px;
+        }
+        .auth-modal .auth-phone-row span {
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            background: var(--beige-dark);
+            border: 1.5px solid var(--beige-dark);
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+            font-size: .95rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .auth-modal .auth-phone-row input {
+            flex: 1;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            border-left: none;
+            margin-bottom: 0;
+        }
+        .auth-sms-digits {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .auth-sms-digits input {
+            width: 48px;
+            height: 52px;
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            padding: 0;
+            margin: 0;
+            border: 2px solid var(--beige-dark);
+            border-radius: 10px;
+        }
+        .auth-sms-digits input.filled { border-color: var(--gold); background: #fdf8ef; }
+
         .nav-cart {
             display: flex;
             align-items: center;
@@ -1726,6 +1879,11 @@
             nav.desktop a { padding: 6px 8px; font-size: .75rem; }
             .nav-cart { padding: 6px 12px !important; font-size: .75rem; gap: 4px !important; }
             .cart-badge { min-width: 16px; height: 16px; font-size: .6rem; padding: 0 3px; }
+            .nav-login { padding: 6px 8px; font-size: .75rem; }
+            .header-user { gap: 6px; }
+            .header-user-name { font-size: .7rem; }
+            .header-user-phone { font-size: .6rem; }
+            .header-user .btn-logout { padding: 4px 8px; font-size: .65rem; }
             .burger { display: none; }
             .mobile-menu { display: none !important; }
 
@@ -1846,6 +2004,14 @@
             <a href="#" class="nav-cart" onclick="openCart(); return false;">
                 Корзина <span class="cart-badge" id="cartBadge">0</span>
             </a>
+            <a href="#" class="nav-login" id="headerLoginBtn" onclick="openAuthModal('login'); return false;">Войти</a>
+            <div class="header-user" id="headerUser" style="display:none;">
+                <div class="header-user-info">
+                    <span class="header-user-name" id="headerUserName"></span>
+                    <span class="header-user-phone" id="headerUserPhone"></span>
+                </div>
+                <button class="btn-logout" onclick="logout()">Выйти</button>
+            </div>
         </nav>
         <button class="burger" onclick="toggleMobile()" aria-label="Меню">
             <span></span><span></span><span></span>
@@ -1955,14 +2121,21 @@
         <div class="checkout-area" id="cartCheckout">
             <input type="text" id="orderAddress" placeholder="Точка выдачи" readonly>
             <input type="text" id="orderComment" placeholder="Комментарий к заказу">
-            <!-- Step 1: name + phone + consent -->
-            <div id="orderStep1">
-                <input type="text" id="orderName" placeholder="Ваше имя *" maxlength="30" oninput="this.value=this.value.replace(/[^a-zA-Zа-яА-ЯёЁ \-]/g,'');toggleOrderBtn()" style="margin-bottom:8px;">
-                <div style="display:flex;align-items:stretch;margin-bottom:8px;">
-                    <span style="display:flex;align-items:center;padding:0 14px;background:var(--beige-dark);border:1.5px solid var(--beige-dark);border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-size:.95rem;font-weight:600;color:var(--text);white-space:nowrap;">+7</span>
-                    <input type="tel" id="orderPhone" placeholder="9991234567 *" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'');toggleOrderBtn()" style="flex:1;border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;margin-bottom:0;">
+            <!-- Authenticated user: show info + direct order -->
+            <div id="orderAuth" style="display:none;">
+                <div style="background:var(--beige);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:10px;">
+                    <div style="font-weight:600;color:var(--text);font-size:.95rem;" id="orderAuthName"></div>
+                    <div style="font-size:.8rem;color:var(--text-light);" id="orderAuthPhone"></div>
                 </div>
-                <button class="btn-checkout" id="orderSendCodeBtn" onclick="showConsentModal()" disabled style="opacity:.5;cursor:not-allowed;">Сделать заказ</button>
+                <button class="btn-checkout" onclick="submitAuthOrder()">Сделать заказ</button>
+            </div>
+            <!-- Not logged in: prompt to login -->
+            <div id="orderGuest">
+                <div style="text-align:center;padding:12px 0 8px;">
+                    <p style="color:var(--text-light);font-size:.9rem;margin-bottom:12px;">Войдите или зарегистрируйтесь для оформления заказа</p>
+                    <button class="btn-checkout" onclick="openAuthModal('login')" style="margin-bottom:8px;">Войти</button>
+                    <button class="btn-checkout" onclick="openAuthModal('register')" style="background:var(--white);color:var(--brown);border:1.5px solid var(--beige-dark);">Зарегистрироваться</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2027,6 +2200,65 @@
 </div>
 
 
+<!-- AUTH MODAL -->
+<div class="detail-overlay" id="authOverlay" onclick="if(event.target===event.currentTarget)closeAuthModal()">
+    <div class="auth-modal">
+        <button class="detail-close" onclick="closeAuthModal()" style="background:rgba(26,22,18,.1);color:var(--text);">&times;</button>
+
+        <!-- Login -->
+        <div id="authLogin">
+            <h3>Вход</h3>
+            <p class="auth-sub">Введите телефон и пароль</p>
+            <div class="auth-error" id="authLoginError"></div>
+            <div class="auth-phone-row">
+                <span>+7</span>
+                <input type="tel" id="authLoginPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+            </div>
+            <input type="password" id="authLoginPass" placeholder="Пароль">
+            <button class="auth-btn" onclick="authDoLogin()">Войти</button>
+            <div class="auth-switch">Нет аккаунта? <a onclick="authShowRegister()">Зарегистрироваться</a></div>
+        </div>
+
+        <!-- Register Step 1: phone -->
+        <div id="authReg1" style="display:none;">
+            <h3>Регистрация</h3>
+            <p class="auth-sub">Введите номер телефона для получения SMS-кода</p>
+            <div class="auth-error" id="authRegError1"></div>
+            <div class="auth-phone-row">
+                <span>+7</span>
+                <input type="tel" id="authRegPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+            </div>
+            <button class="auth-btn" onclick="authRegSendCode()">Отправить код</button>
+            <div class="auth-switch">Уже есть аккаунт? <a onclick="authShowLogin()">Войти</a></div>
+        </div>
+
+        <!-- Register Step 2: SMS code -->
+        <div id="authReg2" style="display:none;">
+            <h3>Введите код</h3>
+            <p class="auth-sub">Код отправлен на <span id="authRegPhoneDisplay"></span></p>
+            <div class="auth-error" id="authRegError2"></div>
+            <div class="auth-sms-digits">
+                <input type="text" inputmode="numeric" maxlength="1" class="auth-digit" data-idx="0">
+                <input type="text" inputmode="numeric" maxlength="1" class="auth-digit" data-idx="1">
+                <input type="text" inputmode="numeric" maxlength="1" class="auth-digit" data-idx="2">
+                <input type="text" inputmode="numeric" maxlength="1" class="auth-digit" data-idx="3">
+            </div>
+            <button class="auth-btn" onclick="authRegCheckCode()">Далее</button>
+        </div>
+
+        <!-- Register Step 3: name + password -->
+        <div id="authReg3" style="display:none;">
+            <h3>Создайте аккаунт</h3>
+            <p class="auth-sub">Введите имя и придумайте пароль</p>
+            <div class="auth-error" id="authRegError3"></div>
+            <input type="text" id="authRegName" placeholder="Ваше имя" maxlength="30" oninput="this.value=this.value.replace(/[^a-zA-Zа-яА-ЯёЁ \-]/g,'')">
+            <input type="password" id="authRegPass1" placeholder="Пароль (мин. 4 символа)">
+            <input type="password" id="authRegPass2" placeholder="Повторите пароль">
+            <button class="auth-btn" onclick="authDoRegister()">Зарегистрироваться</button>
+        </div>
+    </div>
+</div>
+
 <!-- PRODUCT DETAIL MODAL -->
 <div class="detail-overlay" id="detailOverlay" onclick="if(event.target===event.currentTarget)closeDetail()">
     <div class="detail-modal">
@@ -2073,8 +2305,12 @@
     });
 
     // ===== API HELPER =====
+    let authToken = localStorage.getItem('authToken');
+    let currentCustomer = JSON.parse(localStorage.getItem('currentCustomer') || 'null');
+
     async function api(url, opts = {}) {
         const headers = opts.headers || {};
+        if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
         if (opts.body && typeof opts.body === 'object') {
             headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(opts.body);
@@ -2082,10 +2318,214 @@
         const res = await fetch(url, { ...opts, headers });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
+            if (res.status === 401 && authToken) { logout(); }
             throw new Error(err.detail || 'Error');
         }
         return res.json();
     }
+
+    function setAuth(token, customer) {
+        authToken = token;
+        currentCustomer = customer;
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentCustomer', JSON.stringify(customer));
+        updateHeaderAuth();
+        updateCheckoutAuth();
+    }
+
+    function logout() {
+        authToken = null;
+        currentCustomer = null;
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentCustomer');
+        updateHeaderAuth();
+        updateCheckoutAuth();
+    }
+
+    function updateHeaderAuth() {
+        var loginBtn = document.getElementById('headerLoginBtn');
+        var userEl = document.getElementById('headerUser');
+        if (currentCustomer) {
+            loginBtn.style.display = 'none';
+            userEl.style.display = 'flex';
+            document.getElementById('headerUserName').textContent = currentCustomer.name || '';
+            document.getElementById('headerUserPhone').textContent = currentCustomer.phone || '';
+        } else {
+            loginBtn.style.display = '';
+            userEl.style.display = 'none';
+        }
+    }
+
+    function updateCheckoutAuth() {
+        var authDiv = document.getElementById('orderAuth');
+        var guestDiv = document.getElementById('orderGuest');
+        if (!authDiv || !guestDiv) return;
+        if (currentCustomer) {
+            authDiv.style.display = 'block';
+            guestDiv.style.display = 'none';
+            document.getElementById('orderAuthName').textContent = currentCustomer.name || '';
+            document.getElementById('orderAuthPhone').textContent = currentCustomer.phone || '';
+        } else {
+            authDiv.style.display = 'none';
+            guestDiv.style.display = 'block';
+        }
+    }
+
+    // ===== AUTH MODAL =====
+    function openAuthModal(mode) {
+        document.getElementById('authLogin').style.display = mode === 'login' ? 'block' : 'none';
+        document.getElementById('authReg1').style.display = mode === 'register' ? 'block' : 'none';
+        document.getElementById('authReg2').style.display = 'none';
+        document.getElementById('authReg3').style.display = 'none';
+        document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
+        document.getElementById('authOverlay').classList.add('open');
+    }
+    function closeAuthModal() { document.getElementById('authOverlay').classList.remove('open'); }
+    function authShowLogin() {
+        document.getElementById('authLogin').style.display = 'block';
+        document.getElementById('authReg1').style.display = 'none';
+        document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
+    }
+    function authShowRegister() {
+        document.getElementById('authLogin').style.display = 'none';
+        document.getElementById('authReg1').style.display = 'block';
+        document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
+    }
+
+    async function authDoLogin() {
+        var phone = '+7' + document.getElementById('authLoginPhone').value.trim();
+        var pass = document.getElementById('authLoginPass').value;
+        var errEl = document.getElementById('authLoginError');
+        errEl.textContent = '';
+        try {
+            var res = await api('/api/auth/login', { method: 'POST', body: { phone: phone, password: pass } });
+            setAuth(res.token, res.customer);
+            closeAuthModal();
+            showToast('Вы вошли как ' + res.customer.name);
+        } catch (e) { errEl.textContent = e.message; }
+    }
+
+    var authRegPhoneSaved = '';
+    var authRegCodeSaved = '';
+
+    async function authRegSendCode() {
+        var raw = document.getElementById('authRegPhone').value.trim();
+        var errEl = document.getElementById('authRegError1');
+        errEl.textContent = '';
+        if (raw.length !== 10) { errEl.textContent = 'Введите 10 цифр номера'; return; }
+        authRegPhoneSaved = '+7' + raw;
+        try {
+            await api('/api/auth/send-code', { method: 'POST', body: { phone: authRegPhoneSaved } });
+            document.getElementById('authRegPhoneDisplay').textContent = authRegPhoneSaved;
+            document.getElementById('authReg1').style.display = 'none';
+            document.getElementById('authReg2').style.display = 'block';
+            document.querySelectorAll('.auth-digit').forEach(d => { d.value = ''; d.classList.remove('filled'); });
+            var first = document.querySelector('.auth-digit[data-idx="0"]');
+            if (first) first.focus();
+            showToast('Код отправлен');
+        } catch (e) { errEl.textContent = e.message; }
+    }
+
+    function authRegCheckCode() {
+        var code = Array.from(document.querySelectorAll('.auth-digit')).map(d => d.value).join('');
+        var errEl = document.getElementById('authRegError2');
+        errEl.textContent = '';
+        if (code.length !== 4) { errEl.textContent = 'Введите 4-значный код'; return; }
+        authRegCodeSaved = code;
+        document.getElementById('authReg2').style.display = 'none';
+        document.getElementById('authReg3').style.display = 'block';
+    }
+
+    async function authDoRegister() {
+        var name = document.getElementById('authRegName').value.trim();
+        var pass1 = document.getElementById('authRegPass1').value;
+        var pass2 = document.getElementById('authRegPass2').value;
+        var errEl = document.getElementById('authRegError3');
+        errEl.textContent = '';
+        if (!name) { errEl.textContent = 'Введите имя'; return; }
+        if (pass1.length < 4) { errEl.textContent = 'Пароль минимум 4 символа'; return; }
+        if (pass1 !== pass2) { errEl.textContent = 'Пароли не совпадают'; return; }
+        try {
+            var res = await api('/api/auth/register', { method: 'POST', body: {
+                phone: authRegPhoneSaved, code: authRegCodeSaved, name: name, password: pass1, password_confirm: pass2
+            }});
+            setAuth(res.token, res.customer);
+            closeAuthModal();
+            showToast('Регистрация успешна! Добро пожаловать, ' + res.customer.name);
+        } catch (e) { errEl.textContent = e.message; }
+    }
+
+    // Auth digit inputs
+    (function initAuthDigits() {
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.auth-digit').forEach(function(input, idx) {
+                var digits = document.querySelectorAll('.auth-digit');
+                input.addEventListener('input', function(e) {
+                    var val = e.target.value.replace(/\D/g, '');
+                    e.target.value = val.slice(0, 1);
+                    if (val && idx < 3) digits[idx + 1].focus();
+                    e.target.classList.toggle('filled', !!val);
+                });
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                        digits[idx - 1].focus();
+                        digits[idx - 1].value = '';
+                        digits[idx - 1].classList.remove('filled');
+                    }
+                    if (e.key === 'Enter') authRegCheckCode();
+                });
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    var paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 4);
+                    paste.split('').forEach(function(ch, i) {
+                        if (digits[i]) { digits[i].value = ch; digits[i].classList.add('filled'); }
+                    });
+                });
+            });
+        });
+    })();
+
+    // Authenticated order
+    async function submitAuthOrder() {
+        if (cart.length === 0) return;
+        // Validate minimum dishes
+        var requiredCats = ['Суп', 'Горячее', 'Салат'];
+        var mainCount = cart.reduce(function(sum, item) { return requiredCats.includes(item.category) ? sum + item.qty : sum; }, 0);
+        if (mainCount < 2) { showToast('Добавьте минимум 2 блюда из разделов Суп, Горячее или Салат'); return; }
+        var comment = document.getElementById('orderComment')?.value || '';
+        var address = document.getElementById('orderAddress')?.value || '';
+        try {
+            var res = await api('/api/orders/auth', {
+                method: 'POST',
+                body: {
+                    items: cart.map(function(c) { return { dish_id: c.id, quantity: c.qty }; }),
+                    comment: comment || null,
+                    address: address || null,
+                }
+            });
+            cart = [];
+            updateCartBadge();
+            showOrderSuccess(res.order.id);
+        } catch (e) { showToast(e.message); }
+    }
+
+    // Init auth on page load
+    (function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            updateHeaderAuth();
+            if (authToken) {
+                fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + authToken } })
+                    .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+                    .then(function(data) {
+                        currentCustomer = { id: data.id, phone: data.phone, name: data.name };
+                        localStorage.setItem('currentCustomer', JSON.stringify(currentCustomer));
+                        updateHeaderAuth();
+                        updateCheckoutAuth();
+                    })
+                    .catch(function() { logout(); });
+            }
+        });
+    })();
 
     // ===== LOAD MENU FROM API =====
     async function loadMenu() {
@@ -2288,6 +2728,7 @@
         const total = cart.reduce((s, c) => s + c.price * c.qty, 0);
         totalEl.textContent = '\u0418\u0442\u043e\u0433\u043e: ' + total.toLocaleString('ru-RU') + ' \u20bd';
         if (checkoutArea) checkoutArea.style.display = 'block';
+        updateCheckoutAuth();
     }
 
     function openCart() {
@@ -2466,6 +2907,7 @@
         document.getElementById('smsStep2').style.display = 'none';
         document.getElementById('smsStep3').style.display = 'block';
         document.getElementById('smsOrderNumber').textContent = '#' + orderId;
+        document.getElementById('smsOverlay').classList.add('open');
         const btn = document.getElementById('smsOkBtn');
         const timerSpan = document.getElementById('smsOkTimer');
         let sec = 5;
@@ -2493,13 +2935,9 @@
         if (okTimerInterval) { clearInterval(okTimerInterval); okTimerInterval = null; }
         closeSmsModal();
         closeCart();
-        // Clear form fields
-        document.getElementById('orderName').value = '';
-        document.getElementById('orderPhone').value = '';
         document.getElementById('orderAddress').value = currentLocation || '';
         document.getElementById('orderComment').value = '';
         clearSmsDigits();
-        toggleOrderBtn();
         // Clear cart and update UI
         cart = [];
         updateCartBadge();

@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 from jose import jwt
+from passlib.hash import pbkdf2_sha256
 
 from database import get_db
 from models import Customer, SmsCode
@@ -209,6 +210,7 @@ def get_me(customer: Customer = Depends(get_current_customer_dep)):
         "id": customer.id,
         "phone": customer.phone,
         "name": customer.name,
+        "has_password": customer.password_hash is not None,
     }
 
 
@@ -217,3 +219,88 @@ def update_me(body: UpdateNameRequest, customer: Customer = Depends(get_current_
     customer.name = body.name.strip()
     db.commit()
     return {"ok": True, "name": customer.name}
+
+
+class RegisterRequest(BaseModel):
+    phone: str
+    code: str
+    name: str
+    password: str
+    password_confirm: str
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        return normalize_phone(v)
+
+
+class LoginRequest(BaseModel):
+    phone: str
+    password: str
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        return normalize_phone(v)
+
+
+@router.post("/register")
+def register(body: RegisterRequest, db: Session = Depends(get_db)):
+    if body.password != body.password_confirm:
+        raise HTTPException(status_code=400, detail="Пароли не совпадают")
+    if len(body.password) < 4:
+        raise HTTPException(status_code=400, detail="Пароль должен быть минимум 4 символа")
+    if not body.name.strip():
+        raise HTTPException(status_code=400, detail="Укажите имя")
+
+    # Verify SMS code
+    sms_code = (
+        db.query(SmsCode)
+        .filter(SmsCode.phone == body.phone, SmsCode.code == body.code, SmsCode.used == False)
+        .order_by(SmsCode.created_at.desc())
+        .first()
+    )
+    if not sms_code:
+        raise HTTPException(status_code=400, detail="Неверный код")
+    age = (datetime.now(timezone.utc) - sms_code.created_at.replace(tzinfo=timezone.utc)).total_seconds()
+    if age > 300:
+        raise HTTPException(status_code=400, detail="Код истёк, запросите новый")
+    sms_code.used = True
+
+    # Find or create customer
+    customer = db.query(Customer).filter(Customer.phone == body.phone).first()
+    if not customer:
+        customer = Customer(phone=body.phone)
+        db.add(customer)
+        db.flush()
+
+    if customer.password_hash:
+        raise HTTPException(status_code=400, detail="Аккаунт уже зарегистрирован, используйте вход")
+
+    customer.password_hash = pbkdf2_sha256.hash(body.password)
+    customer.name = body.name.strip()
+    db.commit()
+    db.refresh(customer)
+
+    token = create_token(customer.id, customer.phone)
+    return {
+        "ok": True,
+        "token": token,
+        "customer": {"id": customer.id, "phone": customer.phone, "name": customer.name},
+    }
+
+
+@router.post("/login")
+def login(body: LoginRequest, db: Session = Depends(get_db)):
+    customer = db.query(Customer).filter(Customer.phone == body.phone).first()
+    if not customer or not customer.password_hash:
+        raise HTTPException(status_code=401, detail="Аккаунт не найден, зарегистрируйтесь")
+    if not pbkdf2_sha256.verify(body.password, customer.password_hash):
+        raise HTTPException(status_code=401, detail="Неверный пароль")
+
+    token = create_token(customer.id, customer.phone)
+    return {
+        "ok": True,
+        "token": token,
+        "customer": {"id": customer.id, "phone": customer.phone, "name": customer.name},
+    }

@@ -19,6 +19,7 @@ class Customer(Base):
     id = Column(Integer, primary_key=True, index=True)
     phone = Column(String(20), unique=True, nullable=False, index=True)
     name = Column(String(100), nullable=True)
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     orders = relationship("Order", back_populates="customer")
