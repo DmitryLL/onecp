@@ -2028,7 +2028,7 @@
                         <div class="weekday">${wd}${isToday ? ' · сегодня' : ''}</div>
                     </div>
                     <select class="cal-day-select" onchange="calSetDay('${d.date}', this.value)">
-                        <option value="">— нет набора —</option>
+                        <option value="">Выберите набор</option>
                         ${activeSets.map(s => '<option value="' + s.id + '"' + (s.id === currentSetId ? ' selected' : '') + '>' + escH(s.name) + '</option>').join('')}
                     </select>
                 </div>`;
