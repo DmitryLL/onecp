@@ -1869,8 +1869,8 @@
 <!-- CATALOG -->
 <section id="catalog">
     <div class="section-header animate-on-scroll">
-        <h2 class="section-title" id="siteCatalogTitle">Каталог товаров</h2>
-        <p class="section-sub" id="siteCatalogSub">Выберите товар и добавьте в корзину</p>
+        <h2 class="section-title" id="siteCatalogTitle"></h2>
+        <p class="section-sub" id="siteCatalogSub"></p>
     </div>
     <div class="catalog-grid" id="catalogGrid"></div>
 </section>
@@ -2526,8 +2526,9 @@
             }
             if (s.heroTitle && !locInfo) document.getElementById('siteHeroTitle').innerHTML = nl2br(s.heroTitle);
             if (s.heroSub && !locInfo) document.getElementById('siteHeroSub').innerHTML = nl2br(s.heroSub);
-            if (s.catalogTitle) document.getElementById('siteCatalogTitle').innerHTML = nl2br(s.catalogTitle);
-            if (s.catalogSub) document.getElementById('siteCatalogSub').innerHTML = nl2br(s.catalogSub);
+            // catalogTitle now auto-generated with tomorrow's date
+            // if (s.catalogTitle) document.getElementById('siteCatalogTitle').innerHTML = nl2br(s.catalogTitle);
+            // if (s.catalogSub) document.getElementById('siteCatalogSub').innerHTML = nl2br(s.catalogSub);
             if (s.aboutTitle) document.getElementById('siteAboutTitle').innerHTML = nl2br(s.aboutTitle);
             if (s.aboutSub) document.getElementById('siteAboutSub').innerHTML = nl2br(s.aboutSub);
             if (s.address && !currentLocation) document.getElementById('siteAddress').innerHTML = nl2br(s.address);
@@ -2590,6 +2591,16 @@
     const isRootPage = window.location.pathname === '/';
 
     // ===== INIT =====
+    // Set tomorrow's date in catalog title
+    (function() {
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        var months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+        var dayNames = ['воскресенье','понедельник','вторник','среду','четверг','пятницу','субботу'];
+        var dateStr = tomorrow.getDate() + ' ' + months[tomorrow.getMonth()] + ', ' + dayNames[tomorrow.getDay()];
+        document.getElementById('siteCatalogTitle').textContent = 'Меню на ' + dateStr;
+    })();
+
     if (!isRootPage) { loadMenu(); }
     loadSettings();
 </script>
