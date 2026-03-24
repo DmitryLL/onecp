@@ -1619,7 +1619,9 @@
 
         function renderCustomers() {
             const search = (document.getElementById('customerSearch').value || '').trim();
-            const filtered = search ? customers.filter(c => c.phone.includes(search) || (c.name || '').toLowerCase().includes(search.toLowerCase())) : customers;
+            const isDigits = /^\d+$/.test(search);
+            const searchActive = search && ((isDigits && search.length >= 4) || (!isDigits && search.length >= 2));
+            const filtered = searchActive ? customers.filter(c => c.phone.includes(search) || (c.name || '').toLowerCase().includes(search.toLowerCase())) : customers;
             const tbody = document.getElementById('customersBody');
             if (!filtered.length) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:24px;">Зарегистрированных клиентов нет</td></tr>';
