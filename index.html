@@ -181,6 +181,132 @@
             text-shadow: 0 2px 15px rgba(0,0,0,.7);
             margin-top: 4px;
         }
+        /* ===== IBT HERO ===== */
+        .hero.hero-ibt {
+            background: radial-gradient(ellipse at 30% 50%, #121a24 0%, #0c0c10 50%, #060608 100%);
+            overflow: hidden;
+            padding: 80px 24px 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .hero.hero-ibt::before {
+            background: linear-gradient(to bottom, #080810, transparent);
+        }
+        .hero.hero-ibt::after {
+            background: linear-gradient(to bottom, transparent, var(--beige));
+        }
+        .ibt-logo-bg {
+            position: absolute;
+            top: 0;
+            bottom: 40%;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(16px, 3vw, 36px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .ibt-logo-bg .ibt-icon {
+            flex-shrink: 0;
+            width: clamp(70px, 10vw, 140px);
+            height: clamp(70px, 10vw, 140px);
+            filter: drop-shadow(0 0 50px rgba(100,160,255,.2));
+            opacity: .7;
+        }
+        .ibt-logo-bg .ibt-brand {
+            display: flex;
+            flex-direction: column;
+        }
+        .ibt-logo-bg .ibt-text {
+            font-family: 'SB Sans Display', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: clamp(2rem, 5.5vw, 5rem);
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(180deg, #a8cfff 0%, #5b9bd5 35%, #3a7bc8 65%, #5b9bd5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 40px rgba(90,155,213,.2));
+            text-transform: uppercase;
+            line-height: 1;
+            opacity: .75;
+        }
+        .ibt-logo-bg .ibt-text-small {
+            font-family: 'SB Sans Display', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: clamp(1.2rem, 3vw, 2.8rem);
+            font-weight: 700;
+            letter-spacing: 5px;
+            background: linear-gradient(180deg, #c0d8f0 0%, #7aabde 50%, #5b9bd5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            line-height: 1;
+            margin-top: 4px;
+            opacity: .6;
+        }
+        .ibt-logo-bg .ibt-sub {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: clamp(1.1rem, 2.8vw, 2.2rem);
+            font-weight: 400;
+            font-style: italic;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, var(--gold), #e8d5a8, var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-top: 10px;
+            opacity: .8;
+        }
+        .ibt-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(90,155,213,.08) 0%, transparent 70%);
+            pointer-events: none;
+            top: 50%;
+            left: 30%;
+            transform: translate(-50%, -50%);
+        }
+        .hero.hero-ibt h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            text-shadow: 0 2px 20px rgba(0,0,0,.8);
+            margin-bottom: 14px;
+            z-index: 2;
+        }
+        .hero.hero-ibt p {
+            z-index: 2;
+            margin-bottom: 0;
+        }
+        .hero.hero-ibt .hero-loc-info {
+            margin-bottom: 12px;
+        }
+        .hero.hero-ibt .hero-loc-chip {
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.15);
+            font-size: 1.05rem;
+            padding: 10px 22px;
+        }
+        .hero.hero-ibt .hero-slogan {
+            background: rgba(90,155,213,.2);
+            border: 1px solid rgba(100,160,255,.25);
+            backdrop-filter: blur(10px);
+            font-size: 1rem;
+            padding: 12px 28px;
+        }
+        .hero.hero-ibt .hero-loc-cta {
+            font-size: 1.3rem;
+            font-weight: 500;
+            text-shadow: 0 2px 15px rgba(0,0,0,.7);
+            margin-top: 4px;
+        }
+
         .sber-glow {
             position: absolute;
             width: 500px;
@@ -2296,7 +2422,7 @@
     const LOCATIONS = {
         '/Sber': { name: 'Sber', address: 'Фонтанная 18', description: 'Точка выдачи в бизнес-центре Sber', heroCss: 'hero-sber', heroHtml: '<div class="sber-glow"></div><div class="sber-logo-bg"><svg class="sber-icon" viewBox="0 0 200 200" fill="none"><path d="M100 20a80 80 0 1 0 56.57 23.43" stroke="url(#sg1)" stroke-width="22" stroke-linecap="round" fill="none"/><path d="M68 100l24 24 52-52" stroke="url(#sg2)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><defs><linearGradient id="sg1" x1="20" y1="100" x2="180" y2="100"><stop stop-color="#4eff78"/><stop offset="1" stop-color="#21a038"/></linearGradient><linearGradient id="sg2" x1="68" y1="72" x2="144" y2="124"><stop stop-color="#4eff78"/><stop offset="1" stop-color="#21a038"/></linearGradient></defs></svg><div class="sber-brand"><span class="sber-text">Сбербанк</span><span class="sber-sub">One Coffee Place</span></div></div>' },
         '/Skycity': { name: 'Sky City', address: 'Алеутская 45', description: 'Точка выдачи в БЦ Sky City' },
-        '/InternationalBayViewtowers': { name: 'International BayView Towers', address: 'Енисейская 23', description: 'Точка выдачи в International BayView Towers' },
+        '/InternationalBayViewtowers': { name: 'International BayView Towers', address: 'Енисейская 23', description: 'Точка выдачи в International BayView Towers', heroCss: 'hero-ibt', heroHtml: '<div class="ibt-glow"></div><div class="ibt-logo-bg"><svg class="ibt-icon" viewBox="0 0 200 200" fill="none"><rect x="60" y="40" width="80" height="130" rx="4" stroke="url(#ib1)" stroke-width="6" fill="none"/><rect x="75" y="55" width="20" height="16" rx="2" fill="url(#ib2)" opacity=".6"/><rect x="105" y="55" width="20" height="16" rx="2" fill="url(#ib2)" opacity=".6"/><rect x="75" y="80" width="20" height="16" rx="2" fill="url(#ib2)" opacity=".6"/><rect x="105" y="80" width="20" height="16" rx="2" fill="url(#ib2)" opacity=".6"/><rect x="75" y="105" width="20" height="16" rx="2" fill="url(#ib2)" opacity=".6"/><rect x="105" y="105" width="20" height="16" rx="2" fill="url(#ib2)" opacity=".6"/><rect x="88" y="138" width="24" height="32" rx="2" fill="url(#ib2)" opacity=".4"/><path d="M56 170h88" stroke="url(#ib1)" stroke-width="4"/><path d="M80 40L100 20l20 20" stroke="url(#ib1)" stroke-width="5" fill="none" stroke-linejoin="round"/><defs><linearGradient id="ib1" x1="60" y1="20" x2="140" y2="170"><stop stop-color="#a8cfff"/><stop offset="1" stop-color="#3a7bc8"/></linearGradient><linearGradient id="ib2" x1="75" y1="55" x2="125" y2="120"><stop stop-color="#a8cfff"/><stop offset="1" stop-color="#5b9bd5"/></linearGradient></defs></svg><div class="ibt-brand"><span class="ibt-text">International</span><span class="ibt-text-small">BayView Towers</span><span class="ibt-sub">One Coffee Place</span></div></div>' },
     };
     const locInfo = LOCATIONS[window.location.pathname];
     const currentLocation = locInfo ? locInfo.address : '';
