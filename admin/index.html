@@ -585,12 +585,11 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Фото</th>
+                                <th style="width:80px;">Порядок</th>
                                 <th>Название</th>
-                                <th>Состав</th>
-                                <th>Цена</th>
-                                <th>Активен</th>
-                                <th>Действия</th>
+                                <th>Описание</th>
+                                <th style="width:80px;">Активен</th>
+                                <th style="width:120px;">Действия</th>
                             </tr>
                         </thead>
                         <tbody id="setsBody"></tbody>
@@ -878,37 +877,16 @@
             <form onsubmit="saveSet(event)">
                 <input type="hidden" id="setEditId">
                 <div class="form-group">
-                    <label>Название набора</label>
+                    <label>Название набора <span style="color:#c8956c;">*</span></label>
                     <input type="text" id="setName" required>
+                </div>
+                <div class="form-group">
+                    <label>Порядок появления <span style="color:#c8956c;">*</span></label>
+                    <input type="number" id="setSortOrder" min="0" max="9999" placeholder="0" required style="width:120px;" class="no-spin">
                 </div>
                 <div class="form-group">
                     <label>Описание</label>
                     <textarea id="setDescription" rows="2" style="width:100%;padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;font-family:inherit;resize:vertical;"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Картинка набора</label>
-                    <div id="setImagePreview" style="margin-bottom:8px;"></div>
-                    <input type="file" id="setImage" accept="image/*" style="width:100%;padding:8px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#ccc;font-size:.9rem;">
-                    <button type="button" id="setImageDeleteBtn" class="btn btn-danger btn-sm" style="margin-top:8px;display:none;" onclick="deleteSetImage()">Удалить картинку</button>
-                </div>
-                <div class="form-group">
-                    <label>Цена набора (₽)</label>
-                    <input type="number" id="setPrice" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label>Порядок появления</label>
-                    <input type="number" id="setSortOrder" min="0" max="9999" placeholder="0" style="width:120px;" class="no-spin">
-                </div>
-                <div class="form-group">
-                    <label>Состав набора</label>
-                    <div id="setItemsList" style="margin-bottom:8px;"></div>
-                    <div style="display:flex;gap:8px;">
-                        <select id="setDishSelect" style="flex:1;padding:10px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;">
-                            <option value="">— Выберите товар —</option>
-                        </select>
-                        <input type="number" id="setDishQty" value="1" min="1" style="width:70px;padding:10px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;text-align:center;">
-                        <button type="button" class="btn btn-primary btn-sm" onclick="addSetItem()">+</button>
-                    </div>
                 </div>
                 <div class="form-group">
                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
@@ -1412,10 +1390,9 @@
         function renderSetsTable() {
             document.getElementById('setsBody').innerHTML = dishSets.map(s => `
                 <tr>
-                    <td>${s.imageUrl ? '<img src="' + s.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
+                    <td style="text-align:center;font-weight:600;color:#c8956c;">${s.sortOrder || 0}</td>
                     <td>${escH(s.name)}</td>
-                    <td style="font-size:.85rem;color:#aaa;max-width:250px;">${s.items.map(i => escH(i.dishName) + (i.quantity > 1 ? ' ×' + i.quantity : '')).join(', ') || '—'}</td>
-                    <td style="white-space:nowrap;">${s.price.toLocaleString('ru-RU')} ₽</td>
+                    <td style="font-size:.85rem;color:#888;">${escH(s.description || '—')}</td>
                     <td>${s.available ? '<span style="color:#4caf50;">Да</span>' : '<span style="color:#f44;">Нет</span>'}</td>
                     <td>
                         <div class="actions-cell">
@@ -1469,15 +1446,8 @@
             document.getElementById('setEditId').value = '';
             document.getElementById('setName').value = '';
             document.getElementById('setDescription').value = '';
-            document.getElementById('setPrice').value = '';
             document.getElementById('setSortOrder').value = '';
             document.getElementById('setAvailable').checked = true;
-            document.getElementById('setImagePreview').innerHTML = '';
-            document.getElementById('setImage').value = '';
-            document.getElementById('setImageDeleteBtn').style.display = 'none';
-            setItems = [];
-            renderSetItems();
-            populateSetDishSelect();
             document.getElementById('setModalTitle').textContent = 'Создать набор';
             document.getElementById('setModalOverlay').classList.add('open');
         }
@@ -1491,19 +1461,8 @@
             document.getElementById('setEditId').value = id;
             document.getElementById('setName').value = s.name;
             document.getElementById('setDescription').value = s.description || '';
-            document.getElementById('setPrice').value = s.price;
             document.getElementById('setSortOrder').value = s.sortOrder || '';
             document.getElementById('setAvailable').checked = s.available;
-            document.getElementById('setImagePreview').innerHTML = '';
-            document.getElementById('setImage').value = '';
-            document.getElementById('setImageDeleteBtn').style.display = 'none';
-            if (s.imageUrl) {
-                document.getElementById('setImagePreview').innerHTML = '<img src="' + s.imageUrl + '" style="width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #333;">';
-                document.getElementById('setImageDeleteBtn').style.display = 'inline-block';
-            }
-            setItems = s.items.map(i => ({ dishId: i.dishId, dishName: i.dishName, quantity: i.quantity }));
-            renderSetItems();
-            populateSetDishSelect();
             document.getElementById('setModalTitle').textContent = 'Редактировать набор';
             document.getElementById('setModalOverlay').classList.add('open');
         }
@@ -1514,27 +1473,16 @@
             const data = {
                 name: document.getElementById('setName').value.trim(),
                 description: document.getElementById('setDescription').value.trim() || null,
-                price: parseFloat(document.getElementById('setPrice').value) || 0,
+                price: 0,
                 available: document.getElementById('setAvailable').checked,
                 sort_order: parseInt(document.getElementById('setSortOrder').value) || 0,
-                items: setItems.map(i => ({ dish_id: i.dishId, quantity: i.quantity })),
+                items: [],
             };
             try {
-                let setId = editId;
                 if (editId) {
                     await api('/api/admin/sets/' + editId, { method: 'PUT', body: data });
                 } else {
-                    const res = await api('/api/admin/sets', { method: 'POST', body: data });
-                    setId = res.id;
-                }
-                if (document.getElementById('setImage').files.length) {
-                    const formData = new FormData();
-                    formData.append('file', document.getElementById('setImage').files[0]);
-                    await fetch('/api/admin/sets/' + setId + '/image', {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + adminToken },
-                        body: formData,
-                    });
+                    await api('/api/admin/sets', { method: 'POST', body: data });
                 }
                 showToast(editId ? 'Набор обновлён' : 'Набор создан');
                 await loadSets();

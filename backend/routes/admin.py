@@ -436,7 +436,7 @@ class DishSetItemIn(BaseModel):
 class DishSetIn(BaseModel):
     name: str
     description: str | None = None
-    price: float
+    price: float = 0
     items: list[DishSetItemIn] = []
     available: bool = True
     sort_order: int = 0
