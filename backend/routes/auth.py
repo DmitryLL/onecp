@@ -293,10 +293,8 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
 @router.post("/login")
 def login(body: LoginRequest, db: Session = Depends(get_db)):
     customer = db.query(Customer).filter(Customer.phone == body.phone).first()
-    if not customer or not customer.password_hash:
-        raise HTTPException(status_code=401, detail="Аккаунт не найден, зарегистрируйтесь")
-    if not pbkdf2_sha256.verify(body.password, customer.password_hash):
-        raise HTTPException(status_code=401, detail="Неверный пароль")
+    if not customer or not customer.password_hash or not pbkdf2_sha256.verify(body.password, customer.password_hash):
+        raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
     token = create_token(customer.id, customer.phone)
     return {
