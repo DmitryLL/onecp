@@ -263,6 +263,39 @@
 
         .hero-btn:hover svg { transform: translateX(3px); }
 
+        /* Hero location info */
+        .hero-loc-info {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .hero-loc-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,.15);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: .9rem;
+            font-weight: 500;
+            letter-spacing: .3px;
+        }
+        .hero-loc-chip svg {
+            flex-shrink: 0;
+            opacity: .85;
+        }
+        .hero-loc-cta {
+            display: block;
+            font-size: 1.15rem;
+            font-weight: 400;
+            opacity: .9;
+            letter-spacing: .3px;
+        }
+
         /* ===== BEIGE WRAPPER ===== */
         .beige-wrapper {
             background: var(--beige);
@@ -1894,7 +1927,12 @@
         document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
         document.getElementById('orderAddress').value = locInfo.address;
         document.getElementById('siteHeroTitle').innerHTML = locInfo.description;
-        document.getElementById('siteHeroSub').innerHTML = locInfo.address + '&ensp;·&ensp;Закажите обед на завтра · Выдача с 11:00 до 14:00';
+        document.getElementById('siteHeroSub').innerHTML =
+            '<span class="hero-loc-info">' +
+                '<span class="hero-loc-chip"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + locInfo.address + '</span>' +
+                '<span class="hero-loc-chip"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Выдача 11:00 – 14:00</span>' +
+            '</span>' +
+            '<span class="hero-loc-cta">Закажите обед на завтра</span>';
     } else if (window.location.pathname !== '/') {
         window.location.replace('/');
     } else {
