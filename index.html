@@ -1251,16 +1251,17 @@
     }
 
     // ===== LOAD MENU FROM API =====
-    let menuSets = [];
-
     async function loadMenu() {
         try {
             products = await api('/api/menu/');
-            menuSets = await api('/api/menu/sets');
+            const setDishes = await api('/api/menu/sets');
+            // If today has a set, show its dishes; otherwise show all dishes
+            if (setDishes.length > 0) {
+                products = setDishes;
+            }
         } catch (e) {
             console.error('Failed to load menu:', e);
             products = [];
-            menuSets = [];
         }
         renderCatalog();
     }
@@ -1268,29 +1269,24 @@
     // ===== RENDER CATALOG =====
     function renderCatalog() {
         const grid = document.getElementById('catalogGrid');
-        // Show sets if available, otherwise show individual dishes
-        const items = menuSets.length > 0 ? menuSets : products;
-        const isSet = menuSets.length > 0;
-        if (!items.length) {
+        if (!products.length) {
             grid.innerHTML = '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;padding:40px 0;">Загрузка меню...</p>';
             return;
         }
-        grid.innerHTML = items.map((p, i) => `
+        grid.innerHTML = products.map((p, i) => `
             <div class="card animate-on-scroll" style="transition-delay:${i * 60}ms">
                 <div class="card-img">
                     ${p.imageUrl ? '<img src="' + p.imageUrl + '" alt="' + esc(p.name) + '">' : ''}
-                    ${!isSet && p.weight ? '<span class="card-weight">' + p.weight + ' ' + (p.weightUnit || '\u0433') + '</span>' : ''}
-                    ${isSet ? '<span class="card-weight" style="background:linear-gradient(135deg,var(--brown),var(--gold));color:#fff;">Набор</span>' : ''}
+                    ${p.weight ? '<span class="card-weight">' + p.weight + ' ' + (p.weightUnit || '\u0433') + '</span>' : ''}
                 </div>
                 <div class="card-body">
                     <h3>${esc(p.name)}</h3>
-                    ${isSet && p.items && p.items.length ? '<p style="font-size:.8rem;color:var(--text-muted);margin:4px 0 8px;line-height:1.4;">' + p.items.map(it => esc(it.dishName) + (it.quantity > 1 ? ' \u00d7' + it.quantity : '')).join(', ') + '</p>' : ''}
                     <div class="card-info-row">
                         <div class="price">${p.price.toLocaleString('ru-RU')} \u20bd</div>
-                        ${p.description ? '<a class="link-detail" onclick="showDetail(' + (isSet ? "'set-" + p.id + "'" : p.id) + ')">Подробнее</a>' : ''}
+                        ${p.description ? '<a class="link-detail" onclick="showDetail(' + p.id + ')">Подробнее</a>' : ''}
                     </div>
                     <div class="card-buttons">
-                        <button class="btn-cart" id="btn-${isSet ? 'set-' + p.id : p.id}" onclick="${isSet ? 'addSetToCart(' + p.id + ')' : 'addToCart(' + p.id + ')'}">В корзину</button>
+                        <button class="btn-cart" id="btn-${p.id}" onclick="addToCart(${p.id})">В корзину</button>
                     </div>
                 </div>
             </div>
@@ -1307,29 +1303,6 @@
 
     // ===== PRODUCT DETAIL =====
     function showDetail(id) {
-        // Check if it's a set
-        if (typeof id === 'string' && id.startsWith('set-')) {
-            const setId = parseInt(id.replace('set-', ''));
-            const s = menuSets.find(x => x.id === setId);
-            if (!s) return;
-            let html = '';
-            if (s.imageUrl) html += '<img src="' + s.imageUrl + '" alt="' + esc(s.name) + '">';
-            html += '<div class="detail-body">';
-            html += '<h2>' + esc(s.name) + '</h2>';
-            if (s.items && s.items.length) {
-                html += '<div style="margin:8px 0 12px;"><p style="font-size:.85rem;color:var(--text-muted);margin-bottom:6px;">Состав набора:</p>';
-                html += '<ul style="margin:0;padding-left:18px;font-size:.88rem;color:var(--text-light);line-height:1.6;">';
-                s.items.forEach(it => { html += '<li>' + esc(it.dishName) + (it.quantity > 1 ? ' \u00d7 ' + it.quantity : '') + '</li>'; });
-                html += '</ul></div>';
-            }
-            if (s.description) html += '<div class="detail-text">' + esc(s.description) + '</div>';
-            html += '<div class="detail-price">' + s.price.toLocaleString('ru-RU') + ' \u20bd</div>';
-            html += '<button class="btn-cart" style="width:100%;" id="detail-btn-set-' + s.id + '" onclick="addSetToCart(' + s.id + ')">В корзину</button>';
-            html += '</div>';
-            document.getElementById('detailContent').innerHTML = html;
-            document.getElementById('detailOverlay').classList.add('open');
-            return;
-        }
         const p = products.find(x => x.id === id);
         if (!p) return;
         let html = '';
@@ -1399,21 +1372,7 @@
         requestAnimationFrame(animate);
     }
 
-    function addSetToCart(setId) {
-        const s = menuSets.find(x => x.id === setId);
-        if (!s) return;
-        const cartId = 'set-' + setId;
-        const existing = cart.find(c => c.id === cartId);
-        if (existing) { existing.qty++; } else {
-            cart.push({ id: cartId, name: s.name, price: s.price, qty: 1, isSet: true, setId: setId, items: s.items });
-        }
-        updateCartBadge();
-        const btn = document.getElementById('btn-set-' + setId) || document.getElementById('detail-btn-set-' + setId);
-        if (btn) flyToCart(btn);
-        [document.getElementById('btn-set-' + setId), document.getElementById('detail-btn-set-' + setId)].forEach(b => {
-            if (b) { b.textContent = '\u2713 Добавлено'; b.classList.add('added'); setTimeout(() => { b.textContent = 'В корзину'; b.classList.remove('added'); }, 1500); }
-        });
-    }
+
 
     function addToCart(id) {
         const product = products.find(p => p.id === id);
@@ -1588,12 +1547,7 @@
                 body: {
                     phone,
                     sms_code: code,
-                    items: cart.flatMap(c => {
-                        if (c.isSet && c.items) {
-                            return c.items.map(it => ({ dish_id: it.dishId, quantity: it.quantity * c.qty }));
-                        }
-                        return [{ dish_id: c.id, quantity: c.qty }];
-                    }),
+                    items: cart.map(c => ({ dish_id: c.id, quantity: c.qty })),
                     comment: comment || null,
                     address: address || null,
                     customer_name: customerName,

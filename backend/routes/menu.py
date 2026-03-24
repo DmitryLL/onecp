@@ -70,25 +70,30 @@ def get_sets(db: Session = Depends(get_db)):
             .all()
         )
 
-    return [
-        {
-            "id": s.id,
-            "name": s.name,
-            "description": s.description,
-            "price": s.price,
-            "imageUrl": s.image_url,
-            "items": [
-                {
-                    "dishId": item.dish_id,
-                    "dishName": item.dish.name if item.dish else "—",
-                    "quantity": item.quantity,
-                    "dishPrice": item.dish.price if item.dish else 0,
-                }
-                for item in s.items
-            ],
-        }
-        for s in sets
-    ]
+    # Return dishes from today's set(s) as flat list
+    dishes_seen = set()
+    result = []
+    for s in sets:
+        for item in s.items:
+            d = item.dish
+            if not d or d.id in dishes_seen:
+                continue
+            dishes_seen.add(d.id)
+            result.append({
+                "id": d.id,
+                "name": d.name,
+                "description": d.description,
+                "price": d.price,
+                "emoji": d.emoji,
+                "imageUrl": d.image_url,
+                "category": d.category,
+                "weight": d.weight,
+                "weightUnit": d.weight_unit,
+                "proteins": d.proteins,
+                "fats": d.fats,
+                "carbs": d.carbs,
+            })
+    return result
 
 
 @router.get("/categories")
