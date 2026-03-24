@@ -925,7 +925,19 @@
         .bottom-banner {
             width: 100%;
             position: relative;
-            background: var(--beige-dark);
+            background: var(--beige);
+        }
+
+        .bottom-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(to bottom, var(--beige), transparent);
+            z-index: 1;
+            pointer-events: none;
         }
 
         .bottom-divider {
