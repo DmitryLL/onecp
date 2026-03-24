@@ -1004,78 +1004,152 @@
                 position: fixed;
                 inset: 0;
                 z-index: 9999;
-                background: var(--black);
+                background: radial-gradient(ellipse at 50% 0%, rgba(201,169,110,.10) 0%, var(--black) 70%);
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 padding: 24px;
+                overflow-y: auto;
             }
-            .location-overlay .loc-logo {
-                margin-bottom: 32px;
+            .loc-hero {
+                text-align: center;
+                margin-bottom: 48px;
+                animation: fadeUp .8s cubic-bezier(.22,1,.36,1);
             }
-            .location-overlay .loc-logo img {
-                height: 56px;
+            .loc-hero img {
+                height: 64px;
                 width: auto;
+                margin-bottom: 28px;
+                filter: drop-shadow(0 4px 20px rgba(201,169,110,.25));
             }
-            .location-overlay h2 {
+            .loc-hero h1 {
                 color: var(--beige);
-                font-size: 1.6rem;
-                font-weight: 700;
-                margin-bottom: 12px;
-                text-align: center;
+                font-size: 2rem;
+                font-weight: 800;
+                letter-spacing: -.5px;
+                margin-bottom: 10px;
             }
-            .location-overlay p {
-                color: var(--text-muted);
-                font-size: .95rem;
-                margin-bottom: 36px;
-                text-align: center;
+            .loc-hero p {
+                color: rgba(245,239,230,.45);
+                font-size: 1rem;
+                font-weight: 400;
             }
             .location-cards {
                 display: flex;
-                gap: 20px;
+                gap: 24px;
                 flex-wrap: wrap;
                 justify-content: center;
-                max-width: 800px;
+                max-width: 960px;
                 width: 100%;
             }
             .loc-card {
-                flex: 1 1 220px;
-                max-width: 260px;
-                background: rgba(245,239,230,.06);
-                border: 1.5px solid rgba(201,169,110,.18);
-                border-radius: var(--radius);
-                padding: 32px 24px;
-                text-align: center;
+                flex: 1 1 260px;
+                max-width: 300px;
+                background: linear-gradient(165deg, rgba(245,239,230,.07) 0%, rgba(201,169,110,.04) 100%);
+                border: 1.5px solid rgba(201,169,110,.12);
+                border-radius: 20px;
+                padding: 0;
                 text-decoration: none;
-                transition: all .3s cubic-bezier(.22,1,.36,1);
+                transition: all .4s cubic-bezier(.22,1,.36,1);
                 cursor: pointer;
+                overflow: hidden;
+                position: relative;
+                animation: fadeUp .8s cubic-bezier(.22,1,.36,1) both;
             }
+            .loc-card:nth-child(1) { animation-delay: .1s; }
+            .loc-card:nth-child(2) { animation-delay: .2s; }
+            .loc-card:nth-child(3) { animation-delay: .3s; }
+            .loc-card::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: 20px;
+                background: radial-gradient(circle at 50% 0%, rgba(201,169,110,.08) 0%, transparent 60%);
+                opacity: 0;
+                transition: opacity .4s;
+            }
+            .loc-card:hover::before { opacity: 1; }
             .loc-card:hover {
-                background: rgba(201,169,110,.12);
                 border-color: var(--gold);
-                transform: translateY(-4px);
-                box-shadow: 0 12px 40px rgba(201,169,110,.15);
+                transform: translateY(-6px);
+                box-shadow: 0 20px 60px rgba(201,169,110,.18), 0 0 0 1px rgba(201,169,110,.1);
             }
-            .loc-card .loc-icon {
-                font-size: 2.2rem;
-                margin-bottom: 16px;
+            .loc-card-img {
+                width: 100%;
+                height: 140px;
+                background: linear-gradient(135deg, rgba(201,169,110,.12), rgba(139,115,85,.15));
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 3.5rem;
+                position: relative;
+                overflow: hidden;
+            }
+            .loc-card-img::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 40px;
+                background: linear-gradient(to top, rgba(26,22,18,.6), transparent);
+            }
+            .loc-card-body {
+                padding: 24px 24px 28px;
+                position: relative;
+                z-index: 1;
             }
             .loc-card h3 {
                 color: var(--beige);
-                font-size: 1.15rem;
+                font-size: 1.2rem;
                 font-weight: 700;
                 margin-bottom: 8px;
+                letter-spacing: -.2px;
             }
             .loc-card .loc-addr {
-                color: var(--text-muted);
-                font-size: .88rem;
+                color: rgba(245,239,230,.5);
+                font-size: .9rem;
                 font-weight: 400;
-                line-height: 1.4;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
             }
+            .loc-card .loc-addr svg {
+                width: 14px;
+                height: 14px;
+                flex-shrink: 0;
+                stroke: var(--gold-light);
+            }
+            .loc-card .loc-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: linear-gradient(135deg, var(--gold), var(--brown));
+                color: var(--white);
+                font-size: .85rem;
+                font-weight: 600;
+                padding: 10px 22px;
+                border-radius: 50px;
+                transition: all .3s;
+                box-shadow: 0 4px 16px rgba(201,169,110,.25);
+            }
+            .loc-card:hover .loc-btn {
+                box-shadow: 0 6px 24px rgba(201,169,110,.4);
+                transform: translateX(2px);
+            }
+            .loc-card .loc-btn svg {
+                width: 16px;
+                height: 16px;
+                transition: transform .3s;
+            }
+            .loc-card:hover .loc-btn svg { transform: translateX(3px); }
             @media (max-width: 768px) {
-                .location-cards { flex-direction: column; align-items: center; }
+                .location-cards { flex-direction: column; align-items: center; gap: 16px; }
                 .loc-card { max-width: 100%; }
+                .loc-hero h1 { font-size: 1.6rem; }
+                .loc-card-img { height: 110px; font-size: 2.8rem; }
             }
             .mobile-cart-fab .fab-badge {
                 background: #fff;
@@ -1104,24 +1178,53 @@
 
 <!-- LOCATION PICKER (shown only on /) -->
 <div class="location-overlay" id="locationPicker" style="display:none;">
-    <div class="loc-logo"><img src="images/logo.png" alt="One Coffee Place"></div>
-    <h2>Выберите точку выдачи</h2>
-    <p>Для оформления заказа выберите удобную точку</p>
+    <div class="loc-hero">
+        <img src="images/logo.png" alt="One Coffee Place">
+        <h1>One Coffee Place</h1>
+        <p>Выберите точку выдачи для оформления заказа</p>
+    </div>
     <div class="location-cards">
         <a class="loc-card" href="/Sber">
-            <div class="loc-icon">&#x1F3E2;</div>
-            <h3>Sber</h3>
-            <div class="loc-addr">Фонтанная 18</div>
+            <div class="loc-card-img">&#x2615;</div>
+            <div class="loc-card-body">
+                <h3>Sber</h3>
+                <div class="loc-addr">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Фонтанная 18
+                </div>
+                <div class="loc-btn">
+                    Перейти
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </div>
+            </div>
         </a>
         <a class="loc-card" href="/Skycity">
-            <div class="loc-icon">&#x1F3D9;</div>
-            <h3>Sky City</h3>
-            <div class="loc-addr">Алеутская 45</div>
+            <div class="loc-card-img">&#x1F3D9;&#xFE0F;</div>
+            <div class="loc-card-body">
+                <h3>Sky City</h3>
+                <div class="loc-addr">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Алеутская 45
+                </div>
+                <div class="loc-btn">
+                    Перейти
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </div>
+            </div>
         </a>
         <a class="loc-card" href="/InternationalBayViewtowers">
-            <div class="loc-icon">&#x1F30A;</div>
-            <h3>International BayView Towers</h3>
-            <div class="loc-addr">Енисейская 23</div>
+            <div class="loc-card-img">&#x1F30A;</div>
+            <div class="loc-card-body">
+                <h3>International BayView Towers</h3>
+                <div class="loc-addr">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Енисейская 23
+                </div>
+                <div class="loc-btn">
+                    Перейти
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </div>
+            </div>
         </a>
     </div>
 </div>
