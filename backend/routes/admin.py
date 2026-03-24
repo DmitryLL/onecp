@@ -242,6 +242,18 @@ def restore_dish(dish_id: int, admin: AdminUser = Depends(get_admin), db: Sessio
     return {"ok": True}
 
 
+@router.delete("/dishes/{dish_id}/force")
+def force_delete_dish(dish_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Блюдо не найдено")
+    db.query(DishSetItem).filter(DishSetItem.dish_id == dish_id).delete()
+    db.query(OrderItem).filter(OrderItem.dish_id == dish_id).delete()
+    db.delete(dish)
+    db.commit()
+    return {"ok": True}
+
+
 # ===== ORDERS =====
 
 @router.get("/orders")
