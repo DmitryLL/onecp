@@ -774,17 +774,17 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Описание</label>
-                    <textarea id="prodDescription" rows="2" maxlength="600" style="width:100%;padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;font-family:inherit;resize:vertical;"></textarea>
-                </div>
-                <div class="form-group">
                     <label>Цена (₽) <span style="color:#c8956c;">*</span></label>
                     <input type="number" id="prodPrice" min="0" required class="no-spin">
                 </div>
                 <div class="form-group">
-                    <label>Вес / Объём</label>
+                    <label>Описание</label>
+                    <textarea id="prodDescription" rows="2" maxlength="600" style="width:100%;padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;font-family:inherit;resize:vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Вес / Объём <span style="color:#c8956c;">*</span></label>
                     <div style="display:flex;gap:8px;">
-                        <input type="text" id="prodWeight" placeholder="Например: 150/80" style="flex:1;">
+                        <input type="text" id="prodWeight" placeholder="Например: 150/80" required style="flex:1;">
                         <select id="prodWeightUnit" style="width:100px;padding:10px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;">
                             <option value="г">г</option>
                             <option value="мл">мл</option>
