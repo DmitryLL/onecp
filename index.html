@@ -2538,23 +2538,18 @@
                 container.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:40px 0;">У вас пока нет заказов</p>';
                 return;
             }
-            var statusLabels = {new:'Новый',confirmed:'Подтверждён',cooking:'Готовится',ready:'Готов',delivered:'Доставлен',cancelled:'Отменён'};
             container.innerHTML = orders.map(function(o) {
                 var d = o.createdAt ? new Date(o.createdAt) : null;
                 var dateStr = d ? d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '—';
-                var statusColor = o.status === 'cancelled' ? '#d32f2f' : o.status === 'delivered' || o.status === 'ready' ? '#2e7d32' : '#c8956c';
                 return '<div style="background:var(--beige);border-radius:12px;padding:16px;margin-bottom:10px;">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
                         '<span style="font-weight:700;color:var(--brown);">Заказ #' + o.id + '</span>' +
                         '<span style="font-size:.8rem;color:var(--text-light);">' + dateStr + '</span>' +
                     '</div>' +
-                    '<div style="font-size:.88rem;color:var(--text-light);line-height:1.6;margin-bottom:8px;">' +
-                        o.items.map(function(it) { return '<span style="color:var(--text);">' + esc(it.name) + '</span> ×' + it.qty; }).join(' · ') +
+                    '<div style="margin-bottom:10px;">' +
+                        o.items.map(function(it) { return '<div style="display:flex;justify-content:space-between;font-size:.88rem;line-height:1.8;"><span style="color:var(--text);">' + esc(it.name) + ' ×' + it.qty + '</span><span style="color:var(--text-light);">' + (it.price * it.qty).toLocaleString('ru-RU') + ' ₽</span></div>'; }).join('') +
                     '</div>' +
-                    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                        '<span style="font-weight:700;color:var(--text);">' + o.total.toLocaleString('ru-RU') + ' ₽</span>' +
-                        '<span style="font-size:.8rem;font-weight:600;color:' + statusColor + ';">' + (statusLabels[o.status] || o.status) + '</span>' +
-                    '</div>' +
+                    '<div style="font-weight:700;color:var(--text);font-size:.95rem;">Итого: ' + o.total.toLocaleString('ru-RU') + ' ₽</div>' +
                     (o.address ? '<div style="font-size:.78rem;color:var(--text-light);margin-top:6px;">📍 ' + esc(o.address) + '</div>' : '') +
                     (o.comment ? '<div style="font-size:.78rem;color:var(--text-light);margin-top:4px;font-style:italic;">' + esc(o.comment) + '</div>' : '') +
                 '</div>';
