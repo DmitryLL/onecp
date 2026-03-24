@@ -666,7 +666,7 @@
                 <a href="#sets" onclick="showPanel('sets');">🎁 Наборы</a>
                 <a href="#calendar" onclick="showPanel('calendar');">📅 Календарь</a>
                 <a href="#customers" onclick="showPanel('customers');">👥 Клиенты</a>
-                <a href="#settings" onclick="showPanel('settings');">⚙️ Настройки сайта</a>
+                <a href="#settings" onclick="showPanel('settings');">📨 Рассылки</a>
             </nav>
             <div class="sidebar-bottom">
                 <a href="/" class="sidebar-nav" style="color:#666;text-decoration:none;padding:10px 14px;font-size:.9rem;">← На сайт</a>
@@ -722,7 +722,6 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>ID</th>
                                 <th>Телефон</th>
                                 <th>Имя</th>
                                 <th>Дата регистрации</th>
@@ -784,7 +783,7 @@
             <!-- SETTINGS PANEL -->
             <div class="settings-panel" id="settingsPanel">
                 <div class="page-header">
-                    <h1>Настройки сайта</h1>
+                    <h1>Рассылки</h1>
                     <span id="settingsSaveStatus" style="color:#4ade80;font-size:.85rem;opacity:0;transition:opacity .3s;"></span>
                 </div>
 
@@ -1624,12 +1623,11 @@
             const filtered = searchActive ? customers.filter(c => c.phone.includes(search) || (c.name || '').toLowerCase().includes(search.toLowerCase())) : customers;
             const tbody = document.getElementById('customersBody');
             if (!filtered.length) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:24px;">Зарегистрированных клиентов нет</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666;padding:24px;">Зарегистрированных клиентов нет</td></tr>';
                     return;
             }
             tbody.innerHTML = filtered.map(c => {
                 return `<tr>
-                    <td>${c.id}</td>
                     <td>${escH(c.phone)}</td>
                     <td>${escH(c.name || '—')}</td>
                     <td style="color:#888;font-size:.85rem;">${c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '—'}</td>
