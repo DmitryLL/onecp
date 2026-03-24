@@ -1539,7 +1539,9 @@
         function searchDishForSet(setId, input) {
             const q = input.value.trim().toLowerCase();
             const dropdown = document.getElementById('setDishSearch_' + setId);
-            const available = products.filter(p => p.available !== false);
+            const setData = dishSets.find(s => s.id === setId);
+            const existingIds = new Set((setData?.items || []).map(it => it.dishId));
+            const available = products.filter(p => p.available !== false && !existingIds.has(p.id));
             const filtered = q ? available.filter(p => p.name.toLowerCase().includes(q)) : available;
             if (!filtered.length) {
                 dropdown.innerHTML = '<div class="dish-search-item" style="color:#555;cursor:default;">Ничего не найдено</div>';
