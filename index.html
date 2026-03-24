@@ -2337,6 +2337,13 @@
 
     function showConsentModal() {
         if (document.getElementById('orderSendCodeBtn').disabled) return;
+        // Validate: minimum 2 dishes from Суп/Горячее/Салат
+        const requiredCats = ['Суп', 'Горячее', 'Салат'];
+        const mainCount = cart.reduce((sum, item) => requiredCats.includes(item.category) ? sum + item.qty : sum, 0);
+        if (mainCount < 2) {
+            showToast('Добавьте минимум 2 блюда из разделов Суп, Горячее или Салат');
+            return;
+        }
         const orderName = document.getElementById('orderName').value.trim();
         if (!orderName) { showToast('Введите ваше имя'); return; }
         const raw = document.getElementById('orderPhone').value.trim();
