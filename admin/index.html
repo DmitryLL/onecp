@@ -9,8 +9,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0a0a;
-            color: #e0e0e0;
+            background: #f5f5f5;
+            color: #333;
             min-height: 100vh;
         }
 
@@ -19,8 +19,8 @@
 
         .sidebar {
             width: 240px;
-            background: #111;
-            border-right: 1px solid #222;
+            background: #ffffff;
+            border-right: 1px solid #e0e0e0;
             padding: 24px 16px;
             display: flex;
             flex-direction: column;
@@ -34,13 +34,13 @@
         .sidebar-logo {
             font-size: 1.4rem;
             font-weight: 700;
-            color: #fff;
+            color: #1a1a1a;
             margin-bottom: 8px;
         }
 
         .sidebar-sub {
             font-size: .8rem;
-            color: #666;
+            color: #999;
             margin-bottom: 32px;
         }
 
@@ -51,7 +51,7 @@
             align-items: center;
             gap: 10px;
             padding: 10px 14px;
-            color: #999;
+            color: #777;
             text-decoration: none;
             border-radius: 8px;
             font-size: .95rem;
@@ -59,12 +59,12 @@
         }
 
         .sidebar-nav a:hover, .sidebar-nav a.active {
-            background: rgba(245,239,230,.1);
-            color: #f5efe6;
+            background: rgba(0,0,0,.05);
+            color: #1a1a1a;
         }
 
         .sidebar-bottom {
-            border-top: 1px solid #222;
+            border-top: 1px solid #e0e0e0;
             padding-top: 16px;
             display: flex;
             flex-direction: column;
@@ -87,7 +87,7 @@
 
         .page-header h1 {
             font-size: 1.6rem;
-            color: #fff;
+            color: #1a1a1a;
         }
 
         /* ===== BUTTONS ===== */
@@ -103,24 +103,24 @@
         .btn:active { transform: scale(.97); }
 
         .btn-primary {
-            background: #f5efe6;
-            color: #111;
+            background: #1a1a1a;
+            color: #fff;
             font-weight: 600;
         }
-        .btn-primary:hover { background: #e8ddd0; }
+        .btn-primary:hover { background: #333; }
 
         .btn-danger {
-            background: #3a1515;
+            background: #fde8e8;
             color: #e74c3c;
         }
-        .btn-danger:hover { background: #4a1e1e; }
+        .btn-danger:hover { background: #fbd0d0; }
 
         .btn-secondary {
-            background: #1a1a1a;
-            color: #ccc;
-            border: 1px solid #333;
+            background: #f0f0f0;
+            color: #555;
+            border: 1px solid #d0d0d0;
         }
-        .btn-secondary:hover { background: #222; }
+        .btn-secondary:hover { background: #e8e8e8; }
 
         .btn-sm {
             padding: 6px 14px;
@@ -129,8 +129,8 @@
 
         /* ===== TABLE ===== */
         .table-wrap {
-            background: #111;
-            border: 1px solid #222;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
             border-radius: 12px;
             overflow: hidden;
         }
@@ -142,7 +142,7 @@
         }
 
         th {
-            background: #1a1a1a;
+            background: #f0f0f0;
             padding: 14px 16px;
             text-align: left;
             font-size: .85rem;
@@ -154,20 +154,20 @@
 
         td {
             padding: 14px 16px;
-            border-top: 1px solid #1a1a1a;
+            border-top: 1px solid #eee;
             font-size: .95rem;
             overflow: hidden;
             text-overflow: ellipsis;
             word-wrap: break-word;
         }
 
-        tr:hover td { background: rgba(245,239,230,.03); }
+        tr:hover td { background: rgba(0,0,0,.02); }
 
         .emoji-cell { font-size: 1.5rem; }
 
         .price-cell {
             font-weight: 600;
-            color: #f5efe6;
+            color: #1a1a1a;
         }
 
         .actions-cell {
@@ -178,8 +178,8 @@
         /* ===== PRODUCT SECTIONS ===== */
         .prod-section {
             margin-bottom: 24px;
-            background: #0d0d0d;
-            border: 1px solid #1a1a1a;
+            background: #f0f0f0;
+            border: 1px solid #e0e0e0;
             border-radius: 14px;
             overflow: hidden;
         }
@@ -188,8 +188,8 @@
             align-items: center;
             gap: 10px;
             padding: 14px 20px;
-            background: linear-gradient(135deg, rgba(200,149,108,.12), rgba(232,196,124,.06));
-            border-bottom: 1px solid #1a1a1a;
+            background: linear-gradient(135deg, rgba(200,149,108,.15), rgba(232,196,124,.08));
+            border-bottom: 1px solid #e0e0e0;
         }
         .prod-section-header h2 {
             font-size: 1rem;
@@ -199,8 +199,8 @@
         }
         .prod-section-header .count {
             font-size: .78rem;
-            color: #666;
-            background: #1a1a1a;
+            color: #999;
+            background: #f0f0f0;
             padding: 2px 10px;
             border-radius: 20px;
         }
@@ -208,25 +208,25 @@
             table-layout: auto;
         }
         .prod-section table th {
-            background: #111;
+            background: #ffffff;
             padding: 8px 6px;
             font-size: .75rem;
-            color: #555;
+            color: #aaa;
             white-space: nowrap;
         }
         .prod-section table td {
             padding: 6px 5px;
-            border-top: 1px solid #151515;
+            border-top: 1px solid #eee;
             vertical-align: middle;
         }
         .prod-section tr { transition: background .15s; }
-        .prod-section tr:hover td { background: rgba(200,149,108,.04); }
+        .prod-section tr:hover td { background: rgba(200,149,108,.06); }
         .prod-section tr[data-id] { outline-offset: -1px; transition: outline .3s; }
 
         .inline-input {
-            background: linear-gradient(135deg, #111 0%, #0d0d0d 100%);
-            border: 1px solid #2a2a2a;
-            color: #ddd;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            border: 1px solid #d5d5d5;
+            color: #444;
             font-size: .84rem;
             padding: 6px 8px;
             border-radius: 8px;
@@ -244,18 +244,18 @@
             min-height: 34px;
         }
         .inline-input:hover {
-            border-color: #555;
-            background: #161616;
+            border-color: #aaa;
+            background: #f8f8f8;
             box-shadow: 0 2px 8px rgba(0,0,0,.3);
         }
         .inline-input:focus {
             outline: none;
             border-color: #c8956c;
-            background: #1a1409;
+            background: #fdf6ec;
             box-shadow: 0 0 0 3px rgba(200,149,108,.15), 0 2px 12px rgba(200,149,108,.08);
-            color: #f0e6d8;
+            color: #333;
         }
-        .inline-input::placeholder { color: #3a3a3a; }
+        .inline-input::placeholder { color: #bbb; }
         .inline-num {
             width: 100%;
             text-align: center;
@@ -274,13 +274,13 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            background: linear-gradient(135deg, #111 0%, #0d0d0d 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c8956c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 6px center;
             background-size: 12px 7px;
-            border: 1px solid #2a2a2a;
-            color: #ccc;
+            border: 1px solid #d5d5d5;
+            color: #555;
             font-size: .84rem;
             padding: 6px 24px 6px 8px;
             border-radius: 10px;
@@ -291,27 +291,27 @@
             letter-spacing: .02em;
         }
         .inline-select:hover {
-            border-color: #555;
-            background-color: #161616;
-            color: #e0e0e0;
+            border-color: #aaa;
+            background-color: #f8f8f8;
+            color: #333;
             box-shadow: 0 2px 8px rgba(0,0,0,.3);
         }
         .inline-select:focus {
             outline: none;
             border-color: #c8956c;
-            background-color: #1a1409;
+            background-color: #fdf6ec;
             box-shadow: 0 0 0 3px rgba(200,149,108,.15), 0 2px 12px rgba(200,149,108,.08);
-            color: #f0e6d8;
+            color: #333;
         }
         .inline-select option {
-            background: #1a1a1a;
-            color: #ddd;
+            background: #fff;
+            color: #333;
             padding: 10px 12px;
         }
 
         .archive-card {
-            background: #0d0d0d;
-            border: 1px solid #1a1a1a;
+            background: #f0f0f0;
+            border: 1px solid #e0e0e0;
             border-radius: 12px;
             padding: 16px 20px;
             display: flex;
@@ -320,18 +320,18 @@
             margin-bottom: 8px;
             transition: background .15s;
         }
-        .archive-card:hover { background: #111; }
+        .archive-card:hover { background: #ffffff; }
         .archive-card img { width: 48px; height: 48px; object-fit: cover; border-radius: 10px; }
         .archive-card .info { flex: 1; }
-        .archive-card .info h4 { color: #ccc; font-size: .92rem; margin: 0 0 2px; }
-        .archive-card .info span { color: #555; font-size: .82rem; }
+        .archive-card .info h4 { color: #555; font-size: .92rem; margin: 0 0 2px; }
+        .archive-card .info span { color: #aaa; font-size: .82rem; }
 
         /* ===== MODAL ===== */
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,.7);
+            background: rgba(0,0,0,.4);
             z-index: 2000;
             align-items: center;
             justify-content: center;
@@ -339,8 +339,8 @@
         .modal-overlay.open { display: flex; }
 
         .modal {
-            background: #111;
-            border: 1px solid #222;
+            background: #fff;
+            border: 1px solid #e0e0e0;
             border-radius: 16px;
             padding: 32px;
             width: 100%;
@@ -349,7 +349,7 @@
         }
 
         .modal h2 {
-            color: #fff;
+            color: #1a1a1a;
             font-size: 1.3rem;
             margin-bottom: 24px;
         }
@@ -360,7 +360,7 @@
 
         .modal label {
             display: block;
-            color: #aaa;
+            color: #666;
             font-size: .85rem;
             margin-bottom: 6px;
         }
@@ -368,17 +368,17 @@
         .modal input, .modal select {
             width: 100%;
             padding: 10px 14px;
-            background: #1a1a1a;
-            border: 1.5px solid #333;
+            background: #f5f5f5;
+            border: 1.5px solid #d0d0d0;
             border-radius: 8px;
-            color: #fff;
+            color: #333;
             font-size: .95rem;
             font-family: inherit;
         }
 
         .modal input:focus, .modal select:focus {
             outline: none;
-            border-color: #f5efe6;
+            border-color: #c8956c;
         }
 
         .modal-actions {
@@ -394,15 +394,15 @@
         .products-panel { display: none; }
 
         .settings-card {
-            background: #111;
-            border: 1px solid #222;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 20px;
         }
 
         .settings-card h3 {
-            color: #fff;
+            color: #1a1a1a;
             font-size: 1.1rem;
             margin-bottom: 16px;
         }
@@ -413,7 +413,7 @@
 
         .settings-card label {
             display: block;
-            color: #aaa;
+            color: #666;
             font-size: .85rem;
             margin-bottom: 6px;
         }
@@ -421,10 +421,10 @@
         .settings-card input, .settings-card textarea {
             width: 100%;
             padding: 10px 14px;
-            background: #1a1a1a;
-            border: 1.5px solid #333;
+            background: #f5f5f5;
+            border: 1.5px solid #d0d0d0;
             border-radius: 8px;
-            color: #fff;
+            color: #333;
             font-size: .95rem;
             font-family: inherit;
         }
@@ -436,7 +436,7 @@
 
         .settings-card input:focus, .settings-card textarea:focus {
             outline: none;
-            border-color: #f5efe6;
+            border-color: #c8956c;
         }
 
         /* ===== TOAST ===== */
@@ -444,11 +444,11 @@
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: #1a3a1a;
-            color: #4ade80;
+            background: #e8f5e8;
+            color: #2e7d32;
             padding: 14px 24px;
             border-radius: 10px;
-            border: 1px solid #2a4a2a;
+            border: 1px solid #a5d6a7;
             font-size: .95rem;
             transform: translateY(100px);
             opacity: 0;
@@ -466,15 +466,15 @@
         }
 
         .stat-card {
-            background: #111;
-            border: 1px solid #222;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
             border-radius: 12px;
             padding: 20px;
         }
 
         .stat-card .stat-label {
             font-size: .8rem;
-            color: #666;
+            color: #999;
             text-transform: uppercase;
             letter-spacing: .5px;
             margin-bottom: 8px;
@@ -483,13 +483,13 @@
         .stat-card .stat-value {
             font-size: 1.8rem;
             font-weight: 700;
-            color: #f5efe6;
+            color: #1a1a1a;
         }
 
         /* ===== SET CARDS ===== */
         .set-card {
-            background: #111;
-            border: 1px solid #222;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
             border-radius: 12px;
             padding: 16px 20px;
             margin-bottom: 10px;
@@ -510,12 +510,12 @@
         .set-card-name {
             font-weight: 600;
             font-size: 1rem;
-            color: #f5efe6;
+            color: #1a1a1a;
             flex: 1;
             min-width: 120px;
         }
         .set-card-desc {
-            color: #666;
+            color: #999;
             font-size: .85rem;
             margin-top: 4px;
         }
@@ -540,26 +540,26 @@
         .set-card-items {
             margin-top: 10px;
             padding-top: 10px;
-            border-top: 1px solid #1a1a1a;
+            border-top: 1px solid #eee;
         }
         .set-item-row {
             display: flex;
             align-items: center;
             gap: 10px;
             padding: 6px 12px;
-            background: #1a1a1a;
-            border: 1px solid #222;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
             margin-top: 4px;
             font-size: .85rem;
-            color: #ccc;
+            color: #555;
         }
         .set-item-row .item-cat { font-size: .8rem; font-weight: 600; min-width: 75px; }
         .set-item-row .item-name { flex: 1; }
         .set-item-row .item-qty { color: #888; font-size: .8rem; min-width: 30px; text-align: center; }
         .set-item-row .remove-item {
             cursor: pointer;
-            color: #555;
+            color: #aaa;
             font-size: .8rem;
             transition: color .2s;
             padding: 2px 4px;
@@ -573,10 +573,10 @@
         .set-add-dish input {
             width: 100%;
             padding: 8px 12px;
-            background: #1a1a1a;
-            border: 1.5px solid #333;
+            background: #f5f5f5;
+            border: 1.5px solid #d0d0d0;
             border-radius: 8px;
-            color: #fff;
+            color: #333;
             font-size: .85rem;
             font-family: inherit;
         }
@@ -586,8 +586,8 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: #1a1a1a;
-            border: 1px solid #333;
+            background: #fff;
+            border: 1px solid #d0d0d0;
             border-radius: 0 0 8px 8px;
             max-height: 200px;
             overflow-y: auto;
@@ -600,20 +600,20 @@
             padding: 8px 12px;
             cursor: pointer;
             font-size: .85rem;
-            color: #ccc;
+            color: #555;
             display: flex;
             justify-content: space-between;
             align-items: center;
             transition: background .15s;
         }
-        .dish-search-item:hover { background: #252525; color: #f5efe6; }
+        .dish-search-item:hover { background: #f5f5f5; color: #1a1a1a; }
         .dish-search-item .price { color: #888; font-size: .8rem; }
 
         /* ===== CALENDAR ===== */
         .cal-list { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; max-width: 700px; }
         .cal-day {
-            background: #111;
-            border: 1px solid #1a1a1a;
+            background: #fff;
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
             padding: 8px 14px;
             display: flex;
@@ -621,18 +621,18 @@
             gap: 12px;
             transition: border-color .2s;
         }
-        .cal-day:hover { border-color: #333; }
-        .cal-day.today { border-color: #c8956c; background: #131008; }
+        .cal-day:hover { border-color: #c8956c; }
+        .cal-day.today { border-color: #c8956c; background: #fdf6ec; }
         .cal-date { min-width: 90px; flex-shrink: 0; }
-        .cal-date .date { color: #999; font-weight: 600; font-size: .82rem; }
+        .cal-date .date { color: #777; font-weight: 600; font-size: .82rem; }
         .cal-day.today .cal-date .date { color: #c8956c; }
-        .cal-date .weekday { color: #444; font-size: .7rem; }
+        .cal-date .weekday { color: #bbb; font-size: .7rem; }
         .cal-day-select {
             flex: 1;
-            background: #1a1a1a;
-            border: 1px solid #333;
+            background: #f5f5f5;
+            border: 1px solid #d0d0d0;
             border-radius: 8px;
-            color: #ccc;
+            color: #555;
             font-size: .85rem;
             padding: 6px 10px;
             font-family: inherit;
