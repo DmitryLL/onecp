@@ -743,6 +743,7 @@
         }
 
         .mobile-cart-fab { display: none; }
+        .mobile-header-right { display: none; }
 
         /* burger */
         .burger {
@@ -1875,17 +1876,38 @@
 
             .header-inner { padding: 0 12px; height: 56px; }
             .logo img { height: 30px; }
-            nav.desktop { display: flex; gap: 2px; }
-            nav.desktop a { padding: 6px 8px; font-size: .75rem; }
-            .nav-cart { padding: 6px 12px !important; font-size: .75rem; gap: 4px !important; }
-            .cart-badge { min-width: 16px; height: 16px; font-size: .6rem; padding: 0 3px; }
-            .nav-login { padding: 6px 8px; font-size: .75rem; }
-            .header-user { gap: 6px; }
-            .header-user-name { font-size: .7rem; }
-            .header-user-phone { font-size: .6rem; }
-            .header-user .btn-logout { padding: 4px 8px; font-size: .65rem; }
-            .burger { display: none; }
-            .mobile-menu { display: none !important; }
+            nav.desktop { display: none; }
+            .mobile-header-right { display: flex; align-items: center; gap: 8px; }
+            .mobile-header-right .nav-cart { padding: 6px 12px; font-size: .75rem; gap: 4px; }
+            .mobile-header-right .cart-badge { min-width: 16px; height: 16px; font-size: .6rem; padding: 0 3px; }
+            .burger { display: flex; }
+
+            .mobile-menu {
+                display: none;
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                background: rgba(26,22,18,.95);
+                backdrop-filter: blur(20px);
+                padding: 12px 20px 16px;
+                flex-direction: column;
+                gap: 4px;
+                z-index: 999;
+                border-bottom: 1px solid rgba(201,169,110,.15);
+                animation: slideDown .3s;
+            }
+            .mobile-menu.open { display: flex; }
+            .mobile-menu a {
+                display: block;
+                padding: 12px 16px;
+                text-decoration: none;
+                color: rgba(245,239,230,.8);
+                border-radius: var(--radius-sm);
+                font-size: .95rem;
+                font-weight: 500;
+            }
+            .mobile-menu a:hover { background: rgba(228,217,204,.15); color: var(--beige); }
 
             .mobile-cart-fab.visible {
                 display: flex;
@@ -2014,9 +2036,14 @@
                 <button class="btn-logout" onclick="logout()">Выйти</button>
             </div>
         </nav>
-        <button class="burger" onclick="toggleMobile()" aria-label="Меню">
-            <span></span><span></span><span></span>
-        </button>
+        <div class="mobile-header-right">
+            <a href="#" class="nav-cart" onclick="openCart(); return false;">
+                Корзина <span class="cart-badge" id="cartBadgeMobile">0</span>
+            </a>
+            <button class="burger" onclick="toggleMobile()" aria-label="Меню">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
     </div>
 </header>
 
@@ -2024,7 +2051,10 @@
 <div class="mobile-menu" id="mobileMenu">
     <a href="#catalog" onclick="closeMobile()">Каталог</a>
     <a href="#contacts" onclick="closeMobile()">Контакты</a>
-    <a href="#" onclick="openCart(); closeMobile(); return false;" style="color:var(--gold);">Корзина (<span id="cartBadgeMob">0</span>)</a>
+    <a href="#" id="mobLoginBtn" onclick="openAuthModal('login'); closeMobile(); return false;">Войти</a>
+    <a href="#" id="mobMyOrders" onclick="openMyOrders(); closeMobile(); return false;" style="display:none;">Мои заказы</a>
+    <a href="#" id="mobUserInfo" style="display:none;color:var(--gold);pointer-events:none;"></a>
+    <a href="#" id="mobLogout" onclick="logout(); closeMobile(); return false;" style="display:none;color:#d32f2f;">Выйти</a>
 </div>
 
 <!-- MOBILE FLOATING CART -->
@@ -2363,14 +2393,29 @@
     function updateHeaderAuth() {
         var loginBtn = document.getElementById('headerLoginBtn');
         var userEl = document.getElementById('headerUser');
+        // Mobile menu items
+        var mobLogin = document.getElementById('mobLoginBtn');
+        var mobOrders = document.getElementById('mobMyOrders');
+        var mobUser = document.getElementById('mobUserInfo');
+        var mobLogout = document.getElementById('mobLogout');
         if (currentCustomer) {
             loginBtn.style.display = 'none';
             userEl.style.display = 'flex';
             document.getElementById('headerUserName').textContent = currentCustomer.name || '';
             document.getElementById('headerUserPhone').textContent = currentCustomer.phone || '';
+            // Mobile
+            if (mobLogin) mobLogin.style.display = 'none';
+            if (mobOrders) mobOrders.style.display = 'block';
+            if (mobUser) { mobUser.style.display = 'block'; mobUser.textContent = (currentCustomer.name || '') + '  ' + (currentCustomer.phone || ''); }
+            if (mobLogout) mobLogout.style.display = 'block';
         } else {
             loginBtn.style.display = '';
             userEl.style.display = 'none';
+            // Mobile
+            if (mobLogin) mobLogin.style.display = 'block';
+            if (mobOrders) mobOrders.style.display = 'none';
+            if (mobUser) mobUser.style.display = 'none';
+            if (mobLogout) mobLogout.style.display = 'none';
         }
     }
 
@@ -2746,6 +2791,8 @@
     function updateCartBadge() {
         const count = cart.reduce((s, c) => s + c.qty, 0);
         document.getElementById('cartBadge').textContent = count;
+        const mobBadge = document.getElementById('cartBadgeMobile');
+        if (mobBadge) mobBadge.textContent = count;
         const mob = document.getElementById('cartBadgeMob');
         if (mob) mob.textContent = count;
         const fab = document.getElementById('cartBadgeFab');
