@@ -587,47 +587,53 @@
         }
 
         /* ===== CONTACTS ===== */
-        .contacts-cards {
+        .contacts-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 36px;
+            align-items: start;
+        }
+
+        .contacts-left {
             display: flex;
-            justify-content: center;
-            gap: 24px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .contact-card {
             background: var(--white);
             border-radius: var(--radius-lg);
-            padding: 28px 32px;
+            padding: 24px 28px;
             box-shadow: var(--shadow-card);
             border: 1px solid rgba(139,115,85,.08);
-            text-align: center;
-            min-width: 220px;
-            flex: 0 1 240px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
             transition: all .3s;
         }
 
         .contact-card:hover {
             box-shadow: var(--shadow-md);
-            transform: translateY(-4px);
+            transform: translateX(4px);
         }
 
         .contact-card .cc-icon {
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(135deg, var(--beige), var(--beige-dark));
-            border-radius: 16px;
-            display: inline-flex;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--gold-light), var(--gold));
+            border-radius: 14px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
-            margin-bottom: 14px;
+            font-size: 1.3rem;
+            flex-shrink: 0;
         }
 
         .contact-card h4 {
             font-size: .95rem;
             font-weight: 700;
             color: var(--text);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .contact-card p { color: var(--text-light); font-size: .9rem; line-height: 1.5; }
@@ -1011,11 +1017,7 @@
 
             .catalog-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
 
-            .contacts-cards { flex-direction: column; align-items: stretch; }
-            .contact-card { flex: 1; }
-            #question { margin: 24px 0 0 !important; max-width: 100% !important; }
-            #question .form-group { margin-bottom: 0; }
-            #questionForm > div:first-child { grid-template-columns: 1fr !important; }
+            .contacts-layout { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -1080,41 +1082,45 @@
         <h2 class="section-title">Контакты</h2>
     </div>
 
-    <div class="contacts-cards animate-on-scroll">
-        <div class="contact-card">
-            <div class="cc-icon">&#x1F4CD;</div>
-            <h4>Адрес</h4>
-            <p id="siteAddress">г. Москва, ул. Примерная, д. 1, оф. 101</p>
+    <div class="contacts-layout">
+        <div class="contacts-left animate-on-scroll">
+            <div class="contact-card">
+                <div class="cc-icon">&#x1F4CD;</div>
+                <div>
+                    <h4>Адрес</h4>
+                    <p id="siteAddress">г. Москва, ул. Примерная, д. 1, оф. 101</p>
+                </div>
+            </div>
+            <div class="contact-card">
+                <div class="cc-icon">&#x1F550;</div>
+                <div>
+                    <h4>График выдачи</h4>
+                    <p id="siteSchedule">с 11:00 — 14:00</p>
+                </div>
+            </div>
         </div>
-        <div class="contact-card">
-            <div class="cc-icon">&#x1F550;</div>
-            <h4>График выдачи</h4>
-            <p id="siteSchedule">с 11:00 — 14:00</p>
-        </div>
-    </div>
 
-    <div class="form-card animate-on-scroll" id="question" style="max-width:520px;margin:32px auto 0;">
-        <h3>Задать вопрос</h3>
-        <form id="questionForm" onsubmit="submitForm(event)">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                <div class="form-group" style="margin-bottom:0;">
+        <div class="form-card animate-on-scroll" id="question">
+            <h3>Задать вопрос</h3>
+            <form id="questionForm" onsubmit="submitForm(event)">
+                <div class="form-group">
                     <label for="name">Ваше имя</label>
                     <input type="text" id="name" placeholder="Иван Иванов" required>
                 </div>
-                <div class="form-group" style="margin-bottom:0;">
+                <div class="form-group">
                     <label for="qPhone">Телефон</label>
                     <div style="display:flex;">
-                        <span style="padding:12px 10px;background:var(--beige-dark);border:2px solid var(--beige-dark);border-right:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-weight:600;color:var(--text);font-size:.85rem;">+7</span>
+                        <span style="padding:12px 12px;background:var(--beige-dark);border:2px solid var(--beige-dark);border-right:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);font-weight:600;color:var(--text);font-size:.9rem;">+7</span>
                         <input type="tel" id="qPhone" placeholder="9991234567" maxlength="10" required oninput="this.value=this.value.replace(/\D/g,'')" style="border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left:none;">
                     </div>
                 </div>
-            </div>
-            <div class="form-group" style="margin-top:16px;">
-                <label for="message">Сообщение</label>
-                <textarea id="message" placeholder="Напишите ваш вопрос..." required></textarea>
-            </div>
-            <button type="submit" class="btn-submit" style="width:100%;">Отправить</button>
-        </form>
+                <div class="form-group">
+                    <label for="message">Сообщение</label>
+                    <textarea id="message" placeholder="Напишите ваш вопрос..." required rows="4"></textarea>
+                </div>
+                <button type="submit" class="btn-submit" style="width:100%;">Отправить</button>
+            </form>
+        </div>
     </div>
 </section>
 
