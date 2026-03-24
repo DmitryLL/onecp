@@ -78,37 +78,33 @@
         }
 
         /* ===== HEADER ===== */
-        .slogan-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1001;
-            background: linear-gradient(135deg, var(--brown), var(--gold));
-            color: #fff;
-            text-align: center;
-            padding: 7px 24px;
-            font-size: .8rem;
-            font-weight: 500;
-            letter-spacing: .4px;
-            line-height: 1.3;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-        .slogan-bar span {
+        .hero-slogan {
             display: inline-block;
-            opacity: .95;
+            background: linear-gradient(135deg, rgba(139,90,43,.85), rgba(201,169,110,.85));
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: .85rem;
+            font-weight: 500;
+            letter-spacing: .3px;
+            color: #fff;
+            margin-bottom: 16px;
+            line-height: 1.4;
+            text-shadow: 0 1px 4px rgba(0,0,0,.2);
+            box-shadow: 0 4px 20px rgba(139,90,43,.25);
+            animation: fadeUp .8s .05s cubic-bezier(.22,1,.36,1) both;
         }
-        .slogan-bar svg {
+        .hero-slogan svg {
             display: inline-block;
             vertical-align: middle;
-            margin: 0 8px;
-            opacity: .6;
+            margin: 0 6px;
+            opacity: .5;
         }
 
         header {
             position: fixed;
-            top: 30px;
+            top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
@@ -220,7 +216,7 @@
 
         /* ===== HERO ===== */
         .hero {
-            margin-top: 102px;
+            margin-top: 72px;
             background: #000 url('images/top-bg.png') center/cover no-repeat;
             color: #fff;
             padding: 120px 24px 100px;
@@ -1332,7 +1328,7 @@
             .mobile-menu {
                 display: none;
                 position: fixed;
-                top: 102px;
+                top: 72px;
                 left: 0;
                 right: 0;
                 background: rgba(26,22,18,.95);
@@ -1460,14 +1456,6 @@
 </div>
 
 <!-- HEADER -->
-<div class="slogan-bar">
-    <span>Готовим с душой, подаём с любовью</span>
-    <svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="currentColor"/></svg>
-    <span>Свежие блюда каждый день</span>
-    <svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="currentColor"/></svg>
-    <span>Закажите и убедитесь сами</span>
-</div>
-
 <header id="siteHeader">
     <div class="header-inner">
         <a href="#" class="logo"><img src="images/logo.png" alt="One Coffee Place"></a>
@@ -2200,6 +2188,7 @@
                 '<span class="hero-loc-chip"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + locInfo.address + '</span>' +
                 '<span class="hero-loc-chip"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Выдача 11:00 – 14:00</span>' +
             '</span>' +
+            '<span class="hero-slogan">Готовим с душой, подаём с любовью <svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="currentColor"/></svg> Свежие блюда каждый день</span>' +
             '<span class="hero-loc-cta">Закажите обед на завтра</span>';
     } else if (window.location.pathname !== '/') {
         window.location.replace('/');
