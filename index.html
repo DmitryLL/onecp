@@ -998,6 +998,85 @@
                 transition: transform .2s;
             }
             .mobile-cart-fab:active { transform: scale(.95); }
+
+            /* ===== LOCATION PICKER ===== */
+            .location-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                background: var(--black);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 24px;
+            }
+            .location-overlay .loc-logo {
+                margin-bottom: 32px;
+            }
+            .location-overlay .loc-logo img {
+                height: 56px;
+                width: auto;
+            }
+            .location-overlay h2 {
+                color: var(--beige);
+                font-size: 1.6rem;
+                font-weight: 700;
+                margin-bottom: 12px;
+                text-align: center;
+            }
+            .location-overlay p {
+                color: var(--text-muted);
+                font-size: .95rem;
+                margin-bottom: 36px;
+                text-align: center;
+            }
+            .location-cards {
+                display: flex;
+                gap: 20px;
+                flex-wrap: wrap;
+                justify-content: center;
+                max-width: 800px;
+                width: 100%;
+            }
+            .loc-card {
+                flex: 1 1 220px;
+                max-width: 260px;
+                background: rgba(245,239,230,.06);
+                border: 1.5px solid rgba(201,169,110,.18);
+                border-radius: var(--radius);
+                padding: 32px 24px;
+                text-align: center;
+                text-decoration: none;
+                transition: all .3s cubic-bezier(.22,1,.36,1);
+                cursor: pointer;
+            }
+            .loc-card:hover {
+                background: rgba(201,169,110,.12);
+                border-color: var(--gold);
+                transform: translateY(-4px);
+                box-shadow: 0 12px 40px rgba(201,169,110,.15);
+            }
+            .loc-card .loc-icon {
+                font-size: 2.2rem;
+                margin-bottom: 16px;
+            }
+            .loc-card h3 {
+                color: var(--beige);
+                font-size: 1.15rem;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+            .loc-card .loc-addr {
+                color: var(--text-muted);
+                font-size: .88rem;
+                font-weight: 400;
+                line-height: 1.4;
+            }
+            @media (max-width: 768px) {
+                .location-cards { flex-direction: column; align-items: center; }
+                .loc-card { max-width: 100%; }
+            }
             .mobile-cart-fab .fab-badge {
                 background: #fff;
                 color: var(--brown-dark);
@@ -1022,6 +1101,30 @@
     </style>
 </head>
 <body>
+
+<!-- LOCATION PICKER (shown only on /) -->
+<div class="location-overlay" id="locationPicker" style="display:none;">
+    <div class="loc-logo"><img src="images/logo.png" alt="One Coffee Place"></div>
+    <h2>Выберите точку выдачи</h2>
+    <p>Для оформления заказа выберите удобную точку</p>
+    <div class="location-cards">
+        <a class="loc-card" href="/Sber">
+            <div class="loc-icon">&#x1F3E2;</div>
+            <h3>Sber</h3>
+            <div class="loc-addr">Фонтанная 18</div>
+        </a>
+        <a class="loc-card" href="/Skycity">
+            <div class="loc-icon">&#x1F3D9;</div>
+            <h3>Sky City</h3>
+            <div class="loc-addr">Алеутская 45</div>
+        </a>
+        <a class="loc-card" href="/InternationalBayViewtowers">
+            <div class="loc-icon">&#x1F30A;</div>
+            <h3>International BayView Towers</h3>
+            <div class="loc-addr">Енисейская 23</div>
+        </a>
+    </div>
+</div>
 
 <!-- HEADER -->
 <header id="siteHeader">
@@ -1684,16 +1787,23 @@
 
     // ===== LOCATION PAGES =====
     const LOCATIONS = {
-        '/Sber': 'Sber',
-        '/Skycity': 'Skycity',
-        '/InternationalBayViewtowers': 'International Bay View Towers',
+        '/Sber': { name: 'Sber', address: 'Фонтанная 18' },
+        '/Skycity': { name: 'Sky City', address: 'Алеутская 45' },
+        '/InternationalBayViewtowers': { name: 'International BayView Towers', address: 'Енисейская 23' },
     };
-    const currentLocation = LOCATIONS[window.location.pathname];
-    if (currentLocation) {
-        document.getElementById('siteAddress').textContent = currentLocation;
-        document.getElementById('orderAddress').value = currentLocation;
+    const locInfo = LOCATIONS[window.location.pathname];
+    const currentLocation = locInfo ? locInfo.address : '';
+    if (locInfo) {
+        document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
+        document.getElementById('orderAddress').value = locInfo.address;
     } else if (window.location.pathname === '/') {
-        // Root page — redirect to first location or show default
+        // Show location picker, hide main content
+        document.getElementById('locationPicker').style.display = '';
+        document.getElementById('siteHeader').style.display = 'none';
+        document.querySelector('.hero').style.display = 'none';
+        document.querySelector('.beige-wrapper').style.display = 'none';
+        document.querySelector('footer').style.display = 'none';
+        document.getElementById('mobileCartFab').style.display = 'none';
     }
 
     // ===== INIT =====
