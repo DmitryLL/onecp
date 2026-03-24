@@ -757,7 +757,7 @@
                 </div>
 
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
-                    <label style="color:#aaa;font-size:.9rem;">Дата:</label>
+                    <label style="color:#aaa;font-size:.9rem;">Заказ на:</label>
                     <input type="date" id="ordersDate" onchange="loadOrdersByDate()" style="padding:8px 14px;background:#f5f5f5;border:1.5px solid #d0d0d0;border-radius:8px;color:#333;font-size:.9rem;font-family:inherit;">
                     <button class="btn btn-sm" onclick="exportOrdersExcel()" style="background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;">Отчёт по гостям</button>
                     <button class="btn btn-sm" onclick="exportKitchenExcel()" style="background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;">Отчёт для кухни</button>
@@ -1758,12 +1758,27 @@
             renderOrdersByDate();
         }
 
+        // Compute delivery date for an order based on its creation time
+        // Before 14:00 Vladivostok → delivery next day, after 14:00 → day after tomorrow
+        function getOrderDeliveryDate(createdAtISO) {
+            var vladTime = new Date(new Date(createdAtISO).toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
+            var delivery = new Date(vladTime);
+            if (vladTime.getHours() >= 14) {
+                delivery.setDate(delivery.getDate() + 2);
+            } else {
+                delivery.setDate(delivery.getDate() + 1);
+            }
+            return delivery.getFullYear() + '-' +
+                String(delivery.getMonth() + 1).padStart(2, '0') + '-' +
+                String(delivery.getDate()).padStart(2, '0');
+        }
+
         async function loadOrdersByDate() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { document.getElementById('ordersDateContent').innerHTML = '<p style="color:#666;">Выберите дату</p>'; return; }
             try {
                 const orders = await api('/api/admin/orders');
-                allDateOrders = orders.filter(o => o.createdAt && o.createdAt.substring(0, 10) === dateStr);
+                allDateOrders = orders.filter(o => o.createdAt && getOrderDeliveryDate(o.createdAt) === dateStr);
                 applyLocFilter();
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
@@ -1836,13 +1851,6 @@
             return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ', ' + days[d.getDay()];
         }
 
-        // Helper: delivery date = order date + 1 day
-        function getDeliveryDate(dateStr) {
-            var d = new Date(dateStr + 'T00:00:00');
-            d.setDate(d.getDate() + 1);
-            return d;
-        }
-
         // Helper: apply styles to a cell range
         function styleCell(ws, ref, style) {
             if (!ws[ref]) ws[ref] = { v: '', t: 's' };
@@ -1869,21 +1877,19 @@
             if (!dateStr) { showToast('Выберите дату'); return; }
             try {
                 const orders = await api('/api/admin/orders');
-                allDateOrders = orders.filter(o => o.createdAt && o.createdAt.substring(0, 10) === dateStr);
+                allDateOrders = orders.filter(o => o.createdAt && getOrderDeliveryDate(o.createdAt) === dateStr);
                 applyLocFilter();
             } catch (e) { showToast('Ошибка загрузки: ' + e.message); return; }
             if (!dateOrders.length) { showToast('Нет заказов' + (activeLocFilter ? ' по точке ' + activeLocFilter : '')); return; }
             showToast('Загрузка...');
             try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
 
-            var orderDate = new Date(dateStr + 'T00:00:00');
-            var deliveryDate = getDeliveryDate(dateStr);
+            var deliveryDate = new Date(dateStr + 'T00:00:00');
 
             var data = [];
             // Title block
             data.push(['ONE COFFEE PLACE — Отчёт по гостям' + getLocSuffix()]);
-            data.push(['Заказы от: ' + formatDateRu(orderDate)]);
-            data.push(['Доставка на: ' + formatDateRu(deliveryDate)]);
+            data.push(['Заказ на: ' + formatDateRu(deliveryDate)]);
             if (activeLocFilter) data.push(['Точка выдачи: ' + activeLocFilter]);
             data.push(['Всего заказов: ' + dateOrders.length + '   |   Общая сумма: ' + dateOrders.reduce((s,o) => s + o.total, 0).toLocaleString('ru-RU') + ' ₽']);
             data.push([]); // пустая строка
@@ -1964,14 +1970,13 @@
             if (!dateStr) { showToast('Выберите дату'); return; }
             try {
                 const orders = await api('/api/admin/orders');
-                allDateOrders = orders.filter(o => o.createdAt && o.createdAt.substring(0, 10) === dateStr);
+                allDateOrders = orders.filter(o => o.createdAt && getOrderDeliveryDate(o.createdAt) === dateStr);
                 applyLocFilter();
             } catch (e) { showToast('Ошибка загрузки: ' + e.message); return; }
             if (!dateOrders.length) { showToast('Нет заказов' + (activeLocFilter ? ' по точке ' + activeLocFilter : '')); return; }
             try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
 
-            var orderDate = new Date(dateStr + 'T00:00:00');
-            var deliveryDate = getDeliveryDate(dateStr);
+            var deliveryDate = new Date(dateStr + 'T00:00:00');
 
             // Aggregate dishes
             var totals = {};
@@ -1987,8 +1992,7 @@
             var data = [];
             // Title block
             data.push(['ONE COFFEE PLACE — Отчёт для кухни' + getLocSuffix()]);
-            data.push(['Заказы от: ' + formatDateRu(orderDate)]);
-            data.push(['Готовить на: ' + formatDateRu(deliveryDate)]);
+            data.push(['Заказ на: ' + formatDateRu(deliveryDate)]);
             if (activeLocFilter) data.push(['Точка выдачи: ' + activeLocFilter]);
             data.push(['Всего заказов: ' + dateOrders.length + '   |   Всего порций: ' + totalPortions]);
             data.push([]); // пустая строка
@@ -2261,7 +2265,15 @@
         }
 
         // ===== INIT =====
-        document.getElementById('ordersDate').value = new Date().toISOString().substring(0, 10);
+        // Default date = delivery target (tomorrow, or day after if past 14:00 Vladivostok)
+        (function() {
+            var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
+            var target = new Date(now);
+            target.setDate(target.getDate() + (now.getHours() >= 14 ? 2 : 1));
+            document.getElementById('ordersDate').value = target.getFullYear() + '-' +
+                String(target.getMonth() + 1).padStart(2, '0') + '-' +
+                String(target.getDate()).padStart(2, '0');
+        })();
         const initPanel = location.hash.replace('#', '') || 'orders';
         showPanel(initPanel);
         loadDishes();
