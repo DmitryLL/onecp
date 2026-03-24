@@ -1773,7 +1773,7 @@
                         <tbody>${g.orders.map(o => `<tr>
                             <td>#${o.id}</td>
                             <td style="color:#888;font-size:.85rem;">${o.createdAt ? new Date(o.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '—'}</td>
-                            <td style="font-size:.85rem;">${o.items.map(it => escH(it.name) + ' x' + it.qty).join(', ')}</td>
+                            <td style="font-size:.85rem;">${o.items.map(it => escH(it.name) + ' ×' + it.qty).join('<br>')}</td>
                             <td class="price-cell">${o.total.toLocaleString('ru-RU')} ₽</td>
                             <td style="color:#888;font-size:.85rem;">${escH(o.comment || '—')}</td>
                         </tr>`).join('')}</tbody>
