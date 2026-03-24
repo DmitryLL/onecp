@@ -1642,23 +1642,21 @@
             border-bottom: 1px solid var(--beige);
         }
         .loc-card-top .loc-emoji {
-            width: 52px;
-            height: 52px;
+            width: 64px;
+            height: 64px;
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
             flex-shrink: 0;
-            background: linear-gradient(135deg, var(--brown-light), var(--gold));
-            color: var(--white);
-            font-weight: 700;
+            background: var(--white);
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
         }
-        .loc-card:nth-child(2) .loc-emoji {
-            background: linear-gradient(135deg, var(--gold), var(--brown));
-        }
-        .loc-card:nth-child(3) .loc-emoji {
-            background: linear-gradient(135deg, var(--brown-dark), var(--brown-light));
+        .loc-card-top .loc-emoji canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
         }
         .loc-card-top h3 {
             font-size: 1.1rem;
@@ -1815,7 +1813,7 @@
         <div class="location-cards">
             <a class="loc-card" href="/Sber">
                 <div class="loc-card-top">
-                    <div class="loc-emoji">S</div>
+                    <div class="loc-emoji" data-qr-path="/Sber"></div>
                     <div>
                         <h3>Sber</h3>
                         <div class="loc-addr-small">Фонтанная 18</div>
@@ -1827,7 +1825,7 @@
             </a>
             <a class="loc-card" href="/Skycity">
                 <div class="loc-card-top">
-                    <div class="loc-emoji">SC</div>
+                    <div class="loc-emoji" data-qr-path="/Skycity"></div>
                     <div>
                         <h3>Sky City</h3>
                         <div class="loc-addr-small">Алеутская 45</div>
@@ -1839,7 +1837,7 @@
             </a>
             <a class="loc-card" href="/InternationalBayViewtowers">
                 <div class="loc-card-top">
-                    <div class="loc-emoji">IB</div>
+                    <div class="loc-emoji" data-qr-path="/InternationalBayViewtowers"></div>
                     <div>
                         <h3>International BayView Towers</h3>
                         <div class="loc-addr-small">Енисейская 23</div>
@@ -2650,6 +2648,142 @@
 
     if (!isRootPage) { loadMenu(); }
     loadSettings();
+
+    // ===== QR CODE GENERATOR FOR LOCATION CARDS =====
+    (function() {
+        // Minimal QR Code generator (Type 2, Error Correction L)
+        // Based on QR Code Model 2 specification
+        function generateQR(text) {
+            // Use qrcode-generator-like approach: encode as canvas via off-screen
+            // For simplicity, use a pre-built minimal encoder
+            var size = 25; // QR version 2 = 25x25
+            var modules = [];
+            for (var i = 0; i < size; i++) { modules[i] = []; for (var j = 0; j < size; j++) modules[i][j] = false; }
+            return modules;
+        }
+
+        // Instead of a full QR encoder, load from a tiny external API and draw with rounded corners
+        function renderQR(container, url, fgColor) {
+            var canvas = document.createElement('canvas');
+            var px = 256;
+            canvas.width = px;
+            canvas.height = px;
+            container.appendChild(canvas);
+
+            var img = new Image();
+            img.crossOrigin = 'anonymous';
+            // Generate QR via Google Charts API (reliable, fast)
+            img.src = 'https://chart.googleapis.com/chart?cht=qr&chs=256x256&chld=M|2&chl=' + encodeURIComponent(url);
+            img.onload = function() {
+                // Draw to temp canvas to read pixel data
+                var tmp = document.createElement('canvas');
+                tmp.width = px; tmp.height = px;
+                var tctx = tmp.getContext('2d');
+                tctx.drawImage(img, 0, 0, px, px);
+                var data = tctx.getImageData(0, 0, px, px);
+
+                // Detect module size by scanning first dark pixel row
+                var moduleSize = 0;
+                for (var x = 0; x < px; x++) {
+                    var idx = (0 * px + x) * 4;
+                    if (data.data[idx] < 128) { // dark pixel
+                        if (!moduleSize) moduleSize = x; // first dark = quiet zone end
+                        break;
+                    }
+                }
+                // Scan to find actual module size
+                var firstDark = -1, firstLight = -1;
+                for (var x = 0; x < px; x++) {
+                    var idx = (Math.floor(px/2) * px + x) * 4;
+                    var dark = data.data[idx] < 128;
+                    if (dark && firstDark === -1) firstDark = x;
+                    if (!dark && firstDark !== -1 && firstLight === -1) firstLight = x;
+                    if (firstDark !== -1 && firstLight !== -1) break;
+                }
+                var mSize = firstLight - firstDark;
+                if (mSize < 2) mSize = Math.round(px / 33); // fallback
+
+                // Calculate grid
+                var qzStart = firstDark;
+                var qrModules = Math.round((px - 2 * qzStart) / mSize);
+                if (qrModules < 10) { qrModules = 25; qzStart = 0; mSize = Math.floor(px / qrModules); }
+
+                // Build boolean grid
+                var grid = [];
+                for (var row = 0; row < qrModules; row++) {
+                    grid[row] = [];
+                    for (var col = 0; col < qrModules; col++) {
+                        var cx = Math.floor(qzStart + col * mSize + mSize / 2);
+                        var cy = Math.floor(qzStart + row * mSize + mSize / 2);
+                        cx = Math.min(cx, px - 1); cy = Math.min(cy, px - 1);
+                        var idx = (cy * px + cx) * 4;
+                        grid[row][col] = data.data[idx] < 128;
+                    }
+                }
+
+                // Now draw with rounded modules
+                var ctx = canvas.getContext('2d');
+                var canvasSize = px;
+                ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+                // Background
+                ctx.fillStyle = '#fff';
+                roundRect(ctx, 0, 0, canvasSize, canvasSize, 16);
+                ctx.fill();
+
+                var cellSize = canvasSize / (qrModules + 2); // +2 for quiet zone
+                var offset = cellSize; // 1-cell quiet zone
+                var radius = cellSize * 0.38;
+
+                ctx.fillStyle = fgColor || '#3a2a1a';
+
+                for (var r = 0; r < qrModules; r++) {
+                    for (var c = 0; c < qrModules; c++) {
+                        if (!grid[r][c]) continue;
+                        var x = offset + c * cellSize;
+                        var y = offset + r * cellSize;
+                        roundRect(ctx, x, y, cellSize - 0.5, cellSize - 0.5, radius);
+                        ctx.fill();
+                    }
+                }
+            };
+
+            img.onerror = function() {
+                // Fallback: show text
+                container.textContent = url.split('/').pop().charAt(0);
+                container.style.fontSize = '1.5rem';
+                container.style.fontWeight = '700';
+                container.style.color = fgColor || '#3a2a1a';
+            };
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        // Colors per location
+        var qrColors = {
+            '/Sber': '#1a7a3a',
+            '/Skycity': '#6b3fa0',
+            '/InternationalBayViewtowers': '#2e6db4'
+        };
+
+        document.querySelectorAll('[data-qr-path]').forEach(function(el) {
+            var path = el.getAttribute('data-qr-path');
+            var fullUrl = window.location.origin + path;
+            renderQR(el, fullUrl, qrColors[path] || '#3a2a1a');
+        });
+    })();
 </script>
 </body>
 </html>
