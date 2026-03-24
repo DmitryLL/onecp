@@ -278,7 +278,7 @@ def force_delete_dish(dish_id: int, admin: AdminUser = Depends(get_admin), db: S
 
 @router.get("/orders")
 def list_orders(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
-    orders = db.query(Order).options(joinedload(Order.items).joinedload(OrderItem.dish), joinedload(Order.customer)).order_by(Order.created_at.desc()).limit(200).all()
+    orders = db.query(Order).options(joinedload(Order.items).joinedload(OrderItem.dish), joinedload(Order.customer)).order_by(Order.created_at.desc()).limit(1000).all()
     status_labels = {
         "new": "Новый", "confirmed": "Подтверждён", "cooking": "Готовится",
         "ready": "Готов", "delivered": "Доставлен", "cancelled": "Отменён",
@@ -330,6 +330,40 @@ def purge_all(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_d
 
 
 # ===== CUSTOMERS =====
+
+@router.get("/customers/{phone}/orders")
+def get_customer_orders(phone: str, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    customer = db.query(Customer).filter(Customer.phone == phone).first()
+    if not customer:
+        return []
+    orders = (
+        db.query(Order)
+        .filter(Order.customer_id == customer.id)
+        .options(joinedload(Order.items).joinedload(OrderItem.dish))
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+    status_labels = {
+        "new": "Новый", "confirmed": "Подтверждён", "cooking": "Готовится",
+        "ready": "Готов", "delivered": "Доставлен", "cancelled": "Отменён",
+    }
+    return [
+        {
+            "id": o.id,
+            "status": o.status,
+            "statusLabel": status_labels.get(o.status, o.status),
+            "total": o.total,
+            "comment": o.comment,
+            "address": o.address,
+            "createdAt": o.created_at.isoformat() if o.created_at else None,
+            "items": [
+                {"name": it.dish.name if it.dish else "—", "qty": it.quantity, "price": it.price}
+                for it in o.items
+            ],
+        }
+        for o in orders
+    ]
+
 
 @router.get("/customers")
 def list_customers(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):

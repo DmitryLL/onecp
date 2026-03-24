@@ -1692,8 +1692,13 @@
 
         function escH(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-        function showCustomerOrders(phone, name) {
-            const orders = allOrders.filter(o => o.customerPhone === phone);
+        async function showCustomerOrders(phone, name) {
+            let orders;
+            try {
+                orders = await api('/api/admin/customers/' + encodeURIComponent(phone) + '/orders');
+            } catch (e) {
+                orders = allOrders.filter(o => o.customerPhone === phone);
+            }
             document.getElementById('ordersHistoryTitle').textContent = name;
             const totalSum = orders.reduce((s, o) => s + o.total, 0);
             document.getElementById('ordersHistorySub').textContent = phone + (orders.length ? '  ·  ' + orders.length + ' заказ(ов)  ·  ' + totalSum.toLocaleString('ru-RU') + ' ₽' : '');
