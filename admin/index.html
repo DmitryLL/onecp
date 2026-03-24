@@ -1549,7 +1549,7 @@
             } else {
                 dropdown.innerHTML = filtered.slice(0, 15).map(p => `
                     <div class="dish-search-item" onmousedown="addDishToSet(${setId}, ${p.id})">
-                        <span>${escH(p.name)}</span>
+                        <span>${escH(p.category || 'Без типа')} · ${escH(p.name)}${p.weight ? ' · ' + escH(p.weight) + (p.weightUnit ? ' ' + escH(p.weightUnit) : '') : ''}</span>
                         <span class="price">${p.price} ₽</span>
                     </div>
                 `).join('');
