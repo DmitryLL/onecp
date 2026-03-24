@@ -39,8 +39,8 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
-    location /admin/login {
-        try_files $uri /admin/login/index.html;
+    location /login {
+        try_files $uri /login/index.html;
     }
 
     location /admin/ {
