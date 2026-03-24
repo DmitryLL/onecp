@@ -732,6 +732,7 @@
                         <tbody id="customersBody"></tbody>
                     </table>
                 </div>
+                <div id="customersPagination" style="display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 0;"></div>
 
             </div>
 
@@ -1612,7 +1613,11 @@
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
+        let customersPage = 1;
+        const CUSTOMERS_PER_PAGE = 50;
+
         function filterCustomers() {
+            customersPage = 1;
             renderCustomers();
         }
 
@@ -1622,11 +1627,17 @@
             const searchActive = search && ((isDigits && search.length >= 4) || (!isDigits && search.length >= 2));
             const filtered = searchActive ? customers.filter(c => c.phone.includes(search) || (c.name || '').toLowerCase().includes(search.toLowerCase())) : customers;
             const tbody = document.getElementById('customersBody');
+            const pag = document.getElementById('customersPagination');
             if (!filtered.length) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666;padding:24px;">Зарегистрированных клиентов нет</td></tr>';
-                    return;
+                pag.innerHTML = '';
+                return;
             }
-            tbody.innerHTML = filtered.map(c => {
+            const totalPages = Math.ceil(filtered.length / CUSTOMERS_PER_PAGE);
+            if (customersPage > totalPages) customersPage = totalPages;
+            const start = (customersPage - 1) * CUSTOMERS_PER_PAGE;
+            const page = filtered.slice(start, start + CUSTOMERS_PER_PAGE);
+            tbody.innerHTML = page.map(c => {
                 return `<tr>
                     <td>${escH(c.phone)}</td>
                     <td>${escH(c.name || '—')}</td>
@@ -1639,6 +1650,11 @@
                     </td>
                 </tr>`;
             }).join('');
+            if (totalPages <= 1) { pag.innerHTML = ''; return; }
+            pag.innerHTML =
+                '<button class="btn btn-secondary btn-sm" ' + (customersPage <= 1 ? 'disabled' : '') + ' onclick="customersPage--;renderCustomers();">← Назад</button>' +
+                '<span style="color:#666;font-size:.9rem;">' + customersPage + ' / ' + totalPages + ' <span style="color:#aaa;font-size:.8rem;">(' + filtered.length + ' клиентов)</span></span>' +
+                '<button class="btn btn-secondary btn-sm" ' + (customersPage >= totalPages ? 'disabled' : '') + ' onclick="customersPage++;renderCustomers();">Вперёд →</button>';
         }
 
         function escH(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
