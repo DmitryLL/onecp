@@ -1899,9 +1899,11 @@
         document.getElementById('siteHeader').style.display = 'none';
         document.querySelector('.hero').style.display = 'none';
         document.querySelector('.beige-wrapper').style.display = 'none';
-        document.getElementById('siteFooter')?.closest('footer')?.style && (document.getElementById('siteFooter').closest('footer').style.display = 'none');
+        var mainFooter = document.getElementById('siteFooter')?.closest('footer');
+        if (mainFooter) mainFooter.style.display = 'none';
         document.getElementById('mobileCartFab').style.display = 'none';
         document.getElementById('cartOverlay').style.display = 'none';
+        document.getElementById('mobileMenu').style.display = 'none';
     }
 
     const isLocationPage = !!locInfo;
