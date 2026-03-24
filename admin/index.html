@@ -660,13 +660,13 @@
             <div class="sidebar-logo"><img src="/images/logo.png" alt="One Coffee Place" style="height:36px;width:auto;"></div>
             <div class="sidebar-sub">Панель управления</div>
             <nav class="sidebar-nav">
-                <a href="#orders" onclick="showPanel('orders');">📋 Заказы</a>
-                <a href="#questions" onclick="showPanel('questions');">💬 Вопросы</a>
-                <a href="#products" onclick="showPanel('products');">📦 Товары</a>
-                <a href="#sets" onclick="showPanel('sets');">🎁 Наборы</a>
-                <a href="#calendar" onclick="showPanel('calendar');">📅 Календарь</a>
-                <a href="#customers" onclick="showPanel('customers');">👥 Клиенты</a>
-                <a href="#settings" onclick="showPanel('settings');">📨 Рассылки</a>
+                <a href="/admin/orders" onclick="navTo('orders',event)">📋 Заказы</a>
+                <a href="/admin/questions" onclick="navTo('questions',event)">💬 Вопросы</a>
+                <a href="/admin/products" onclick="navTo('products',event)">📦 Товары</a>
+                <a href="/admin/sets" onclick="navTo('sets',event)">🎁 Наборы</a>
+                <a href="/admin/calendar" onclick="navTo('calendar',event)">📅 Календарь</a>
+                <a href="/admin/customers" onclick="navTo('customers',event)">👥 Клиенты</a>
+                <a href="/admin/settings" onclick="navTo('settings',event)">📨 Рассылки</a>
             </nav>
             <div class="sidebar-bottom">
                 <a href="/" class="sidebar-nav" style="color:#666;text-decoration:none;padding:10px 14px;font-size:.9rem;">← На сайт</a>
@@ -1381,9 +1381,13 @@
 
         // ===== PANELS =====
         const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, customers:5, settings:6};
+        function navTo(panel, e) {
+            if (e) e.preventDefault();
+            history.pushState(null, '', '/admin/' + panel);
+            showPanel(panel);
+        }
         function showPanel(panel) {
-            if (!panelMap.hasOwnProperty(panel)) panel = 'products';
-            location.hash = panel;
+            if (!panelMap.hasOwnProperty(panel)) panel = 'orders';
             const links = document.querySelectorAll('.sidebar-nav a');
             links.forEach(a => a.classList.remove('active'));
             document.getElementById('productsPanel').style.display = 'none';
@@ -1419,9 +1423,9 @@
             }
             links[panelMap[panel]]?.classList.add('active');
         }
-        window.addEventListener('hashchange', () => {
-            const h = location.hash.replace('#', '') || 'products';
-            showPanel(h);
+        window.addEventListener('popstate', () => {
+            const seg = location.pathname.replace('/admin/', '').replace('/', '') || 'orders';
+            showPanel(seg);
         });
 
         // ===== SETS =====
@@ -2257,7 +2261,7 @@
                 String(target.getMonth() + 1).padStart(2, '0') + '-' +
                 String(target.getDate()).padStart(2, '0');
         })();
-        const initPanel = location.hash.replace('#', '') || 'orders';
+        const initPanel = location.pathname.replace('/admin/', '').replace('/', '') || 'orders';
         showPanel(initPanel);
         loadDishes();
     </script>
