@@ -1770,6 +1770,34 @@
             });
         }
 
+        // Helper: format date as "25 марта 2026, среда"
+        function formatDateRu(d) {
+            var months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+            var days = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+            return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ', ' + days[d.getDay()];
+        }
+
+        // Helper: delivery date = order date + 1 day
+        function getDeliveryDate(dateStr) {
+            var d = new Date(dateStr + 'T00:00:00');
+            d.setDate(d.getDate() + 1);
+            return d;
+        }
+
+        // Helper: apply styles to a cell range
+        function styleCell(ws, ref, style) {
+            if (!ws[ref]) ws[ref] = { v: '', t: 's' };
+            ws[ref].s = style;
+        }
+
+        // Shared header style
+        var xlHeaderFill = { fill: { fgColor: { rgb: '4A3728' } }, font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, alignment: { horizontal: 'center', vertical: 'center' }, border: { bottom: { style: 'thin', color: { rgb: '999999' } } } };
+        var xlTitleStyle = { font: { bold: true, sz: 14, color: { rgb: '3A2A1A' } }, alignment: { horizontal: 'left' } };
+        var xlSubStyle = { font: { sz: 11, color: { rgb: '777777' } }, alignment: { horizontal: 'left' } };
+        var xlTotalStyle = { font: { bold: true, sz: 11, color: { rgb: '3A2A1A' } }, fill: { fgColor: { rgb: 'F5EFE6' } }, border: { top: { style: 'thin', color: { rgb: 'BBBBBB' } } } };
+        var xlCellEven = { fill: { fgColor: { rgb: 'FAFAFA' } } };
+        var xlSepStyle = { fill: { fgColor: { rgb: 'E8E0D6' } } };
+
         async function exportOrdersExcel() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { showToast('Выберите дату'); return; }
@@ -1781,10 +1809,23 @@
             showToast('Загрузка...');
             try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
 
-            const headers = ['# Заказа','Время','Клиент','Телефон','Товар','Кол-во','Цена','Сумма заказа','Комментарий'];
-            const data = [headers];
+            var orderDate = new Date(dateStr + 'T00:00:00');
+            var deliveryDate = getDeliveryDate(dateStr);
+
+            var data = [];
+            // Title block
+            data.push(['ONE COFFEE PLACE — Отчёт по гостям']);
+            data.push(['Заказы от: ' + formatDateRu(orderDate)]);
+            data.push(['Доставка на: ' + formatDateRu(deliveryDate)]);
+            data.push(['Всего заказов: ' + dateOrders.length + '   |   Общая сумма: ' + dateOrders.reduce((s,o) => s + o.total, 0).toLocaleString('ru-RU') + ' ₽']);
+            data.push([]); // пустая строка
+
+            var headers = ['№','Время','Клиент','Телефон','Блюдо','Кол-во','Цена','Сумма','Комментарий'];
+            var headerRow = data.length;
+            data.push(headers);
+
             dateOrders.forEach((o, idx) => {
-                if (idx > 0) data.push([]); // пустая строка между заказами
+                if (idx > 0) data.push([]); // разделитель между заказами
                 o.items.forEach((it, i) => {
                     data.push([
                         i === 0 ? o.id : '',
@@ -1793,19 +1834,60 @@
                         i === 0 ? (o.customerPhone || '—') : '',
                         it.name,
                         it.qty,
-                        it.price,
-                        i === 0 ? o.total : '',
+                        it.price + ' ₽',
+                        i === 0 ? o.total + ' ₽' : '',
                         i === 0 ? (o.comment || '') : '',
                     ]);
                 });
             });
 
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = headers.map(k => ({ wch: Math.max(k.length, 14) }));
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Заказы');
-            XLSX.writeFile(wb, 'orders_' + dateStr + '.xlsx');
-            showToast('Файл скачан');
+            // Итоговая строка
+            data.push([]);
+            data.push(['', '', '', '', '', '', 'ИТОГО:', dateOrders.reduce((s,o) => s + o.total, 0).toLocaleString('ru-RU') + ' ₽', '']);
+
+            var ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [
+                { wch: 8 },  // №
+                { wch: 10 }, // Время
+                { wch: 22 }, // Клиент
+                { wch: 16 }, // Телефон
+                { wch: 30 }, // Блюдо
+                { wch: 10 }, // Кол-во
+                { wch: 12 }, // Цена
+                { wch: 14 }, // Сумма
+                { wch: 24 }, // Комментарий
+            ];
+
+            // Merge title rows across all columns
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 8 } },
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 8 } },
+                { s: { r: 3, c: 0 }, e: { r: 3, c: 8 } },
+            ];
+
+            // Apply styles
+            styleCell(ws, 'A1', xlTitleStyle);
+            styleCell(ws, 'A2', xlSubStyle);
+            styleCell(ws, 'A3', xlSubStyle);
+            styleCell(ws, 'A4', { font: { bold: true, sz: 11, color: { rgb: '2E7D32' } } });
+            for (var c = 0; c < 9; c++) {
+                var ref = XLSX.utils.encode_cell({ r: headerRow, c: c });
+                styleCell(ws, ref, xlHeaderFill);
+            }
+            // Style total row
+            var totalRow = data.length - 1;
+            for (var c = 0; c < 9; c++) {
+                var ref = XLSX.utils.encode_cell({ r: totalRow, c: c });
+                styleCell(ws, ref, xlTotalStyle);
+            }
+
+            ws['!rows'] = [{ hpt: 24 }, { hpt: 18 }, { hpt: 18 }, { hpt: 18 }, { hpt: 8 }];
+
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Отчёт по гостям');
+            XLSX.writeFile(wb, 'guests_' + dateStr + '.xlsx');
+            showToast('Отчёт по гостям скачан');
         }
 
         async function exportKitchenExcel() {
@@ -1818,23 +1900,68 @@
             if (!dateOrders.length) { showToast('Нет заказов за эту дату'); return; }
             try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
 
+            var orderDate = new Date(dateStr + 'T00:00:00');
+            var deliveryDate = getDeliveryDate(dateStr);
+
             // Aggregate dishes
-            const totals = {};
+            var totals = {};
+            var totalPortions = 0;
             dateOrders.forEach(o => {
                 o.items.forEach(it => {
                     if (totals[it.name]) totals[it.name] += it.qty;
                     else totals[it.name] = it.qty;
+                    totalPortions += it.qty;
                 });
             });
 
-            const data = [['Блюдо', 'Количество']];
+            var data = [];
+            // Title block
+            data.push(['ONE COFFEE PLACE — Отчёт для кухни']);
+            data.push(['Заказы от: ' + formatDateRu(orderDate)]);
+            data.push(['Готовить на: ' + formatDateRu(deliveryDate)]);
+            data.push(['Всего заказов: ' + dateOrders.length + '   |   Всего порций: ' + totalPortions]);
+            data.push([]); // пустая строка
+
+            var headerRow = data.length;
+            data.push(['№', 'Блюдо', 'Количество']);
+
+            var num = 1;
             Object.keys(totals).sort().forEach(name => {
-                data.push([name, totals[name]]);
+                data.push([num++, name, totals[name]]);
             });
 
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 40 }, { wch: 14 }];
-            const wb = XLSX.utils.book_new();
+            // Итого
+            data.push([]);
+            data.push(['', 'ИТОГО порций:', totalPortions]);
+
+            var ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [{ wch: 6 }, { wch: 40 }, { wch: 16 }];
+
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 2 } },
+                { s: { r: 3, c: 0 }, e: { r: 3, c: 2 } },
+            ];
+
+            // Apply styles
+            styleCell(ws, 'A1', xlTitleStyle);
+            styleCell(ws, 'A2', xlSubStyle);
+            styleCell(ws, 'A3', xlSubStyle);
+            styleCell(ws, 'A4', { font: { bold: true, sz: 11, color: { rgb: '2E7D32' } } });
+            for (var c = 0; c < 3; c++) {
+                var ref = XLSX.utils.encode_cell({ r: headerRow, c: c });
+                styleCell(ws, ref, xlHeaderFill);
+            }
+            var totalRow = data.length - 1;
+            for (var c = 0; c < 3; c++) {
+                var ref = XLSX.utils.encode_cell({ r: totalRow, c: c });
+                styleCell(ws, ref, xlTotalStyle);
+            }
+
+            ws['!rows'] = [{ hpt: 24 }, { hpt: 18 }, { hpt: 18 }, { hpt: 18 }, { hpt: 8 }];
+
+            var wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Кухня');
             XLSX.writeFile(wb, 'kitchen_' + dateStr + '.xlsx');
             showToast('Отчёт для кухни скачан');
