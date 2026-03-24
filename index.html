@@ -2442,8 +2442,9 @@
         document.getElementById('authReg3').style.display = 'none';
         document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
         document.getElementById('authOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
     }
-    function closeAuthModal() { document.getElementById('authOverlay').classList.remove('open'); }
+    function closeAuthModal() { document.getElementById('authOverlay').classList.remove('open'); document.body.style.overflow = ''; }
     function authShowLogin() {
         document.getElementById('authLogin').style.display = 'block';
         document.getElementById('authReg1').style.display = 'none';
@@ -2577,6 +2578,7 @@
         var container = document.getElementById('myOrdersList');
         container.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:24px;">Загрузка...</p>';
         document.getElementById('myOrdersOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
         try {
             var orders = await api('/api/auth/my-orders');
             if (!orders.length) {
@@ -2603,7 +2605,7 @@
             container.innerHTML = '<p style="text-align:center;color:#d32f2f;padding:24px;">' + e.message + '</p>';
         }
     }
-    function closeMyOrders() { document.getElementById('myOrdersOverlay').classList.remove('open'); }
+    function closeMyOrders() { document.getElementById('myOrdersOverlay').classList.remove('open'); document.body.style.overflow = ''; }
 
     // Init auth on page load
     (function() {
@@ -2699,10 +2701,12 @@
         html += '</div>';
         document.getElementById('detailContent').innerHTML = html;
         document.getElementById('detailOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
     }
 
     function closeDetail() {
         document.getElementById('detailOverlay').classList.remove('open');
+        document.body.style.overflow = '';
     }
 
     // ===== CART =====
@@ -2832,10 +2836,12 @@
     function openCart() {
         renderCart();
         document.getElementById('cartOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
     }
 
     function closeCart() {
         document.getElementById('cartOverlay').classList.remove('open');
+        document.body.style.overflow = '';
     }
 
     function closeCartOutside(e) {
@@ -2892,10 +2898,12 @@
 </div>`;
         document.getElementById('consentText').innerHTML = consentHtml;
         document.getElementById('consentOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
     }
 
     function closeConsentModal() {
         document.getElementById('consentOverlay').classList.remove('open');
+        document.body.style.overflow = '';
     }
 
     function acceptConsent() {
@@ -2903,10 +2911,12 @@
         document.getElementById('smsStep1').style.display = 'block';
         document.getElementById('smsStep2').style.display = 'none';
         document.getElementById('smsOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
     }
 
     function closeSmsModal() {
         document.getElementById('smsOverlay').classList.remove('open');
+        document.body.style.overflow = '';
     }
 
     function smsGoBack() {
