@@ -1830,32 +1830,47 @@
                 container.innerHTML = '<p style="color:#666;padding:24px 0;">Нет заявок</p>';
                 return;
             }
-            container.innerHTML = questions.map(q => {
+            const sorted = questions.slice().sort((a, b) => {
+                if (!a.createdAt) return 1;
+                if (!b.createdAt) return -1;
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+            container.innerHTML = '<div class="table-wrap"><table style="table-layout:auto;"><thead><tr><th style="width:140px;">Дата</th><th>Имя</th><th>Телефон</th><th>Сообщение</th><th style="width:90px;">Статус</th><th style="width:60px;"></th></tr></thead><tbody>' +
+            sorted.map(q => {
                 const dt = q.createdAt ? new Date(q.createdAt) : null;
                 let vladTime = '—';
                 if (dt) {
-                    vladTime = dt.toLocaleString('ru-RU', { timeZone: 'Asia/Vladivostok', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    vladTime = dt.toLocaleString('ru-RU', { timeZone: 'Asia/Vladivostok', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
                 }
                 const isNew = q.status === 'new';
-                const statusClass = isNew ? 'color:#f59e0b;' : 'color:#4ade80;';
+                const statusColor = isNew ? '#f59e0b' : '#4ade80';
                 const statusText = isNew ? 'Новая' : 'Обработан';
-                return `<div class="settings-card" style="margin-bottom:12px;${isNew ? 'border-left:3px solid #f59e0b;' : ''}">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                            <strong style="color:#f5efe6;">${escH(q.name)}</strong>
-                            <span style="color:#888;font-size:.85rem;">${escH(q.phone)}</span>
-                            <span style="color:#555;font-size:.8rem;">${vladTime}</span>
-                            <span style="font-size:.8rem;font-weight:600;${statusClass} cursor:pointer;" onclick="toggleQuestionStatus(${q.id}, '${q.status}')" title="Нажмите для смены статуса">${statusText}</span>
+                const hasComment = q.comment && q.comment.trim();
+                return `<tr style="font-size:.82rem;${isNew ? 'border-left:3px solid #f59e0b;' : ''}" id="qRow_${q.id}">
+                    <td style="color:#666;font-size:.78rem;white-space:nowrap;">${vladTime}</td>
+                    <td style="font-weight:600;color:#f5efe6;">${escH(q.name)}</td>
+                    <td style="color:#888;">${escH(q.phone)}</td>
+                    <td style="color:#ccc;max-width:300px;overflow:hidden;text-overflow:ellipsis;" title="${escH(q.message)}">${escH(q.message)}</td>
+                    <td><span style="color:${statusColor};font-weight:600;cursor:pointer;font-size:.78rem;" onclick="toggleQuestionStatus(${q.id},'${q.status}')">${statusText}</span></td>
+                    <td style="text-align:right;white-space:nowrap;">
+                        <span style="cursor:pointer;color:#666;font-size:.75rem;" onclick="toggleQComment(${q.id})" title="Комментарий">💬</span>
+                        <span style="cursor:pointer;color:#555;font-size:.75rem;margin-left:6px;" onclick="deleteQuestion(${q.id})" title="Удалить">✕</span>
+                    </td>
+                </tr>
+                <tr id="qComment_row_${q.id}" style="display:none;">
+                    <td colspan="6" style="padding:4px 16px 10px;">
+                        <div style="display:flex;gap:8px;align-items:flex-start;">
+                            <textarea id="qComment_${q.id}" rows="1" placeholder="Комментарий..." style="flex:1;padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:6px;color:#fff;font-size:.82rem;font-family:inherit;resize:vertical;">${escH(q.comment || '')}</textarea>
+                            <button class="btn btn-secondary" style="padding:4px 10px;font-size:.75rem;" onclick="saveQuestionComment(${q.id})">Сохранить</button>
                         </div>
-                        <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${q.id})">Удалить</button>
-                    </div>
-                    <p style="color:#e0e0e0;margin-bottom:8px;white-space:pre-wrap;">${escH(q.message)}</p>
-                    <div style="margin-top:6px;">
-                        <textarea id="qComment_${q.id}" rows="2" placeholder="Комментарий..." style="width:100%;padding:8px 12px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.85rem;font-family:inherit;resize:vertical;">${escH(q.comment || '')}</textarea>
-                        <button class="btn btn-secondary btn-sm" onclick="saveQuestionComment(${q.id})" style="margin-top:4px;">Сохранить комментарий</button>
-                    </div>
-                </div>`;
-            }).join('');
+                    </td>
+                </tr>`;
+            }).join('') + '</tbody></table></div>';
+        }
+
+        function toggleQComment(id) {
+            const row = document.getElementById('qComment_row_' + id);
+            if (row) row.style.display = row.style.display === 'none' ? '' : 'none';
         }
 
         async function toggleQuestionStatus(id, current) {
