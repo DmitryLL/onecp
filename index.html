@@ -78,9 +78,37 @@
         }
 
         /* ===== HEADER ===== */
-        header {
+        .slogan-bar {
             position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1001;
+            background: linear-gradient(135deg, var(--brown), var(--gold));
+            color: #fff;
+            text-align: center;
+            padding: 7px 24px;
+            font-size: .8rem;
+            font-weight: 500;
+            letter-spacing: .4px;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .slogan-bar span {
+            display: inline-block;
+            opacity: .95;
+        }
+        .slogan-bar svg {
+            display: inline-block;
+            vertical-align: middle;
+            margin: 0 8px;
+            opacity: .6;
+        }
+
+        header {
+            position: fixed;
+            top: 30px;
             left: 0;
             right: 0;
             z-index: 1000;
@@ -192,7 +220,7 @@
 
         /* ===== HERO ===== */
         .hero {
-            margin-top: 72px;
+            margin-top: 102px;
             background: #000 url('images/top-bg.png') center/cover no-repeat;
             color: #fff;
             padding: 120px 24px 100px;
@@ -1304,7 +1332,7 @@
             .mobile-menu {
                 display: none;
                 position: fixed;
-                top: 72px;
+                top: 102px;
                 left: 0;
                 right: 0;
                 background: rgba(26,22,18,.95);
@@ -1432,6 +1460,14 @@
 </div>
 
 <!-- HEADER -->
+<div class="slogan-bar">
+    <span>Готовим с душой, подаём с любовью</span>
+    <svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="currentColor"/></svg>
+    <span>Свежие блюда каждый день</span>
+    <svg width="4" height="4" viewBox="0 0 4 4"><circle cx="2" cy="2" r="2" fill="currentColor"/></svg>
+    <span>Закажите и убедитесь сами</span>
+</div>
+
 <header id="siteHeader">
     <div class="header-inner">
         <a href="#" class="logo"><img src="images/logo.png" alt="One Coffee Place"></a>
