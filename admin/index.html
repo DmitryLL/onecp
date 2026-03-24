@@ -542,26 +542,28 @@
             padding-top: 10px;
             border-top: 1px solid #1a1a1a;
         }
-        .set-item-tag {
-            display: inline-flex;
+        .set-item-row {
+            display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
+            padding: 6px 12px;
             background: #1a1a1a;
-            border: 1px solid #252525;
+            border: 1px solid #222;
             border-radius: 8px;
-            padding: 5px 10px;
-            margin: 2px 3px;
+            margin-top: 4px;
             font-size: .85rem;
             color: #ccc;
         }
-        .set-item-tag .remove-item {
+        .set-item-row .item-name { flex: 1; }
+        .set-item-row .item-qty { color: #888; font-size: .8rem; min-width: 30px; text-align: center; }
+        .set-item-row .remove-item {
             cursor: pointer;
-            color: #666;
-            font-size: .75rem;
+            color: #555;
+            font-size: .8rem;
             transition: color .2s;
-            padding: 0 2px;
+            padding: 2px 4px;
         }
-        .set-item-tag .remove-item:hover { color: #f44; }
+        .set-item-row .remove-item:hover { color: #f44; }
         .set-add-dish {
             margin-top: 8px;
             position: relative;
@@ -1510,17 +1512,18 @@
                     </div>
                     ${s.description ? '<div class="set-card-desc">' + escH(s.description) + '</div>' : ''}
                     <div class="set-card-items">
-                        <div class="set-items-tags" id="setItems_${s.id}">
-                            ${items.length ? items.map(it => `
-                                <span class="set-item-tag">
-                                    ${escH(it.dishName)}${it.quantity > 1 ? ' &times; ' + it.quantity : ''}
-                                    <span class="remove-item" onclick="removeSetDish(${s.id}, ${it.id})" title="Убрать">&times;</span>
-                                </span>
-                            `).join('') : '<span style="color:#555;font-size:.82rem;">Блюда не добавлены</span>'}
-                        </div>
                         <div class="set-add-dish">
                             <input type="text" placeholder="Поиск блюда для добавления..." oninput="searchDishForSet(${s.id}, this)" onfocus="searchDishForSet(${s.id}, this)" onblur="setTimeout(()=>closeSetDishSearch(${s.id}),200)">
                             <div class="dish-search-results" id="setDishSearch_${s.id}"></div>
+                        </div>
+                        <div id="setItems_${s.id}">
+                            ${items.length ? items.map(it => `
+                                <div class="set-item-row">
+                                    <span class="item-name">${escH(it.dishName)}</span>
+                                    ${it.quantity > 1 ? '<span class="item-qty">&times; ' + it.quantity + '</span>' : ''}
+                                    <span class="remove-item" onclick="removeSetDish(${s.id}, ${it.id})" title="Убрать">&times;</span>
+                                </div>
+                            `).join('') : '<p style="color:#555;font-size:.82rem;margin:6px 0 0;">Блюда не добавлены</p>'}
                         </div>
                     </div>
                 </div>`;
