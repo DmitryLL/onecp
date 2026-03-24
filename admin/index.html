@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <title>Админ-панель — OneCp</title>
+    <title>One Coffee Place</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -1381,6 +1381,7 @@
 
         // ===== PANELS =====
         const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, customers:5, settings:6};
+        const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', customers:'Клиенты', settings:'Рассылки'};
         function navTo(panel, e) {
             if (e) e.preventDefault();
             history.pushState(null, '', '/admin/' + panel);
@@ -1388,6 +1389,7 @@
         }
         function showPanel(panel) {
             if (!panelMap.hasOwnProperty(panel)) panel = 'orders';
+            document.title = (panelTitles[panel] || 'One Coffee Place') + ' — One Coffee Place';
             const links = document.querySelectorAll('.sidebar-nav a');
             links.forEach(a => a.classList.remove('active'));
             document.getElementById('productsPanel').style.display = 'none';
