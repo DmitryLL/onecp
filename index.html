@@ -192,11 +192,11 @@
         .hero.hero-ibt {
             background: radial-gradient(ellipse at 30% 50%, #121a24 0%, #0c0c10 50%, #060608 100%);
             overflow: hidden;
-            padding: 192px 24px 100px;
+            padding: 100px 24px 120px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: flex-start;
         }
         .hero.hero-ibt::before {
             background: linear-gradient(to bottom, #080810, transparent);
@@ -205,17 +205,18 @@
             background: linear-gradient(to bottom, transparent, var(--beige));
         }
         .ibt-logo-bg {
-            position: absolute;
-            top: 72px;
-            bottom: 40%;
-            left: 0;
-            right: 0;
+            position: relative;
+            top: auto;
+            bottom: auto;
+            left: auto;
+            right: auto;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: clamp(16px, 3vw, 36px);
             pointer-events: none;
-            z-index: 0;
+            z-index: 2;
+            margin-bottom: 30px;
         }
         .ibt-logo-bg .ibt-icon {
             flex-shrink: 0;
@@ -318,11 +319,11 @@
         .hero.hero-sky {
             background: radial-gradient(ellipse at 30% 50%, #1a1424 0%, #100c14 50%, #080610 100%);
             overflow: hidden;
-            padding: 192px 24px 100px;
+            padding: 100px 24px 120px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: flex-start;
         }
         .hero.hero-sky::before {
             background: linear-gradient(to bottom, #0a0810, transparent);
@@ -331,17 +332,18 @@
             background: linear-gradient(to bottom, transparent, var(--beige));
         }
         .sky-logo-bg {
-            position: absolute;
-            top: 72px;
-            bottom: 40%;
-            left: 0;
-            right: 0;
+            position: relative;
+            top: auto;
+            bottom: auto;
+            left: auto;
+            right: auto;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: clamp(16px, 3vw, 36px);
             pointer-events: none;
-            z-index: 0;
+            z-index: 2;
+            margin-bottom: 30px;
         }
         .sky-logo-bg .sky-icon {
             flex-shrink: 0;
