@@ -204,15 +204,20 @@
             padding: 2px 10px;
             border-radius: 20px;
         }
+        .prod-section table {
+            table-layout: auto;
+        }
         .prod-section table th {
             background: #111;
-            padding: 10px 14px;
+            padding: 8px 6px;
             font-size: .75rem;
             color: #555;
+            white-space: nowrap;
         }
         .prod-section table td {
-            padding: 8px 14px;
+            padding: 6px 5px;
             border-top: 1px solid #151515;
+            vertical-align: middle;
         }
         .prod-section tr { transition: background .15s; }
         .prod-section tr:hover td { background: rgba(200,149,108,.04); }
@@ -222,9 +227,9 @@
             background: linear-gradient(135deg, #111 0%, #0d0d0d 100%);
             border: 1px solid #2a2a2a;
             color: #ddd;
-            font-size: .86rem;
-            padding: 8px 12px;
-            border-radius: 10px;
+            font-size: .84rem;
+            padding: 6px 8px;
+            border-radius: 8px;
             width: 100%;
             font-family: inherit;
             transition: all .25s ease;
@@ -252,8 +257,9 @@
         }
         .inline-input::placeholder { color: #3a3a3a; }
         .inline-num {
-            width: 65px;
+            width: 100%;
             text-align: center;
+            padding: 6px 4px !important;
             -moz-appearance: textfield;
         }
         .inline-num::-webkit-outer-spin-button,
@@ -271,12 +277,12 @@
             background: linear-gradient(135deg, #111 0%, #0d0d0d 100%);
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c8956c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 10px center;
+            background-position: right 6px center;
             background-size: 12px 7px;
             border: 1px solid #2a2a2a;
             color: #ccc;
             font-size: .84rem;
-            padding: 8px 30px 8px 12px;
+            padding: 6px 24px 6px 8px;
             border-radius: 10px;
             cursor: pointer;
             font-family: inherit;
@@ -999,17 +1005,17 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width:56px;">Фото</th>
-                                <th style="width:140px;">Тип</th>
-                                <th style="min-width:120px;">Название</th>
-                                <th style="min-width:140px;">Описание</th>
-                                <th style="width:70px;">Вес</th>
-                                <th style="width:50px;">Ед.</th>
-                                <th style="width:55px;">Б</th>
-                                <th style="width:55px;">Ж</th>
-                                <th style="width:55px;">У</th>
-                                <th style="width:80px;">Цена ₽</th>
-                                <th style="width:70px;"></th>
+                                <th style="width:50px;">Фото</th>
+                                <th style="width:130px;">Тип</th>
+                                <th>Название</th>
+                                <th>Описание</th>
+                                <th style="width:68px;">Вес</th>
+                                <th style="width:56px;">Ед.</th>
+                                <th style="width:56px;">Б</th>
+                                <th style="width:56px;">Ж</th>
+                                <th style="width:56px;">У</th>
+                                <th style="width:76px;">Цена ₽</th>
+                                <th style="width:64px;"></th>
                             </tr>
                         </thead>
                         <tbody>
