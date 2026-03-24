@@ -5,9 +5,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email import encoders
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date as date_type
 
 from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from sqlalchemy.orm import joinedload
 
 from database import SessionLocal
@@ -15,32 +16,41 @@ from models import Order, OrderItem, SiteSettings
 
 logger = logging.getLogger("onecp")
 
-# SMTP settings for popular Russian providers
-SMTP_SERVERS = {
-    "mail.ru": ("smtp.mail.ru", 465),
-    "bk.ru": ("smtp.mail.ru", 465),
-    "inbox.ru": ("smtp.mail.ru", 465),
-    "list.ru": ("smtp.mail.ru", 465),
-    "yandex.ru": ("smtp.yandex.ru", 465),
-    "ya.ru": ("smtp.yandex.ru", 465),
-    "gmail.com": ("smtp.gmail.com", 465),
+VLAD_TZ = timezone(timedelta(hours=10))
+
+LOCATIONS = {
+    "Фонтанная 18": "reportEmailSber",
+    "Алеутская 45": "reportEmailSkycity",
+    "Енисейская 23": "reportEmailIbt",
 }
 
-STATUS_LABELS = {
-    "new": "Новый",
-    "confirmed": "Подтверждён",
-    "cooking": "Готовится",
-    "ready": "Готов",
-    "delivered": "Доставлен",
-    "cancelled": "Отменён",
-}
+MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+             'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+DAYS_RU = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье']
 
 
-def detect_smtp(email: str) -> tuple[str, int]:
-    domain = email.split("@")[-1].lower()
-    if domain in SMTP_SERVERS:
-        return SMTP_SERVERS[domain]
-    return (f"smtp.{domain}", 465)
+def format_date_ru(d):
+    return f"{d.day} {MONTHS_RU[d.month - 1]} {d.year}, {DAYS_RU[d.weekday()]}"
+
+
+# ===== Styles =====
+TITLE_FONT = Font(bold=True, size=14, color="3A2A1A")
+SUB_FONT = Font(size=11, color="777777")
+STATS_FONT = Font(bold=True, size=11, color="2E7D32")
+HEADER_FONT = Font(bold=True, size=11, color="FFFFFF")
+HEADER_FILL = PatternFill(start_color="4A3728", end_color="4A3728", fill_type="solid")
+TOTAL_FONT = Font(bold=True, size=11, color="3A2A1A")
+TOTAL_FILL = PatternFill(start_color="F5EFE6", end_color="F5EFE6", fill_type="solid")
+THIN_BORDER_TOP = Border(top=Side(style="thin", color="BBBBBB"))
+
+
+def get_delivery_date(created_at):
+    """Compute delivery date: before 14:00 Vlad → tomorrow, after → day after tomorrow."""
+    vlad_time = created_at.astimezone(VLAD_TZ)
+    if vlad_time.hour >= 14:
+        return (vlad_time + timedelta(days=2)).date()
+    else:
+        return (vlad_time + timedelta(days=1)).date()
 
 
 def get_report_settings() -> dict | None:
@@ -50,73 +60,264 @@ def get_report_settings() -> dict | None:
             SiteSettings.key.in_([
                 "reportEnabled", "reportSmtpHost", "reportSmtpPort",
                 "reportSmtpEmail", "reportSmtpPassword",
-                "reportRecipient", "reportTime",
+                "reportRecipient", "reportEmailSber", "reportEmailSkycity",
+                "reportEmailIbt", "reportTime",
             ])
         ).all()
         s = {row.key: row.value for row in settings}
         if s.get("reportEnabled") != "1":
             return None
-        if not s.get("reportSmtpEmail") or not s.get("reportSmtpPassword") or not s.get("reportRecipient"):
+        if not s.get("reportSmtpEmail") or not s.get("reportSmtpPassword"):
+            return None
+        # Need at least one recipient
+        has_recipient = (
+            s.get("reportRecipient", "").strip() or
+            s.get("reportEmailSber", "").strip() or
+            s.get("reportEmailSkycity", "").strip() or
+            s.get("reportEmailIbt", "").strip()
+        )
+        if not has_recipient:
             return None
         return s
     finally:
         db.close()
 
 
-def build_orders_excel(date_str: str) -> bytes | None:
+def parse_emails(text: str) -> list[str]:
+    """Parse multi-line email field into list of valid emails."""
+    if not text:
+        return []
+    return [e.strip() for e in text.replace(",", "\n").split("\n") if e.strip() and "@" in e.strip()]
+
+
+def load_orders_for_delivery_date(target_date: date_type):
+    """Load all orders whose delivery date matches target_date."""
     db = SessionLocal()
     try:
+        # Load recent orders (last 5 days of creation) to find ones delivering on target_date
+        cutoff = datetime.combine(target_date - timedelta(days=3), datetime.min.time()).replace(tzinfo=timezone.utc)
         orders = (
             db.query(Order)
             .options(joinedload(Order.items).joinedload(OrderItem.dish), joinedload(Order.customer))
-            .filter(Order.created_at >= f"{date_str}T00:00:00", Order.created_at < f"{date_str}T23:59:59.999999")
+            .filter(Order.created_at >= cutoff)
             .order_by(Order.created_at)
             .all()
         )
-        if not orders:
-            return None
-
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Заказы"
-        headers = ["# Заказа", "Дата", "Клиент", "Телефон", "Товар", "Кол-во", "Цена", "Сумма заказа", "Статус", "Комментарий"]
-        ws.append(headers)
-
-        for col in range(1, len(headers) + 1):
-            ws.cell(row=1, column=col).font = ws.cell(row=1, column=col).font.copy(bold=True)
-
-        for o in orders:
-            phone = o.customer.phone if o.customer else "—"
-            name = o.customer.name if o.customer and o.customer.name else "—"
-            for it in o.items:
-                dish_name = it.dish.name if it.dish else "—"
-                ws.append([
-                    o.id,
-                    o.created_at.strftime("%d.%m.%Y %H:%M") if o.created_at else "",
-                    name,
-                    phone,
-                    dish_name,
-                    it.quantity,
-                    it.price,
-                    o.total,
-                    STATUS_LABELS.get(o.status, o.status),
-                    o.comment or "",
-                ])
-
-        # Auto-width
-        for col in ws.columns:
-            max_len = 0
-            col_letter = col[0].column_letter
-            for cell in col:
-                val = str(cell.value) if cell.value else ""
-                max_len = max(max_len, len(val))
-            ws.column_dimensions[col_letter].width = min(max_len + 3, 40)
-
-        buf = io.BytesIO()
-        wb.save(buf)
-        return buf.getvalue()
+        return [o for o in orders if get_delivery_date(o.created_at) == target_date]
     finally:
         db.close()
+
+
+def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes | None:
+    """Build 'Отчёт по гостям' for a specific location."""
+    loc_orders = [o for o in orders if (o.address or "") == location]
+    if not loc_orders:
+        return None
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Отчёт по гостям"
+
+    # Title block
+    ws.append([f"ONE COFFEE PLACE — Отчёт по гостям — {location}"])
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=9)
+    ws["A1"].font = TITLE_FONT
+
+    ws.append([f"Заказ на: {format_date_ru(delivery_date)}"])
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=9)
+    ws["A2"].font = SUB_FONT
+
+    ws.append([f"Точка выдачи: {location}"])
+    ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=9)
+    ws["A3"].font = Font(bold=True, size=11, color="4A3728")
+
+    total_sum = sum(o.total for o in loc_orders)
+    ws.append([f"Всего заказов: {len(loc_orders)}   |   Общая сумма: {total_sum:,.0f} ₽"])
+    ws.merge_cells(start_row=4, start_column=1, end_row=4, end_column=9)
+    ws["A4"].font = STATS_FONT
+
+    ws.append([])  # empty row
+
+    # Headers
+    headers = ["№", "Время", "Клиент", "Телефон", "Блюдо", "Кол-во", "Цена", "Сумма", "Комментарий"]
+    ws.append(headers)
+    header_row = 6
+    for col in range(1, len(headers) + 1):
+        cell = ws.cell(row=header_row, column=col)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Data
+    for idx, o in enumerate(loc_orders):
+        if idx > 0:
+            ws.append([])
+        phone = o.customer.phone if o.customer else "—"
+        name = o.customer.name if o.customer and o.customer.name else "—"
+        created_vlad = o.created_at.astimezone(VLAD_TZ) if o.created_at else None
+        time_str = created_vlad.strftime("%H:%M") if created_vlad else "—"
+        for i, it in enumerate(o.items):
+            dish_name = it.dish.name if it.dish else "—"
+            ws.append([
+                o.id if i == 0 else "",
+                time_str if i == 0 else "",
+                name if i == 0 else "",
+                phone if i == 0 else "",
+                dish_name,
+                it.quantity,
+                f"{it.price:.0f} ₽",
+                f"{o.total:.0f} ₽" if i == 0 else "",
+                (o.comment or "") if i == 0 else "",
+            ])
+
+    # Total row
+    ws.append([])
+    total_row_data = ["", "", "", "", "", "", "ИТОГО:", f"{total_sum:,.0f} ₽", ""]
+    ws.append(total_row_data)
+    total_row = ws.max_row
+    for col in range(1, 10):
+        cell = ws.cell(row=total_row, column=col)
+        cell.font = TOTAL_FONT
+        cell.fill = TOTAL_FILL
+        cell.border = THIN_BORDER_TOP
+
+    # Column widths
+    widths = [8, 10, 22, 16, 30, 10, 12, 14, 24]
+    for i, w in enumerate(widths):
+        ws.column_dimensions[chr(65 + i)].width = w
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def build_kitchen_excel(orders, delivery_date: date_type) -> bytes | None:
+    """Build 'Отчёт для кухни' — aggregated across all locations."""
+    if not orders:
+        return None
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Кухня"
+
+    # Aggregate dishes
+    totals = {}
+    total_portions = 0
+    for o in orders:
+        for it in o.items:
+            dish_name = it.dish.name if it.dish else "—"
+            totals[dish_name] = totals.get(dish_name, 0) + it.quantity
+            total_portions += it.quantity
+
+    # Title block
+    ws.append(["ONE COFFEE PLACE — Отчёт для кухни — все точки"])
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=3)
+    ws["A1"].font = TITLE_FONT
+
+    ws.append([f"Заказ на: {format_date_ru(delivery_date)}"])
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3)
+    ws["A2"].font = SUB_FONT
+
+    ws.append([f"Всего заказов: {len(orders)}   |   Всего порций: {total_portions}"])
+    ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=3)
+    ws["A3"].font = STATS_FONT
+
+    ws.append([])  # empty row
+
+    # Headers
+    headers = ["№", "Блюдо", "Количество"]
+    ws.append(headers)
+    header_row = 5
+    for col in range(1, 4):
+        cell = ws.cell(row=header_row, column=col)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Data
+    num = 1
+    for name in sorted(totals.keys()):
+        ws.append([num, name, totals[name]])
+        num += 1
+
+    # Total row
+    ws.append([])
+    ws.append(["", "ИТОГО порций:", total_portions])
+    total_row = ws.max_row
+    for col in range(1, 4):
+        cell = ws.cell(row=total_row, column=col)
+        cell.font = TOTAL_FONT
+        cell.fill = TOTAL_FILL
+        cell.border = THIN_BORDER_TOP
+
+    # Column widths
+    ws.column_dimensions["A"].width = 6
+    ws.column_dimensions["B"].width = 40
+    ws.column_dimensions["C"].width = 16
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def get_smtp_connection(settings):
+    """Create and return SMTP connection."""
+    smtp_email = settings["reportSmtpEmail"]
+    smtp_pass = settings["reportSmtpPassword"]
+    smtp_host = settings.get("reportSmtpHost", "").strip()
+    smtp_port = settings.get("reportSmtpPort", "").strip()
+
+    if smtp_host and ":" in smtp_host:
+        parts = smtp_host.split(":")
+        smtp_host = parts[0]
+        if not smtp_port:
+            smtp_port = parts[1]
+    if not smtp_host:
+        smtp_host, smtp_port = detect_smtp(smtp_email)
+    else:
+        smtp_port = int(smtp_port) if smtp_port else 465
+
+    server = smtplib.SMTP_SSL(smtp_host, int(smtp_port), timeout=15)
+    server.login(smtp_email, smtp_pass)
+    return server
+
+
+def detect_smtp(email: str) -> tuple[str, int]:
+    domain = email.split("@")[-1].lower()
+    SMTP_SERVERS = {
+        "mail.ru": ("smtp.mail.ru", 465),
+        "bk.ru": ("smtp.mail.ru", 465),
+        "inbox.ru": ("smtp.mail.ru", 465),
+        "list.ru": ("smtp.mail.ru", 465),
+        "yandex.ru": ("smtp.yandex.ru", 465),
+        "ya.ru": ("smtp.yandex.ru", 465),
+        "gmail.com": ("smtp.gmail.com", 465),
+    }
+    if domain in SMTP_SERVERS:
+        return SMTP_SERVERS[domain]
+    return (f"smtp.{domain}", 465)
+
+
+def send_email(server, from_email: str, to_emails: list[str], subject: str, body_text: str, attachments: list[tuple[str, bytes]]):
+    """Send email with attachments to multiple recipients."""
+    if not to_emails:
+        return
+
+    msg = MIMEMultipart()
+    msg["From"] = from_email
+    msg["To"] = ", ".join(to_emails)
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body_text, "plain", "utf-8"))
+
+    for filename, data in attachments:
+        part = MIMEBase("application", "vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        part.set_payload(data)
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", f"attachment; filename=\"{filename}\"")
+        msg.attach(part)
+
+    server.sendmail(from_email, to_emails, msg.as_string())
+    logger.info(f"[EMAIL REPORT] Sent '{subject}' to {', '.join(to_emails)}")
 
 
 def send_report(force=False):
@@ -128,47 +329,73 @@ def send_report(force=False):
             raise ValueError("Отчёт не настроен: включите отправку и заполните все поля")
         return
 
-    today = datetime.now(timezone(timedelta(hours=10))).strftime("%Y-%m-%d")  # Vladivostok
-    excel_data = build_orders_excel(today)
+    # Target delivery date: tomorrow (report is sent before 14:00)
+    now_vlad = datetime.now(VLAD_TZ)
+    if now_vlad.hour >= 14:
+        delivery_date = (now_vlad + timedelta(days=2)).date()
+    else:
+        delivery_date = (now_vlad + timedelta(days=1)).date()
 
+    date_str_ru = format_date_ru(delivery_date)
+    date_str_file = delivery_date.strftime("%d.%m.%Y")
+
+    orders = load_orders_for_delivery_date(delivery_date)
     smtp_email = settings["reportSmtpEmail"]
-    smtp_pass = settings["reportSmtpPassword"]
-    recipient = settings["reportRecipient"]
-    # Use explicit SMTP settings if provided, otherwise auto-detect
-    smtp_host = settings.get("reportSmtpHost", "").strip()
-    smtp_port = settings.get("reportSmtpPort", "").strip()
-    # Handle case where user enters "host:port" in the host field
-    if smtp_host and ":" in smtp_host:
-        parts = smtp_host.split(":")
-        smtp_host = parts[0]
-        if not smtp_port:
-            smtp_port = parts[1]
-    if not smtp_host:
-        smtp_host, smtp_port = detect_smtp(smtp_email)
-    else:
-        smtp_port = int(smtp_port) if smtp_port else 465
-
-    msg = MIMEMultipart()
-    msg["From"] = smtp_email
-    msg["To"] = recipient
-    msg["Subject"] = f"Заказы за {today}"
-
-    if excel_data:
-        msg.attach(MIMEText(f"Отчёт по заказам за {today} во вложении.", "plain", "utf-8"))
-        part = MIMEBase("application", "vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        part.set_payload(excel_data)
-        encoders.encode_base64(part)
-        part.add_header("Content-Disposition", f"attachment; filename=orders_{today}.xlsx")
-        msg.attach(part)
-    else:
-        msg.attach(MIMEText(f"За {today} заказов не было.", "plain", "utf-8"))
+    general_emails = parse_emails(settings.get("reportRecipient", ""))
 
     try:
-        logger.info(f"[EMAIL REPORT] Connecting to {smtp_host}:{smtp_port} as {smtp_email}...")
-        with smtplib.SMTP_SSL(smtp_host, int(smtp_port), timeout=15) as server:
-            server.login(smtp_email, smtp_pass)
-            server.sendmail(smtp_email, [recipient], msg.as_string())
-        logger.info(f"[EMAIL REPORT] Sent to {recipient}")
+        server = get_smtp_connection(settings)
     except Exception as e:
-        logger.error(f"[EMAIL REPORT] Failed: {e}")
-        raise  # Re-raise so test endpoint can show the error
+        logger.error(f"[EMAIL REPORT] SMTP connection failed: {e}")
+        raise
+
+    try:
+        sent_count = 0
+
+        # 1. Отчёт по гостям — per location
+        for location, setting_key in LOCATIONS.items():
+            loc_emails = parse_emails(settings.get(setting_key, ""))
+            recipients = list(set(loc_emails + general_emails))  # location + general
+            if not recipients:
+                continue
+
+            excel_data = build_guests_excel(orders, location, delivery_date)
+            if excel_data:
+                subject = f"Отчёт по гостям на {date_str_file} — {location}"
+                filename = f"Отчет по гостям на {date_str_file} ({location}).xlsx"
+                body = f"Отчёт по гостям за {location} на {date_str_ru} во вложении."
+                send_email(server, smtp_email, recipients, subject, body, [(filename, excel_data)])
+                sent_count += 1
+            else:
+                logger.info(f"[EMAIL REPORT] No orders for {location}, skipping")
+
+        # 2. Отчёт для кухни — all locations combined
+        all_kitchen_emails = set(general_emails)
+        for setting_key in LOCATIONS.values():
+            all_kitchen_emails.update(parse_emails(settings.get(setting_key, "")))
+        all_kitchen_emails = list(all_kitchen_emails)
+
+        if all_kitchen_emails:
+            kitchen_data = build_kitchen_excel(orders, delivery_date)
+            if kitchen_data:
+                subject = f"Отчёт для кухни на {date_str_file} — все точки"
+                filename = f"Отчет для кухни на {date_str_file} (все точки).xlsx"
+                body = f"Сводный отчёт для кухни на {date_str_ru} во вложении."
+                send_email(server, smtp_email, all_kitchen_emails, subject, body, [(filename, kitchen_data)])
+                sent_count += 1
+
+        if sent_count == 0 and not orders:
+            # No orders at all — send notification to general emails
+            if general_emails:
+                msg = MIMEMultipart()
+                msg["From"] = smtp_email
+                msg["To"] = ", ".join(general_emails)
+                msg["Subject"] = f"Заказы на {date_str_file} — нет заказов"
+                msg.attach(MIMEText(f"На {date_str_ru} заказов не поступило.", "plain", "utf-8"))
+                server.sendmail(smtp_email, general_emails, msg.as_string())
+                logger.info(f"[EMAIL REPORT] Sent 'no orders' notification to {', '.join(general_emails)}")
+
+        logger.info(f"[EMAIL REPORT] Done, sent {sent_count} report(s)")
+
+    finally:
+        server.quit()
