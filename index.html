@@ -1728,7 +1728,38 @@
             .burger { display: none; }
             .mobile-menu { display: none !important; }
 
-            .mobile-cart-fab { display: none !important;
+            .mobile-cart-fab.visible {
+                display: flex;
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 998;
+                background: linear-gradient(135deg, var(--gold), var(--brown));
+                color: #fff;
+                border: none;
+                border-radius: 50px;
+                padding: 14px 22px;
+                font-size: 1rem;
+                font-weight: 700;
+                font-family: inherit;
+                cursor: pointer;
+                box-shadow: 0 6px 24px rgba(0,0,0,.35);
+                align-items: center;
+                gap: 8px;
+                transition: transform .2s;
+            }
+            .mobile-cart-fab:active { transform: scale(.95); }
+            .mobile-cart-fab .fab-badge {
+                background: #fff;
+                color: var(--brown-dark);
+                border-radius: 50%;
+                min-width: 22px;
+                height: 22px;
+                font-size: .75rem;
+                font-weight: 800;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
 
             section { padding: 60px 16px; }
