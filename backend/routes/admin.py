@@ -685,14 +685,14 @@ def get_calendar(admin: AdminUser = Depends(get_admin), db: Session = Depends(ge
                 "id": d.id,
                 "date": d.date.isoformat(),
                 "sets": [
-                    {"id": cs.set_id, "name": cs.dish_set.name if cs.dish_set else "—", "price": cs.dish_set.price if cs.dish_set else 0}
+                    {"id": cs.set_id, "name": cs.dish_set.name if cs.dish_set else "—", "price": cs.dish_set.price if cs.dish_set else 0, "sortOrder": cs.dish_set.sort_order if cs.dish_set else 0}
                     for cs in d.sets if cs.dish_set
                 ],
             }
             for d in days
         ],
         "availableSets": [
-            {"id": s.id, "name": s.name, "price": s.price}
+            {"id": s.id, "name": s.name, "price": s.price, "sortOrder": s.sort_order}
             for s in available
         ],
     }
