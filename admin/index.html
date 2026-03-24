@@ -1889,13 +1889,14 @@
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
-        async function deleteQuestion(id) {
-            if (!confirm('Удалить эту заявку?')) return;
-            try {
-                await api('/api/admin/questions/' + id, { method: 'DELETE' });
-                showToast('Заявка удалена');
-                await loadQuestions();
-            } catch (e) { showToast('Ошибка: ' + e.message); }
+        function deleteQuestion(id) {
+            showConfirm('Удалить заявку?', 'Заявка будет удалена без возможности восстановления.', 'Удалить', async () => {
+                try {
+                    await api('/api/admin/questions/' + id, { method: 'DELETE' });
+                    showToast('Заявка удалена');
+                    await loadQuestions();
+                } catch (e) { showToast('Ошибка: ' + e.message); }
+            });
         }
 
         // ===== SETTINGS =====
