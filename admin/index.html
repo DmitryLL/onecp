@@ -878,7 +878,7 @@
                 <input type="hidden" id="setEditId">
                 <div class="form-group">
                     <label>Название набора <span style="color:#c8956c;">*</span></label>
-                    <input type="text" id="setName" required>
+                    <input type="text" id="setName" required maxlength="100">
                 </div>
                 <div class="form-group">
                     <label>Порядок появления <span style="color:#c8956c;">*</span></label>
@@ -886,13 +886,7 @@
                 </div>
                 <div class="form-group">
                     <label>Описание</label>
-                    <textarea id="setDescription" rows="2" style="width:100%;padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;font-family:inherit;resize:vertical;"></textarea>
-                </div>
-                <div class="form-group">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                        <input type="checkbox" id="setAvailable" checked style="width:18px;height:18px;accent-color:#c8956c;">
-                        Активен (показывать на сайте)
-                    </label>
+                    <textarea id="setDescription" rows="2" maxlength="600" style="width:100%;padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;font-family:inherit;resize:vertical;"></textarea>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeSetModal()">Отмена</button>
@@ -1447,7 +1441,6 @@
             document.getElementById('setName').value = '';
             document.getElementById('setDescription').value = '';
             document.getElementById('setSortOrder').value = '';
-            document.getElementById('setAvailable').checked = true;
             document.getElementById('setModalTitle').textContent = 'Создать набор';
             document.getElementById('setModalOverlay').classList.add('open');
         }
@@ -1462,7 +1455,6 @@
             document.getElementById('setName').value = s.name;
             document.getElementById('setDescription').value = s.description || '';
             document.getElementById('setSortOrder').value = s.sortOrder || '';
-            document.getElementById('setAvailable').checked = s.available;
             document.getElementById('setModalTitle').textContent = 'Редактировать набор';
             document.getElementById('setModalOverlay').classList.add('open');
         }
@@ -1474,7 +1466,7 @@
                 name: document.getElementById('setName').value.trim(),
                 description: document.getElementById('setDescription').value.trim() || null,
                 price: 0,
-                available: document.getElementById('setAvailable').checked,
+                available: editId ? (dishSets.find(x => x.id === parseInt(editId))?.available ?? false) : false,
                 sort_order: parseInt(document.getElementById('setSortOrder').value) || 0,
                 items: [],
             };
