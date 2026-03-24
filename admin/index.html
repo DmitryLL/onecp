@@ -1853,10 +1853,10 @@
         var xlSepStyle = { fill: { fgColor: { rgb: 'E8E0D6' } } };
 
         function getLocSuffix() {
-            return activeLocFilter ? ' — ' + activeLocFilter : '';
+            return activeLocFilter ? ' — ' + activeLocFilter : ' — все точки';
         }
         function getLocFilenameSuffix() {
-            return activeLocFilter ? ' (' + activeLocFilter + ')' : '';
+            return activeLocFilter ? ' (' + activeLocFilter + ')' : ' (все точки)';
         }
 
         async function exportOrdersExcel() {
