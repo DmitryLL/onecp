@@ -37,15 +37,22 @@ def get_menu(db: Session = Depends(get_db)):
 
 
 @router.get("/sets")
-def get_sets(db: Session = Depends(get_db)):
-    from datetime import datetime, timezone, timedelta
+def get_sets(date: str = None, db: Session = Depends(get_db)):
+    from datetime import datetime, timezone, timedelta, date as date_type
     vlad_tz = timezone(timedelta(hours=10))
-    today = datetime.now(vlad_tz).date()
 
-    # Get today's calendar day
+    if date:
+        try:
+            target_date = date_type.fromisoformat(date)
+        except ValueError:
+            target_date = datetime.now(vlad_tz).date()
+    else:
+        target_date = datetime.now(vlad_tz).date()
+
+    # Get calendar day for target date
     cal_day = (
         db.query(CalendarDay)
-        .filter(CalendarDay.date == today)
+        .filter(CalendarDay.date == target_date)
         .options(joinedload(CalendarDay.sets))
         .first()
     )

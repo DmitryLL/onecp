@@ -2076,8 +2076,8 @@
     async function loadMenu() {
         try {
             products = await api('/api/menu/');
-            const setDishes = await api('/api/menu/sets');
-            // If today has a set, show its dishes; otherwise show all dishes
+            const setDishes = await api('/api/menu/sets?date=' + menuDateISO);
+            // If target date has a set, show its dishes; otherwise show all dishes
             if (setDishes.length > 0) {
                 products = setDishes;
             }
@@ -2591,18 +2591,21 @@
     const isRootPage = window.location.pathname === '/';
 
     // ===== INIT =====
-    // Set menu date: tomorrow if before 14:00 Vladivostok, day after tomorrow if 14:00+
+    // Compute menu target date: tomorrow if before 14:00 Vladivostok, day after tomorrow if 14:00+
+    var vladNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
+    var menuTargetDate = new Date(vladNow);
+    if (vladNow.getHours() >= 14) {
+        menuTargetDate.setDate(menuTargetDate.getDate() + 2);
+    } else {
+        menuTargetDate.setDate(menuTargetDate.getDate() + 1);
+    }
+    var menuDateISO = menuTargetDate.getFullYear() + '-' +
+        String(menuTargetDate.getMonth() + 1).padStart(2, '0') + '-' +
+        String(menuTargetDate.getDate()).padStart(2, '0');
     (function() {
-        var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
-        var menuDate = new Date(now);
-        if (now.getHours() >= 14) {
-            menuDate.setDate(menuDate.getDate() + 2);
-        } else {
-            menuDate.setDate(menuDate.getDate() + 1);
-        }
         var months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
         var dayNames = ['воскресенье','понедельник','вторник','среду','четверг','пятницу','субботу'];
-        var dateStr = menuDate.getDate() + ' ' + months[menuDate.getMonth()] + ', ' + dayNames[menuDate.getDay()];
+        var dateStr = menuTargetDate.getDate() + ' ' + months[menuTargetDate.getMonth()] + ', ' + dayNames[menuTargetDate.getDay()];
         document.getElementById('siteCatalogTitle').textContent = 'Меню на ' + dateStr;
     })();
 
