@@ -118,6 +118,19 @@
             text-transform: uppercase;
             line-height: 1;
         }
+        .sber-logo-bg .sber-brand {
+            display: flex;
+            flex-direction: column;
+        }
+        .sber-logo-bg .sber-sub {
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-size: clamp(1rem, 2.5vw, 2rem);
+            font-weight: 400;
+            letter-spacing: 6px;
+            color: rgba(255,255,255,.5);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
         .sber-glow {
             position: absolute;
             width: 500px;
@@ -2226,7 +2239,7 @@
 
     // ===== LOCATION PAGES =====
     const LOCATIONS = {
-        '/Sber': { name: 'Sber', address: 'Фонтанная 18', description: 'Точка выдачи в бизнес-центре Sber', heroCss: 'hero-sber', heroHtml: '<div class="sber-glow"></div><div class="sber-logo-bg"><svg class="sber-icon" viewBox="0 0 200 200" fill="none"><path d="M100 20a80 80 0 1 0 56.57 23.43" stroke="url(#sg1)" stroke-width="22" stroke-linecap="round" fill="none"/><path d="M68 100l24 24 52-52" stroke="url(#sg2)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><defs><linearGradient id="sg1" x1="20" y1="100" x2="180" y2="100"><stop stop-color="#4eff78"/><stop offset="1" stop-color="#21a038"/></linearGradient><linearGradient id="sg2" x1="68" y1="72" x2="144" y2="124"><stop stop-color="#4eff78"/><stop offset="1" stop-color="#21a038"/></linearGradient></defs></svg><span class="sber-text">Сбербанк</span></div>' },
+        '/Sber': { name: 'Sber', address: 'Фонтанная 18', description: 'Точка выдачи в бизнес-центре Sber', heroCss: 'hero-sber', heroHtml: '<div class="sber-glow"></div><div class="sber-logo-bg"><svg class="sber-icon" viewBox="0 0 200 200" fill="none"><path d="M100 20a80 80 0 1 0 56.57 23.43" stroke="url(#sg1)" stroke-width="22" stroke-linecap="round" fill="none"/><path d="M68 100l24 24 52-52" stroke="url(#sg2)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><defs><linearGradient id="sg1" x1="20" y1="100" x2="180" y2="100"><stop stop-color="#4eff78"/><stop offset="1" stop-color="#21a038"/></linearGradient><linearGradient id="sg2" x1="68" y1="72" x2="144" y2="124"><stop stop-color="#4eff78"/><stop offset="1" stop-color="#21a038"/></linearGradient></defs></svg><div class="sber-brand"><span class="sber-text">Сбербанк</span><span class="sber-sub">One Coffee Place</span></div></div>' },
         '/Skycity': { name: 'Sky City', address: 'Алеутская 45', description: 'Точка выдачи в БЦ Sky City' },
         '/InternationalBayViewtowers': { name: 'International BayView Towers', address: 'Енисейская 23', description: 'Точка выдачи в International BayView Towers' },
     };
