@@ -768,6 +768,10 @@
                 return ia - ib;
             });
             const container = document.getElementById('productsSections');
+            const iStyle = 'background:transparent;border:1px solid transparent;color:#fff;font-size:.88rem;padding:4px 6px;border-radius:6px;width:100%;font-family:inherit;';
+            const iHover = 'onfocus="this.style.borderColor=\'#555\';this.style.background=\'#1a1a1a\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\';inlineSave(this)"';
+            const nStyle = 'background:transparent;border:1px solid transparent;color:#fff;font-size:.88rem;padding:4px 6px;border-radius:6px;width:70px;text-align:center;font-family:inherit;';
+            const nHover = 'onfocus="this.style.borderColor=\'#555\';this.style.background=\'#1a1a1a\'" onblur="this.style.borderColor=\'transparent\';this.style.background=\'transparent\';inlineSave(this)"';
             container.innerHTML = sortedKeys.map(cat => `
                 <div style="margin-bottom:28px;">
                     <h2 style="font-size:1.1rem;font-weight:700;color:#c8956c;margin-bottom:10px;padding-left:4px;">${escH(cat)}</h2>
@@ -776,29 +780,40 @@
                             <thead>
                                 <tr>
                                     <th>Фото</th>
+                                    <th>Тип</th>
                                     <th>Название</th>
                                     <th>Описание</th>
-                                    <th>Вес/Объём</th>
-                                    <th>Б / Ж / У</th>
+                                    <th>Вес</th>
+                                    <th>Ед.</th>
+                                    <th>Б</th>
+                                    <th>Ж</th>
+                                    <th>У</th>
                                     <th>Цена</th>
-                                    <th>Действия</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${groups[cat].map(p => `
-                                <tr>
-                                    <td>${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
-                                    <td>${escH(p.name)}</td>
-                                    <td style="color:#888;font-size:.85rem;max-width:200px;">${p.description ? escH(p.description) : '—'}</td>
-                                    <td style="white-space:nowrap;">${p.weight ? p.weight + ' ' + (p.weightUnit || 'г') : '—'}</td>
-                                    <td style="white-space:nowrap;font-size:.85rem;color:#aaa;">${(p.proteins != null || p.fats != null || p.carbs != null) ? (p.proteins ?? '—') + ' / ' + (p.fats ?? '—') + ' / ' + (p.carbs ?? '—') : '—'}</td>
-                                    <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
-                                    <td>
-                                        <div class="actions-cell">
-                                            <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">Изменить</button>
-                                            <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Удалить</button>
-                                        </div>
+                                <tr data-id="${p.id}">
+                                    <td style="position:relative;cursor:pointer;" onclick="triggerInlineImage(${p.id})">
+                                        ${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;">' : '<span style="color:#555;font-size:1.2rem;">+</span>'}
+                                        <input type="file" id="inlineImg-${p.id}" accept="image/*" style="display:none;" onchange="uploadInlineImage(${p.id}, this)">
                                     </td>
+                                    <td><select data-field="category" data-id="${p.id}" onchange="inlineSave(this)" style="background:transparent;border:1px solid transparent;color:#aaa;font-size:.82rem;padding:3px;border-radius:6px;cursor:pointer;">
+                                        <option value="" ${!p.category ? 'selected' : ''}>—</option>
+                                        ${categoryOrder.map(c => '<option value="' + c + '"' + (p.category === c ? ' selected' : '') + '>' + c + '</option>').join('')}
+                                    </select></td>
+                                    <td><input type="text" value="${escH(p.name)}" data-field="name" data-id="${p.id}" style="${iStyle}" ${iHover}></td>
+                                    <td><input type="text" value="${escH(p.description || '')}" data-field="description" data-id="${p.id}" style="${iStyle}color:#888;" ${iHover}></td>
+                                    <td><input type="number" value="${p.weight ?? ''}" data-field="weight" data-id="${p.id}" step="any" min="0" style="${nStyle}" ${nHover}></td>
+                                    <td><select data-field="weight_unit" data-id="${p.id}" onchange="inlineSave(this)" style="background:transparent;border:1px solid transparent;color:#aaa;font-size:.82rem;padding:3px;border-radius:6px;cursor:pointer;">
+                                        ${['г','мл','л','кг'].map(u => '<option value="' + u + '"' + ((p.weightUnit || 'г') === u ? ' selected' : '') + '>' + u + '</option>').join('')}
+                                    </select></td>
+                                    <td><input type="number" value="${p.proteins ?? ''}" data-field="proteins" data-id="${p.id}" step="any" min="0" style="${nStyle}" ${nHover}></td>
+                                    <td><input type="number" value="${p.fats ?? ''}" data-field="fats" data-id="${p.id}" step="any" min="0" style="${nStyle}" ${nHover}></td>
+                                    <td><input type="number" value="${p.carbs ?? ''}" data-field="carbs" data-id="${p.id}" step="any" min="0" style="${nStyle}" ${nHover}></td>
+                                    <td><input type="number" value="${p.price}" data-field="price" data-id="${p.id}" step="any" min="0" style="${nStyle}font-weight:700;" ${nHover}></td>
+                                    <td><button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})" style="padding:4px 10px;">✕</button></td>
                                 </tr>
                                 `).join('')}
                             </tbody>
@@ -806,6 +821,66 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        // ===== INLINE EDIT =====
+        let saveTimeout = {};
+        function inlineSave(el) {
+            const id = el.dataset.id || el.getAttribute('data-id');
+            if (!id) return;
+            clearTimeout(saveTimeout[id]);
+            saveTimeout[id] = setTimeout(async () => {
+                const row = document.querySelector('tr[data-id="' + id + '"]');
+                if (!row) return;
+                const get = (field) => {
+                    const inp = row.querySelector('[data-field="' + field + '"]');
+                    return inp ? inp.value : null;
+                };
+                const data = {
+                    name: get('name') || 'Без названия',
+                    category: get('category') || null,
+                    description: get('description') || null,
+                    weight: parseFloat(get('weight')) || null,
+                    weight_unit: get('weight_unit') || null,
+                    proteins: parseFloat(get('proteins')) || null,
+                    fats: parseFloat(get('fats')) || null,
+                    carbs: parseFloat(get('carbs')) || null,
+                    price: parseFloat(get('price')) || 0,
+                };
+                try {
+                    await api('/api/admin/dishes/' + id, { method: 'PUT', body: data });
+                    // Update local data without re-render
+                    const p = products.find(x => x.id === parseInt(id));
+                    if (p) { Object.assign(p, { ...data, weightUnit: data.weight_unit }); }
+                    // Flash green border briefly
+                    row.style.outline = '1px solid #4caf50';
+                    setTimeout(() => { row.style.outline = ''; }, 600);
+                } catch (e) {
+                    row.style.outline = '1px solid #e74c3c';
+                    setTimeout(() => { row.style.outline = ''; }, 1000);
+                    showToast('Ошибка: ' + e.message);
+                }
+            }, 400);
+        }
+
+        function triggerInlineImage(id) {
+            document.getElementById('inlineImg-' + id).click();
+        }
+
+        async function uploadInlineImage(id, input) {
+            if (!input.files.length) return;
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+            try {
+                const res = await fetch('/api/admin/dishes/' + id + '/image', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + adminToken },
+                    body: formData,
+                });
+                if (!res.ok) throw new Error('Upload failed');
+                await loadDishes();
+                showToast('Фото обновлено');
+            } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
         // ===== MODAL =====
