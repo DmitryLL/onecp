@@ -1751,7 +1751,7 @@
             });
 
             if (!dateOrders.length) {
-                container.innerHTML = '<p style="color:#666;padding:24px 0;">Нет заказов' + (activeLocFilter ? ' по точке ' + activeLocFilter : ' за эту дату') + '</p>';
+                container.innerHTML = '<p style="color:#666;padding:24px 0;">Нет заказов' + (activeLocFilter ? ' по точке ' + escH(activeLocFilter) : ' за эту дату') + '</p>';
                 return;
             }
 

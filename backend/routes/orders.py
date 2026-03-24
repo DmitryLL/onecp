@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, field_validator
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -20,8 +20,8 @@ class CreateOrderRequest(BaseModel):
     phone: str
     sms_code: str
     items: list[OrderItemIn]
-    comment: str | None = None
-    address: str | None = None
+    comment: str | None = Field(None, max_length=500)
+    address: str | None = Field(None, max_length=200)
     customer_name: str
 
     @field_validator("customer_name")
@@ -46,8 +46,12 @@ class CreateOrderRequest(BaseModel):
 @router.post("/")
 def create_order(
     body: CreateOrderRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
+    from routes.auth import check_rate_limit
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(f"order:{client_ip}", max_requests=10, window_seconds=300)
     if not body.items:
         raise HTTPException(status_code=400, detail="Корзина пуста")
 
@@ -110,8 +114,8 @@ def create_order(
 
 class CreateOrderAuthRequest(BaseModel):
     items: list[OrderItemIn]
-    comment: str | None = None
-    address: str | None = None
+    comment: str | None = Field(None, max_length=500)
+    address: str | None = Field(None, max_length=200)
 
 
 @router.post("/auth")

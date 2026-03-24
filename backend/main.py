@@ -2,7 +2,7 @@ import os
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from passlib.hash import pbkdf2_sha256
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -165,13 +165,33 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="OneCp API", lifespan=lifespan)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS: only allow specific origins (same-origin via nginx needs no CORS)
+_cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
+if _cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+# Security headers + request size limit (2MB)
+MAX_BODY_SIZE = 2 * 1024 * 1024
+
+@app.middleware("http")
+async def security_middleware(request: Request, call_next):
+    # Block oversized request bodies (except file uploads which go up to 10MB via nginx)
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_BODY_SIZE:
+        if "/image" not in request.url.path:
+            return Response("Request too large", status_code=413)
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    if request.url.path.startswith("/api/auth") or request.url.path.startswith("/api/admin"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
 
 app.include_router(auth_router)
 app.include_router(menu_router)

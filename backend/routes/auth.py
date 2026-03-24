@@ -1,5 +1,6 @@
 import os
 import random
+import secrets
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -15,12 +16,29 @@ from models import Customer, SmsCode, Order, OrderItem
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger("onecp")
 
-JWT_SECRET = os.getenv("JWT_SECRET", "onecp-secret-change-me")
+JWT_SECRET = os.getenv("JWT_SECRET", "")
+if not JWT_SECRET:
+    JWT_SECRET = secrets.token_hex(32)
+    logger.critical("JWT_SECRET not set! Generated random secret — tokens will NOT survive restart. Set JWT_SECRET env var!")
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+JWT_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
 SMS_PROVIDER = os.getenv("SMS_PROVIDER", "mock")  # mock | smsru
 SMSRU_API_KEY = os.getenv("SMSRU_API_KEY", "")
+
+# Simple in-memory IP rate limiter
+_rate_limits: dict[str, list[float]] = {}
+
+def check_rate_limit(key: str, max_requests: int, window_seconds: int):
+    """Raise 429 if too many requests from this key in the window."""
+    import time
+    now = time.time()
+    entries = _rate_limits.get(key, [])
+    entries = [t for t in entries if now - t < window_seconds]
+    if len(entries) >= max_requests:
+        raise HTTPException(status_code=429, detail="Слишком много запросов, попробуйте позже")
+    entries.append(now)
+    _rate_limits[key] = entries
 
 
 def normalize_phone(phone: str) -> str:
@@ -134,7 +152,10 @@ def send_sms(phone: str, code: str):
 
 
 @router.post("/send-code")
-def send_code(body: SendCodeRequest, db: Session = Depends(get_db)):
+def send_code(body: SendCodeRequest, request: Request, db: Session = Depends(get_db)):
+    # IP rate limit: max 5 SMS requests per 5 minutes per IP
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(f"sms:{client_ip}", max_requests=5, window_seconds=300)
     # Rate limit: max 1 code per 60 seconds
     recent = (
         db.query(SmsCode)
@@ -157,14 +178,13 @@ def send_code(body: SendCodeRequest, db: Session = Depends(get_db)):
         logger.error(f"[SMS] Failed to send to {body.phone}: {e}")
         raise HTTPException(status_code=502, detail=f"Не удалось отправить SMS: {e}")
 
-    result = {"ok": True, "message": "Код отправлен"}
-    if SMS_PROVIDER == "mock":
-        result["debug_code"] = code
-    return result
+    return {"ok": True, "message": "Код отправлен"}
 
 
 @router.post("/verify-code")
-def verify_code(body: VerifyCodeRequest, db: Session = Depends(get_db)):
+def verify_code(body: VerifyCodeRequest, request: Request, db: Session = Depends(get_db)):
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(f"verify:{client_ip}", max_requests=10, window_seconds=300)
     sms_code = (
         db.query(SmsCode)
         .filter(SmsCode.phone == body.phone, SmsCode.code == body.code, SmsCode.used == False)
@@ -318,7 +338,9 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-def login(body: LoginRequest, db: Session = Depends(get_db)):
+def login(body: LoginRequest, request: Request, db: Session = Depends(get_db)):
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(f"login:{client_ip}", max_requests=10, window_seconds=300)
     customer = db.query(Customer).filter(Customer.phone == body.phone).first()
     if not customer or not customer.password_hash or not pbkdf2_sha256.verify(body.password, customer.password_hash):
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")

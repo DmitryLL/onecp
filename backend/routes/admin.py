@@ -13,6 +13,24 @@ from PIL import Image
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/onecp/uploads")
 MAX_IMAGE_SIZE = 800  # max width/height in pixels
 WEBP_QUALITY = 80
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10MB
+
+# Magic bytes for allowed image formats
+IMAGE_SIGNATURES = [
+    (b'\xff\xd8\xff', "image/jpeg"),
+    (b'\x89PNG\r\n\x1a\n', "image/png"),
+    (b'RIFF', "image/webp"),
+    (b'GIF87a', "image/gif"),
+    (b'GIF89a', "image/gif"),
+]
+
+
+def validate_image_upload(file_data: bytes):
+    """Validate image by file size and magic bytes."""
+    if len(file_data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Файл слишком большой (макс. 10 МБ)")
+    if not any(file_data.startswith(sig) for sig, _ in IMAGE_SIGNATURES):
+        raise HTTPException(status_code=400, detail="Файл повреждён или имеет неподдерживаемый формат")
 
 
 def compress_image(file_data: bytes) -> tuple[bytes, str]:
@@ -36,8 +54,7 @@ from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-JWT_SECRET = os.getenv("JWT_SECRET", "onecp-secret-change-me")
-JWT_ALGORITHM = "HS256"
+from routes.auth import JWT_SECRET, JWT_ALGORITHM
 
 
 def get_admin(request: Request, db: Session = Depends(get_db)) -> AdminUser:
@@ -93,7 +110,10 @@ class SettingIn(BaseModel):
 # ===== AUTH =====
 
 @router.post("/login")
-def admin_login(body: AdminLoginRequest, db: Session = Depends(get_db)):
+def admin_login(body: AdminLoginRequest, request: Request, db: Session = Depends(get_db)):
+    from routes.auth import check_rate_limit
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(f"admin_login:{client_ip}", max_requests=5, window_seconds=300)
     admin = db.query(AdminUser).filter(AdminUser.username == body.username).first()
     if not admin or not pbkdf2_sha256.verify(body.password, admin.password_hash):
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
@@ -189,8 +209,9 @@ def upload_dish_image(dish_id: int, file: UploadFile = File(...), admin: AdminUs
     # Create uploads dir
     os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-    # Compress and save
+    # Read and validate
     raw = file.file.read()
+    validate_image_upload(raw)
     compressed, ext = compress_image(raw)
     filename = f"dish_{dish_id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = os.path.join(UPLOAD_DIR, filename)
@@ -567,6 +588,7 @@ def upload_set_image(set_id: int, file: UploadFile = File(...), admin: AdminUser
         raise HTTPException(status_code=400, detail="Допустимые форматы: JPEG, PNG, WebP, GIF")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     raw = file.file.read()
+    validate_image_upload(raw)
     compressed, ext = compress_image(raw)
     filename = f"set_{set_id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = os.path.join(UPLOAD_DIR, filename)

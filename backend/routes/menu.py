@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -121,13 +121,16 @@ def get_site_settings(db: Session = Depends(get_db)):
 
 
 class QuestionIn(BaseModel):
-    name: str
-    phone: str
-    message: str
+    name: str = Field(..., max_length=100)
+    phone: str = Field(..., max_length=20)
+    message: str = Field(..., max_length=1000)
 
 
 @router.post("/question")
-def submit_question(body: QuestionIn, db: Session = Depends(get_db)):
+def submit_question(body: QuestionIn, request: Request, db: Session = Depends(get_db)):
+    from routes.auth import check_rate_limit
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(f"question:{client_ip}", max_requests=3, window_seconds=300)
     if not body.name.strip() or not body.phone.strip() or not body.message.strip():
         raise HTTPException(status_code=400, detail="Заполните все поля")
     q = Question(name=body.name.strip(), phone=body.phone.strip(), message=body.message.strip())
