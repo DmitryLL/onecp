@@ -1893,7 +1893,9 @@
     if (locInfo) {
         document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
         document.getElementById('orderAddress').value = locInfo.address;
-    } else if (window.location.pathname === '/') {
+    } else if (window.location.pathname !== '/') {
+        window.location.replace('/');
+    } else {
         // Show location picker, hide main content
         document.getElementById('locationPicker').style.display = '';
         document.getElementById('siteHeader').style.display = 'none';
