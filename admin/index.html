@@ -2029,7 +2029,7 @@
                     </div>
                     <select class="cal-day-select" onchange="calSetDay('${d.date}', this.value)">
                         <option value="">Выберите набор</option>
-                        ${activeSets.map(s => '<option value="' + s.id + '"' + (s.id === currentSetId ? ' selected' : '') + '>' + escH(s.name) + '</option>').join('')}
+                        ${activeSets.map(s => '<option value="' + s.id + '"' + (s.id === currentSetId ? ' selected' : '') + '>' + (s.sortOrder || 0) + ' — ' + escH(s.name) + '</option>').join('')}
                     </select>
                 </div>`;
             }).join('');
