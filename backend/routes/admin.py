@@ -1,13 +1,33 @@
 import os
 import uuid
 import shutil
+from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from jose import jwt
 from passlib.hash import pbkdf2_sha256
+from PIL import Image
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/onecp/uploads")
+MAX_IMAGE_SIZE = 800  # max width/height in pixels
+WEBP_QUALITY = 80
+
+
+def compress_image(file_data: bytes) -> tuple[bytes, str]:
+    """Compress image to WebP, resize if larger than MAX_IMAGE_SIZE."""
+    img = Image.open(BytesIO(file_data))
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGBA")
+    else:
+        img = img.convert("RGB")
+    # Resize if too large
+    w, h = img.size
+    if w > MAX_IMAGE_SIZE or h > MAX_IMAGE_SIZE:
+        img.thumbnail((MAX_IMAGE_SIZE, MAX_IMAGE_SIZE), Image.LANCZOS)
+    buf = BytesIO()
+    img.save(buf, format="WEBP", quality=WEBP_QUALITY)
+    return buf.getvalue(), "webp"
 
 from database import get_db
 from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question, SmsCode, CalendarDay, CalendarDaySet
@@ -168,8 +188,9 @@ def upload_dish_image(dish_id: int, file: UploadFile = File(...), admin: AdminUs
     # Create uploads dir
     os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-    # Generate unique filename
-    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
+    # Compress and save
+    raw = file.file.read()
+    compressed, ext = compress_image(raw)
     filename = f"dish_{dish_id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = os.path.join(UPLOAD_DIR, filename)
 
@@ -179,9 +200,8 @@ def upload_dish_image(dish_id: int, file: UploadFile = File(...), admin: AdminUs
         if os.path.exists(old_path):
             os.remove(old_path)
 
-    # Save file
     with open(filepath, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+        f.write(compressed)
 
     dish.image_url = f"/uploads/{filename}"
     db.commit()
@@ -516,7 +536,8 @@ def upload_set_image(set_id: int, file: UploadFile = File(...), admin: AdminUser
     if file.content_type not in allowed:
         raise HTTPException(status_code=400, detail="Допустимые форматы: JPEG, PNG, WebP, GIF")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
-    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "jpg"
+    raw = file.file.read()
+    compressed, ext = compress_image(raw)
     filename = f"set_{set_id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = os.path.join(UPLOAD_DIR, filename)
     if ds.image_url:
@@ -524,7 +545,7 @@ def upload_set_image(set_id: int, file: UploadFile = File(...), admin: AdminUser
         if os.path.exists(old_path):
             os.remove(old_path)
     with open(filepath, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+        f.write(compressed)
     ds.image_url = f"/uploads/{filename}"
     db.commit()
     return {"ok": True, "imageUrl": ds.image_url}
