@@ -595,6 +595,7 @@
             display: none;
         }
         .dish-search-results.open { display: block; }
+        .dish-search-results.drop-up { top: auto; bottom: 100%; border-radius: 8px 8px 0 0; }
         .dish-search-item {
             padding: 8px 12px;
             cursor: pointer;
@@ -1554,6 +1555,12 @@
                 `).join('');
             }
             dropdown.classList.add('open');
+            const rect = dropdown.getBoundingClientRect();
+            if (rect.bottom > window.innerHeight) {
+                dropdown.classList.add('drop-up');
+            } else {
+                dropdown.classList.remove('drop-up');
+            }
         }
 
         function closeSetDishSearch(setId) {
