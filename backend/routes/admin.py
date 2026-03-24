@@ -207,16 +207,38 @@ def delete_dish(dish_id: int, admin: AdminUser = Depends(get_admin), db: Session
     dish = db.query(Dish).filter(Dish.id == dish_id).first()
     if not dish:
         raise HTTPException(status_code=404, detail="Блюдо не найдено")
-    # Check if dish is used in orders
     used = db.query(OrderItem).filter(OrderItem.dish_id == dish_id).first()
     if used:
-        raise HTTPException(status_code=400, detail="Нельзя удалить — блюдо есть в заказах. Можно скрыть его (снять available).")
+        raise HTTPException(status_code=400, detail="Нельзя удалить — блюдо есть в заказах. Переместите в архив.")
     try:
         db.delete(dish)
         db.commit()
     except Exception:
         db.rollback()
         raise HTTPException(status_code=400, detail="Не удалось удалить блюдо — оно используется в других записях")
+    return {"ok": True}
+
+
+@router.put("/dishes/{dish_id}/archive")
+def archive_dish(dish_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Блюдо не найдено")
+    dish.available = False
+    # Remove from sets
+    from models import DishSetItem
+    db.query(DishSetItem).filter(DishSetItem.dish_id == dish_id).delete()
+    db.commit()
+    return {"ok": True}
+
+
+@router.put("/dishes/{dish_id}/restore")
+def restore_dish(dish_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        raise HTTPException(status_code=404, detail="Блюдо не найдено")
+    dish.available = True
+    db.commit()
     return {"ok": True}
 
 

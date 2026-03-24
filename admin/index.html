@@ -367,7 +367,12 @@
                     <h1>Товары</h1>
                     <button class="btn btn-primary" onclick="openModal()">+ Добавить товар</button>
                 </div>
+                <div style="display:flex;gap:4px;margin-bottom:18px;">
+                    <button class="btn btn-primary btn-sm" id="tabActive" onclick="showProductsTab('active')" style="font-weight:700;">Активные</button>
+                    <button class="btn btn-secondary btn-sm" id="tabArchive" onclick="showProductsTab('archive')">Архив</button>
+                </div>
                 <div id="productsSections"></div>
+                <div id="archiveSection" style="display:none;"></div>
             </div>
 
             <!-- SETS PANEL -->
@@ -751,10 +756,43 @@
 
         // ===== RENDER TABLE =====
         const categoryOrder = ['Суп', 'Салат', 'Горячее', 'Десерт', 'Напиток'];
+        let productsTab = 'active';
+
+        function showProductsTab(tab) {
+            productsTab = tab;
+            document.getElementById('tabActive').className = 'btn btn-sm ' + (tab === 'active' ? 'btn-primary' : 'btn-secondary');
+            document.getElementById('tabActive').style.fontWeight = tab === 'active' ? '700' : '400';
+            document.getElementById('tabArchive').className = 'btn btn-sm ' + (tab === 'archive' ? 'btn-primary' : 'btn-secondary');
+            document.getElementById('tabArchive').style.fontWeight = tab === 'archive' ? '700' : '400';
+            document.getElementById('productsSections').style.display = tab === 'active' ? 'block' : 'none';
+            document.getElementById('archiveSection').style.display = tab === 'archive' ? 'block' : 'none';
+            if (tab === 'archive') renderArchive();
+        }
+
+        function renderArchive() {
+            const archived = products.filter(p => !p.available);
+            const container = document.getElementById('archiveSection');
+            if (!archived.length) {
+                container.innerHTML = '<p style="color:#666;padding:20px 0;text-align:center;">Архив пуст</p>';
+                return;
+            }
+            container.innerHTML = `<div class="table-wrap"><table>
+                <thead><tr><th>Фото</th><th>Тип</th><th>Название</th><th>Цена</th><th>Действия</th></tr></thead>
+                <tbody>${archived.map(p => `
+                    <tr>
+                        <td>${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
+                        <td style="font-size:.85rem;color:#888;">${p.category ? escH(p.category) : '—'}</td>
+                        <td>${escH(p.name)}</td>
+                        <td style="white-space:nowrap;">${p.price.toLocaleString('ru-RU')} ₽</td>
+                        <td><button class="btn btn-primary btn-sm" onclick="restoreProduct(${p.id})">Восстановить</button></td>
+                    </tr>
+                `).join('')}</tbody>
+            </table></div>`;
+        }
 
         function renderTable() {
             const groups = {};
-            products.forEach(p => {
+            products.filter(p => p.available !== false).forEach(p => {
                 const cat = p.category || 'Без типа';
                 if (!groups[cat]) groups[cat] = [];
                 groups[cat].push(p);
@@ -813,7 +851,7 @@
                                     <td><input type="number" value="${p.fats ?? ''}" data-field="fats" data-id="${p.id}" step="any" min="0" style="${nStyle}" ${nHover}></td>
                                     <td><input type="number" value="${p.carbs ?? ''}" data-field="carbs" data-id="${p.id}" step="any" min="0" style="${nStyle}" ${nHover}></td>
                                     <td><input type="number" value="${p.price}" data-field="price" data-id="${p.id}" step="any" min="0" style="${nStyle}font-weight:700;" ${nHover}></td>
-                                    <td><button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})" style="padding:4px 10px;">✕</button></td>
+                                    <td><button class="btn btn-secondary btn-sm" onclick="archiveProduct(${p.id})" style="padding:4px 10px;font-size:.78rem;white-space:nowrap;">В архив</button></td>
                                 </tr>
                                 `).join('')}
                             </tbody>
@@ -995,12 +1033,21 @@
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
-        async function deleteProduct(id) {
-            if (!confirm('Удалить это блюдо?')) return;
+        async function archiveProduct(id) {
+            if (!confirm('Переместить блюдо в архив?')) return;
             try {
-                await api('/api/admin/dishes/' + id, { method: 'DELETE' });
-                showToast('Блюдо удалено');
+                await api('/api/admin/dishes/' + id + '/archive', { method: 'PUT' });
+                showToast('Блюдо перемещено в архив');
                 await loadDishes();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        async function restoreProduct(id) {
+            try {
+                await api('/api/admin/dishes/' + id + '/restore', { method: 'PUT' });
+                showToast('Блюдо восстановлено');
+                await loadDishes();
+                showProductsTab('active');
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
@@ -1073,7 +1120,7 @@
         function populateSetDishSelect() {
             const sel = document.getElementById('setDishSelect');
             sel.innerHTML = '<option value="">— Выберите товар —</option>' +
-                products.map(p => '<option value="' + p.id + '">' + escH(p.name) + ' (' + p.price + ' ₽)</option>').join('');
+                products.filter(p => p.available !== false).map(p => '<option value="' + p.id + '">' + escH(p.name) + ' (' + p.price + ' ₽)</option>').join('');
         }
 
         function renderSetItems() {
