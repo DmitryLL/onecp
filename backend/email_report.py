@@ -192,7 +192,7 @@ def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes
 
 
 def build_kitchen_excel(orders, delivery_date: date_type) -> bytes | None:
-    """Build 'Отчёт для кухни' — aggregated across all locations."""
+    """Build 'Отчёт для кухни' — aggregated across all locations with per-location columns."""
     if not orders:
         return None
 
@@ -200,35 +200,42 @@ def build_kitchen_excel(orders, delivery_date: date_type) -> bytes | None:
     ws = wb.active
     ws.title = "Кухня"
 
-    # Aggregate dishes
+    loc_names = list(LOCATIONS.keys())  # Фонтанная 18, Алеутская 45, Енисейская 23
+    num_cols = 3 + len(loc_names)  # №, Блюдо, loc1, loc2, loc3, Итого
+
+    # Aggregate dishes per location and total
+    per_loc = {loc: {} for loc in loc_names}
     totals = {}
     total_portions = 0
     for o in orders:
+        loc = o.address or ""
         for it in o.items:
             dish_name = it.dish.name if it.dish else "—"
             totals[dish_name] = totals.get(dish_name, 0) + it.quantity
             total_portions += it.quantity
+            if loc in per_loc:
+                per_loc[loc][dish_name] = per_loc[loc].get(dish_name, 0) + it.quantity
 
     # Title block
     ws.append(["ONE COFFEE PLACE — Отчёт для кухни — все точки"])
-    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=3)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_cols)
     ws["A1"].font = TITLE_FONT
 
     ws.append([f"Заказ на: {format_date_ru(delivery_date)}"])
-    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3)
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=num_cols)
     ws["A2"].font = SUB_FONT
 
     ws.append([f"Всего заказов: {len(orders)}   |   Всего порций: {total_portions}"])
-    ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=3)
+    ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=num_cols)
     ws["A3"].font = STATS_FONT
 
     ws.append([])  # empty row
 
-    # Headers
-    headers = ["№", "Блюдо", "Количество"]
+    # Headers: №, Блюдо, Фонтанная 18, Алеутская 45, Енисейская 23, Итого
+    headers = ["№", "Блюдо"] + loc_names + ["Итого"]
     ws.append(headers)
     header_row = 5
-    for col in range(1, 4):
+    for col in range(1, len(headers) + 1):
         cell = ws.cell(row=header_row, column=col)
         cell.font = HEADER_FONT
         cell.fill = HEADER_FILL
@@ -237,14 +244,22 @@ def build_kitchen_excel(orders, delivery_date: date_type) -> bytes | None:
     # Data
     num = 1
     for name in sorted(totals.keys()):
-        ws.append([num, name, totals[name]])
+        row = [num, name]
+        for loc in loc_names:
+            row.append(per_loc[loc].get(name, 0))
+        row.append(totals[name])
+        ws.append(row)
         num += 1
 
     # Total row
     ws.append([])
-    ws.append(["", "ИТОГО порций:", total_portions])
+    total_row_data = ["", "ИТОГО:"]
+    for loc in loc_names:
+        total_row_data.append(sum(per_loc[loc].values()))
+    total_row_data.append(total_portions)
+    ws.append(total_row_data)
     total_row = ws.max_row
-    for col in range(1, 4):
+    for col in range(1, len(headers) + 1):
         cell = ws.cell(row=total_row, column=col)
         cell.font = TOTAL_FONT
         cell.fill = TOTAL_FILL
@@ -253,7 +268,9 @@ def build_kitchen_excel(orders, delivery_date: date_type) -> bytes | None:
     # Column widths
     ws.column_dimensions["A"].width = 6
     ws.column_dimensions["B"].width = 40
-    ws.column_dimensions["C"].width = 16
+    for i, _ in enumerate(loc_names):
+        ws.column_dimensions[chr(67 + i)].width = 16
+    ws.column_dimensions[chr(67 + len(loc_names))].width = 12
 
     buf = io.BytesIO()
     wb.save(buf)

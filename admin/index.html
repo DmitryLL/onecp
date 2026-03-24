@@ -1928,15 +1928,24 @@
             try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
 
             var deliveryDate = new Date(dateStr + 'T00:00:00');
+            var locNames = ['Фонтанная 18', 'Алеутская 45', 'Енисейская 23'];
+            var numCols = 3 + locNames.length; // №, Блюдо, loc1, loc2, loc3, Итого
 
-            // Aggregate dishes
+            // Aggregate dishes per location and total
+            var perLoc = {};
+            locNames.forEach(l => { perLoc[l] = {}; });
             var totals = {};
             var totalPortions = 0;
             dateOrders.forEach(o => {
+                var loc = o.address || '';
                 o.items.forEach(it => {
                     if (totals[it.name]) totals[it.name] += it.qty;
                     else totals[it.name] = it.qty;
                     totalPortions += it.qty;
+                    if (perLoc[loc]) {
+                        if (perLoc[loc][it.name]) perLoc[loc][it.name] += it.qty;
+                        else perLoc[loc][it.name] = it.qty;
+                    }
                 });
             });
 
@@ -1944,48 +1953,55 @@
             // Title block
             data.push(['ONE COFFEE PLACE — Отчёт для кухни' + getLocSuffix()]);
             data.push(['Заказ на: ' + formatDateRu(deliveryDate)]);
-            if (activeLocFilter) data.push(['Точка выдачи: ' + activeLocFilter]);
             data.push(['Всего заказов: ' + dateOrders.length + '   |   Всего порций: ' + totalPortions]);
             data.push([]); // пустая строка
 
             var headerRow = data.length;
-            data.push(['№', 'Блюдо', 'Количество']);
+            data.push(['№', 'Блюдо'].concat(locNames).concat(['Итого']));
 
             var num = 1;
             Object.keys(totals).sort().forEach(name => {
-                data.push([num++, name, totals[name]]);
+                var row = [num++, name];
+                locNames.forEach(loc => { row.push(perLoc[loc][name] || 0); });
+                row.push(totals[name]);
+                data.push(row);
             });
 
             // Итого
             data.push([]);
-            data.push(['', 'ИТОГО порций:', totalPortions]);
+            var totalRow = ['', 'ИТОГО:'];
+            locNames.forEach(loc => {
+                var s = 0; Object.values(perLoc[loc]).forEach(v => { s += v; });
+                totalRow.push(s);
+            });
+            totalRow.push(totalPortions);
+            data.push(totalRow);
 
             var ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 6 }, { wch: 40 }, { wch: 16 }];
+            ws['!cols'] = [{ wch: 6 }, { wch: 40 }];
+            locNames.forEach(() => { ws['!cols'].push({ wch: 16 }); });
+            ws['!cols'].push({ wch: 12 });
 
             ws['!merges'] = [];
             for (var r = 0; r < headerRow; r++) {
-                ws['!merges'].push({ s: { r: r, c: 0 }, e: { r: r, c: 2 } });
+                ws['!merges'].push({ s: { r: r, c: 0 }, e: { r: r, c: numCols - 1 } });
             }
 
             // Apply styles
             styleCell(ws, 'A1', xlTitleStyle);
             styleCell(ws, 'A2', xlSubStyle);
-            styleCell(ws, 'A3', xlSubStyle);
-            var statsRow = headerRow - 2;
-            styleCell(ws, XLSX.utils.encode_cell({ r: statsRow, c: 0 }), { font: { bold: true, sz: 11, color: { rgb: '2E7D32' } } });
-            if (activeLocFilter) styleCell(ws, 'A4', { font: { bold: true, sz: 11, color: { rgb: '4A3728' } } });
-            for (var c = 0; c < 3; c++) {
+            styleCell(ws, 'A3', { font: { bold: true, sz: 11, color: { rgb: '2E7D32' } } });
+            for (var c = 0; c < numCols; c++) {
                 var ref = XLSX.utils.encode_cell({ r: headerRow, c: c });
                 styleCell(ws, ref, xlHeaderFill);
             }
-            var totalRow = data.length - 1;
-            for (var c = 0; c < 3; c++) {
-                var ref = XLSX.utils.encode_cell({ r: totalRow, c: c });
+            var totalRowIdx = data.length - 1;
+            for (var c = 0; c < numCols; c++) {
+                var ref = XLSX.utils.encode_cell({ r: totalRowIdx, c: c });
                 styleCell(ws, ref, xlTotalStyle);
             }
 
-            ws['!rows'] = [{ hpt: 24 }, { hpt: 18 }, { hpt: 18 }, { hpt: 18 }, { hpt: 8 }];
+            ws['!rows'] = [{ hpt: 24 }, { hpt: 18 }, { hpt: 18 }, { hpt: 8 }];
 
             var wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Кухня');
