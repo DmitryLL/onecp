@@ -367,35 +367,7 @@
                     <h1>Товары</h1>
                     <button class="btn btn-primary" onclick="openModal()">+ Добавить товар</button>
                 </div>
-
-                <div style="margin-bottom:16px;">
-                    <select id="prodCategoryFilter" onchange="renderTable()" style="padding:10px 14px;background:#1a1a1a;border:1.5px solid #333;border-radius:8px;color:#fff;font-size:.95rem;min-width:200px;">
-                        <option value="">Все типы</option>
-                        <option value="Суп">Суп</option>
-                        <option value="Салат">Салат</option>
-                        <option value="Горячее">Горячее</option>
-                        <option value="Десерт">Десерт</option>
-                        <option value="Напиток">Напиток</option>
-                    </select>
-                </div>
-
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Фото</th>
-                                <th>Тип</th>
-                                <th>Название</th>
-                                <th>Описание</th>
-                                <th>Вес/Объём</th>
-                                <th>Б / Ж / У</th>
-                                <th>Цена</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productsBody"></tbody>
-                    </table>
-                </div>
+                <div id="productsSections"></div>
             </div>
 
             <!-- SETS PANEL -->
@@ -778,26 +750,61 @@
         }
 
         // ===== RENDER TABLE =====
+        const categoryOrder = ['Суп', 'Салат', 'Горячее', 'Десерт', 'Напиток'];
+
         function renderTable() {
-            const filter = document.getElementById('prodCategoryFilter').value;
-            const filtered = filter ? products.filter(p => p.category === filter) : products;
-            const tbody = document.getElementById('productsBody');
-            tbody.innerHTML = filtered.map(p => `
-                <tr>
-                    <td>${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
-                    <td style="white-space:nowrap;font-size:.85rem;">${p.category ? '<span style="background:#2a2a2a;padding:3px 10px;border-radius:6px;">' + escH(p.category) + '</span>' : '<span style="color:#444;">—</span>'}</td>
-                    <td>${escH(p.name)}</td>
-                    <td style="color:#888;font-size:.85rem;max-width:200px;">${p.description ? escH(p.description) : '—'}</td>
-                    <td style="white-space:nowrap;">${p.weight ? p.weight + ' ' + (p.weightUnit || 'г') : '—'}</td>
-                    <td style="white-space:nowrap;font-size:.85rem;color:#aaa;">${(p.proteins != null || p.fats != null || p.carbs != null) ? (p.proteins ?? '—') + ' / ' + (p.fats ?? '—') + ' / ' + (p.carbs ?? '—') : '—'}</td>
-                    <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
-                    <td>
-                        <div class="actions-cell">
-                            <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">Изменить</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Удалить</button>
-                        </div>
-                    </td>
-                </tr>
+            const groups = {};
+            products.forEach(p => {
+                const cat = p.category || 'Без типа';
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(p);
+            });
+            const sortedKeys = Object.keys(groups).sort((a, b) => {
+                const ia = categoryOrder.indexOf(a);
+                const ib = categoryOrder.indexOf(b);
+                if (ia === -1 && ib === -1) return 0;
+                if (ia === -1) return 1;
+                if (ib === -1) return -1;
+                return ia - ib;
+            });
+            const container = document.getElementById('productsSections');
+            container.innerHTML = sortedKeys.map(cat => `
+                <div style="margin-bottom:28px;">
+                    <h2 style="font-size:1.1rem;font-weight:700;color:#c8956c;margin-bottom:10px;padding-left:4px;">${escH(cat)}</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Фото</th>
+                                    <th>Название</th>
+                                    <th>Описание</th>
+                                    <th>Вес/Объём</th>
+                                    <th>Б / Ж / У</th>
+                                    <th>Цена</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${groups[cat].map(p => `
+                                <tr>
+                                    <td>${p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">' : '<span style="color:#444;">—</span>'}</td>
+                                    <td>${escH(p.name)}</td>
+                                    <td style="color:#888;font-size:.85rem;max-width:200px;">${p.description ? escH(p.description) : '—'}</td>
+                                    <td style="white-space:nowrap;">${p.weight ? p.weight + ' ' + (p.weightUnit || 'г') : '—'}</td>
+                                    <td style="white-space:nowrap;font-size:.85rem;color:#aaa;">${(p.proteins != null || p.fats != null || p.carbs != null) ? (p.proteins ?? '—') + ' / ' + (p.fats ?? '—') + ' / ' + (p.carbs ?? '—') : '—'}</td>
+                                    <td class="price-cell">${p.price.toLocaleString('ru-RU')} &#8381;</td>
+                                    <td>
+                                        <div class="actions-cell">
+                                            <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">Изменить</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Удалить</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             `).join('');
         }
 
