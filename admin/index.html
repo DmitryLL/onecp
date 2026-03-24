@@ -971,7 +971,7 @@
     <script>
         // ===== AUTH =====
         let adminToken = localStorage.getItem('onecp_admin_token');
-        if (!adminToken) window.location.href = '/logon/';
+        if (!adminToken) window.location.href = '/admin/login';
 
         async function api(url, opts = {}) {
             const headers = { ...opts.headers };
@@ -983,7 +983,7 @@
             const res = await fetch(url, { ...opts, headers });
             if (res.status === 401 || res.status === 403) {
                 localStorage.removeItem('onecp_admin_token');
-                window.location.href = '/logon/';
+                window.location.href = '/admin/login';
                 return;
             }
             if (!res.ok) {
@@ -2195,7 +2195,7 @@
         // ===== LOGOUT =====
         function logout() {
             localStorage.removeItem('onecp_admin_token');
-            window.location.href = '/logon/';
+            window.location.href = '/admin/login';
         }
 
         // ===== TOAST =====
