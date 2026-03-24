@@ -487,44 +487,40 @@
         }
 
         /* ===== CALENDAR ===== */
-        .cal-list { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+        .cal-list { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
         .cal-day {
             background: #111;
-            border: 1px solid #222;
-            border-radius: 12px;
-            padding: 14px 20px;
+            border: 1px solid #1a1a1a;
+            border-radius: 8px;
+            padding: 8px 14px;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             transition: border-color .2s;
         }
-        .cal-day:hover { border-color: #444; }
-        .cal-day.today { border-color: #c8956c; background: #161209; }
-        .cal-date {
-            min-width: 100px;
-            flex-shrink: 0;
-        }
-        .cal-date .date { color: #aaa; font-weight: 700; font-size: .95rem; }
+        .cal-day:hover { border-color: #333; }
+        .cal-day.today { border-color: #c8956c; background: #131008; }
+        .cal-date { min-width: 90px; flex-shrink: 0; }
+        .cal-date .date { color: #999; font-weight: 600; font-size: .82rem; }
         .cal-day.today .cal-date .date { color: #c8956c; }
-        .cal-date .weekday { color: #555; font-size: .78rem; }
-        .cal-sets { flex: 1; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+        .cal-date .weekday { color: #444; font-size: .7rem; }
+        .cal-sets { flex: 1; display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
         .cal-set-tag {
-            display: inline-block;
-            background: rgba(200,149,108,.12);
-            color: #c8956c;
-            font-size: .8rem;
-            padding: 4px 10px;
-            border-radius: 6px;
+            background: rgba(200,149,108,.1);
+            color: #b8865c;
+            font-size: .72rem;
+            padding: 2px 7px;
+            border-radius: 4px;
             white-space: nowrap;
         }
-        .cal-count { font-size: .75rem; color: #555; margin-left: 4px; }
+        .cal-count { font-size: .68rem; color: #444; margin-left: 2px; }
         .cal-edit-btn {
             background: none;
-            border: 1px dashed #333;
-            color: #555;
-            font-size: .78rem;
-            padding: 5px 12px;
-            border-radius: 6px;
+            border: 1px dashed #2a2a2a;
+            color: #444;
+            font-size: .7rem;
+            padding: 3px 8px;
+            border-radius: 5px;
             cursor: pointer;
             transition: all .2s;
             flex-shrink: 0;
