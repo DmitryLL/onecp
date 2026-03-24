@@ -206,7 +206,7 @@
 
     <script>
         if (localStorage.getItem('onecp_admin_token')) {
-            window.location.href = '/admin/';
+            window.location.href = '/orders';
         }
 
         async function handleLogin(e) {
@@ -226,7 +226,7 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || 'Error');
                 localStorage.setItem('onecp_admin_token', data.token);
-                window.location.href = '/admin/';
+                window.location.href = '/orders';
             } catch (err) {
                 const el = document.getElementById('errorMsg');
                 el.textContent = err.message;

@@ -665,7 +665,7 @@
                 <a href="/products" onclick="navTo('products',event)">📦 Товары</a>
                 <a href="/sets" onclick="navTo('sets',event)">🎁 Наборы</a>
                 <a href="/calendar" onclick="navTo('calendar',event)">📅 Календарь</a>
-                <a href="/customers" onclick="navTo('customers',event)">👥 Клиенты</a>
+                <a href="/clients" onclick="navTo('clients',event)">👥 Клиенты</a>
                 <a href="/settings" onclick="navTo('settings',event)">📨 Рассылки</a>
             </nav>
             <div class="sidebar-bottom">
@@ -1380,8 +1380,8 @@
         }
 
         // ===== PANELS =====
-        const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, customers:5, settings:6};
-        const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', customers:'Клиенты', settings:'Рассылки'};
+        const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, clients:5, settings:6};
+        const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', clients:'Клиенты', settings:'Рассылки'};
         function navTo(panel, e) {
             if (e) e.preventDefault();
             history.pushState(null, '', '/' + panel);
@@ -1416,7 +1416,7 @@
             } else if (panel === 'calendar') {
                 document.getElementById('calendarPanel').style.display = 'block';
                 loadCalendar();
-            } else if (panel === 'customers') {
+            } else if (panel === 'clients') {
                 document.getElementById('customersPanel').style.display = 'block';
                 loadCustomers();
             } else {
