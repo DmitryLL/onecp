@@ -118,6 +118,16 @@ def init_db():
                 db.add(SiteSettings(key=key, value=value))
             logger.info("Seeded default site settings")
 
+        # Seed default locations if empty
+        if db.query(Location).count() == 0:
+            default_locations = [
+                Location(name="Sber", address="Фонтанная 18", slug="Sber", description="Точка выдачи в головном офисе СБЕР", sort_order=1),
+                Location(name="Sky City", address="Алеутская 45", slug="Skycity", description="Точка выдачи в БЦ Sky City", sort_order=2),
+                Location(name="International BayView Towers", address="Енисейская 23", slug="InternationalBayViewtowers", description="Точка выдачи в International BayView Towers", sort_order=3),
+            ]
+            db.add_all(default_locations)
+            logger.info("Seeded default locations")
+
         db.commit()
     finally:
         db.close()

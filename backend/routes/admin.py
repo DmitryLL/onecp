@@ -892,6 +892,26 @@ def update_location(loc_id: int, body: LocationIn, admin: AdminUser = Depends(ge
     return {"ok": True}
 
 
+@router.put("/locations/{loc_id}/archive")
+def archive_location(loc_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    loc = db.query(Location).filter(Location.id == loc_id).first()
+    if not loc:
+        raise HTTPException(status_code=404, detail="Точка не найдена")
+    loc.active = False
+    db.commit()
+    return {"ok": True}
+
+
+@router.put("/locations/{loc_id}/restore")
+def restore_location(loc_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    loc = db.query(Location).filter(Location.id == loc_id).first()
+    if not loc:
+        raise HTTPException(status_code=404, detail="Точка не найдена")
+    loc.active = True
+    db.commit()
+    return {"ok": True}
+
+
 @router.delete("/locations/{loc_id}")
 def delete_location(loc_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
     loc = db.query(Location).filter(Location.id == loc_id).first()

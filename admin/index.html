@@ -2094,21 +2094,44 @@
 
         function renderLocations() {
             const container = document.getElementById('locationsList');
+            const active = adminLocations.filter(l => l.active);
+            const archived = adminLocations.filter(l => !l.active);
+
             if (!adminLocations.length) {
                 container.innerHTML = '<p style="color:#666;padding:24px 0;">Точек продаж пока нет</p>';
                 return;
             }
-            container.innerHTML = '<table class="data-table"><thead><tr><th>Название</th><th>Адрес</th><th>Slug</th><th>Email отчёта</th><th>Действия</th></tr></thead><tbody>' +
-                adminLocations.map(loc => `<tr>
-                    <td><strong>${escH(loc.name)}</strong>${loc.description ? '<br><span style="color:#888;font-size:.8rem;">' + escH(loc.description) + '</span>' : ''}</td>
-                    <td>${escH(loc.address)}</td>
-                    <td><code>/${escH(loc.slug)}</code></td>
-                    <td style="font-size:.85rem;color:#666;">${escH(loc.reportEmail || '—')}</td>
-                    <td style="white-space:nowrap;">
-                        <button class="btn btn-secondary btn-sm" onclick="editLocation(${loc.id})">Изменить</button>
-                        <button class="btn btn-sm" style="background:#e74c3c;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="deleteLocation(${loc.id})">Удалить</button>
-                    </td>
-                </tr>`).join('') + '</tbody></table>';
+
+            let html = '';
+            if (active.length) {
+                html += '<table class="data-table"><thead><tr><th>Название</th><th>Адрес</th><th>Slug</th><th>Email отчёта</th><th>Действия</th></tr></thead><tbody>' +
+                    active.map(loc => `<tr>
+                        <td><strong>${escH(loc.name)}</strong>${loc.description ? '<br><span style="color:#888;font-size:.8rem;">' + escH(loc.description) + '</span>' : ''}</td>
+                        <td>${escH(loc.address)}</td>
+                        <td><code>/${escH(loc.slug)}</code></td>
+                        <td style="font-size:.85rem;color:#666;">${escH(loc.reportEmail || '—')}</td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn btn-secondary btn-sm" onclick="editLocation(${loc.id})">Изменить</button>
+                            <button class="btn btn-sm" style="background:#888;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="archiveLocation(${loc.id})">В архив</button>
+                        </td>
+                    </tr>`).join('') + '</tbody></table>';
+            }
+
+            if (archived.length) {
+                html += '<h3 style="margin-top:28px;margin-bottom:12px;color:#888;font-size:1rem;">Архив</h3>' +
+                    '<table class="data-table"><thead><tr><th>Название</th><th>Адрес</th><th>Slug</th><th>Действия</th></tr></thead><tbody>' +
+                    archived.map(loc => `<tr style="opacity:.6;">
+                        <td>${escH(loc.name)}</td>
+                        <td>${escH(loc.address)}</td>
+                        <td><code>/${escH(loc.slug)}</code></td>
+                        <td style="white-space:nowrap;">
+                            <button class="btn btn-secondary btn-sm" onclick="restoreLocation(${loc.id})">Восстановить</button>
+                            <button class="btn btn-sm" style="background:#e74c3c;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="deleteLocation(${loc.id})">Удалить</button>
+                        </td>
+                    </tr>`).join('') + '</tbody></table>';
+            }
+
+            container.innerHTML = html;
         }
 
         function openLocationForm(loc) {
@@ -2151,6 +2174,30 @@
                 }
                 closeLocationForm();
                 showToast('Точка сохранена');
+                await loadLocations();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        function archiveLocation(id) {
+            const loc = adminLocations.find(l => l.id === id);
+            showConfirm(
+                'Отправить в архив?',
+                loc ? '«' + loc.name + '» будет скрыта с сайта.' : 'Точка будет скрыта.',
+                'В архив',
+                async () => {
+                    try {
+                        await api('/api/admin/locations/' + id + '/archive', { method: 'PUT' });
+                        showToast('Точка перемещена в архив');
+                        await loadLocations();
+                    } catch (e) { showToast('Ошибка: ' + e.message); }
+                }
+            );
+        }
+
+        async function restoreLocation(id) {
+            try {
+                await api('/api/admin/locations/' + id + '/restore', { method: 'PUT' });
+                showToast('Точка восстановлена');
                 await loadLocations();
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
