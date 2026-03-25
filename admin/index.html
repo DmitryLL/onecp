@@ -816,14 +816,20 @@
                             <p style="font-size:.75rem;color:#999;margin:0 0 6px;">Рекомендуемый размер: 2500×700 px (широкий баннер), формат JPEG/PNG/WebP</p>
                             <div id="locImagePreview" style="margin-bottom:8px;"></div>
                             <input type="file" id="locImage" accept="image/*" style="width:100%;padding:8px;background:#f5f5f5;border:1.5px solid #d0d0d0;border-radius:8px;color:#555;font-size:.9rem;">
-                            <button type="button" id="locImageDeleteBtn" class="btn btn-danger btn-sm" style="margin-top:8px;display:none;" onclick="deleteLocImage()">Удалить картинку</button>
+                            <div style="display:flex;gap:8px;margin-top:8px;">
+                                <button type="button" id="locImageDeleteBtn" class="btn btn-danger btn-sm" style="display:none;" onclick="deleteLocImage()">Удалить</button>
+                                <button type="button" id="locImageDownloadBtn" class="btn btn-sm" style="display:none;background:#3498db;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="downloadLocImageFromForm('top')">Скачать</button>
+                            </div>
                         </div>
                         <div class="form-group" style="margin-bottom:14px;">
                             <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Фото для низа страницы</label>
                             <p style="font-size:.75rem;color:#999;margin:0 0 6px;">Рекомендуемый размер: 2500×800 px, формат JPEG/PNG/WebP</p>
                             <div id="locBottomImagePreview" style="margin-bottom:8px;"></div>
                             <input type="file" id="locBottomImage" accept="image/*" style="width:100%;padding:8px;background:#f5f5f5;border:1.5px solid #d0d0d0;border-radius:8px;color:#555;font-size:.9rem;">
-                            <button type="button" id="locBottomImageDeleteBtn" class="btn btn-danger btn-sm" style="margin-top:8px;display:none;" onclick="deleteLocBottomImage()">Удалить картинку</button>
+                            <div style="display:flex;gap:8px;margin-top:8px;">
+                                <button type="button" id="locBottomImageDeleteBtn" class="btn btn-danger btn-sm" style="display:none;" onclick="deleteLocBottomImage()">Удалить</button>
+                                <button type="button" id="locBottomImageDownloadBtn" class="btn btn-sm" style="display:none;background:#3498db;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="downloadLocImageFromForm('bottom')">Скачать</button>
+                            </div>
                         </div>
                         <div style="display:flex;gap:12px;margin-top:20px;">
                             <button class="btn btn-primary" onclick="saveLocation()">Сохранить</button>
@@ -2118,8 +2124,6 @@
                         <td><code>/${escH(loc.slug)}</code></td>
                         <td style="white-space:nowrap;">
                             <button class="btn btn-secondary btn-sm" onclick="editLocation(${loc.id})">Изменить</button>
-                            ${loc.imageUrl ? '<button class="btn btn-sm" style="background:#3498db;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="downloadLocImage(\'' + escH(loc.imageUrl) + '\',\'' + escH(loc.slug) + '_top\')">⬇ Шапка</button>' : ''}
-                            ${loc.bottomImageUrl ? '<button class="btn btn-sm" style="background:#3498db;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="downloadLocImage(\'' + escH(loc.bottomImageUrl) + '\',\'' + escH(loc.slug) + '_bottom\')">⬇ Низ</button>' : ''}
                             <button class="btn btn-sm" style="background:#888;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="archiveLocation(${loc.id})">В архив</button>
                         </td>
                     </tr>`).join('') + '</tbody></table>';
@@ -2183,10 +2187,16 @@
             } catch (e) { showToast('Ошибка сортировки: ' + e.message); }
         }
 
-        function downloadLocImage(url, name) {
+        let _locFormImageUrl = null;
+        let _locFormBottomImageUrl = null;
+        let _locFormSlug = '';
+
+        function downloadLocImageFromForm(type) {
+            const url = type === 'top' ? _locFormImageUrl : _locFormBottomImageUrl;
+            if (!url) return;
             const a = document.createElement('a');
             a.href = url;
-            a.download = name + '.' + url.split('.').pop();
+            a.download = _locFormSlug + '_' + type + '.' + url.split('.').pop();
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -2198,21 +2208,28 @@
             document.getElementById('locAddress').value = loc ? loc.address : '';
             document.getElementById('locSlug').value = loc ? loc.slug : '';
             document.getElementById('locDescription').value = loc ? (loc.description || '') : '';
+            _locFormSlug = loc ? loc.slug : '';
             document.getElementById('locImage').value = '';
-            if (loc && loc.imageUrl) {
-                document.getElementById('locImagePreview').innerHTML = '<img src="' + loc.imageUrl + '" style="width:200px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #ddd;">';
+            _locFormImageUrl = (loc && loc.imageUrl) || null;
+            if (_locFormImageUrl) {
+                document.getElementById('locImagePreview').innerHTML = '<img src="' + _locFormImageUrl + '" style="width:200px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #ddd;">';
                 document.getElementById('locImageDeleteBtn').style.display = 'inline-block';
+                document.getElementById('locImageDownloadBtn').style.display = 'inline-block';
             } else {
                 document.getElementById('locImagePreview').innerHTML = '';
                 document.getElementById('locImageDeleteBtn').style.display = 'none';
+                document.getElementById('locImageDownloadBtn').style.display = 'none';
             }
             document.getElementById('locBottomImage').value = '';
-            if (loc && loc.bottomImageUrl) {
-                document.getElementById('locBottomImagePreview').innerHTML = '<img src="' + loc.bottomImageUrl + '" style="width:200px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #ddd;">';
+            _locFormBottomImageUrl = (loc && loc.bottomImageUrl) || null;
+            if (_locFormBottomImageUrl) {
+                document.getElementById('locBottomImagePreview').innerHTML = '<img src="' + _locFormBottomImageUrl + '" style="width:200px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #ddd;">';
                 document.getElementById('locBottomImageDeleteBtn').style.display = 'inline-block';
+                document.getElementById('locBottomImageDownloadBtn').style.display = 'inline-block';
             } else {
                 document.getElementById('locBottomImagePreview').innerHTML = '';
                 document.getElementById('locBottomImageDeleteBtn').style.display = 'none';
+                document.getElementById('locBottomImageDownloadBtn').style.display = 'none';
             }
             document.getElementById('locationFormTitle').textContent = loc ? 'Редактировать точку' : 'Новая точка';
             document.getElementById('locationFormOverlay').style.display = 'flex';
@@ -2276,6 +2293,8 @@
                 await api('/api/admin/locations/' + id + '/image', { method: 'DELETE' });
                 document.getElementById('locImagePreview').innerHTML = '';
                 document.getElementById('locImageDeleteBtn').style.display = 'none';
+                document.getElementById('locImageDownloadBtn').style.display = 'none';
+                _locFormImageUrl = null;
                 showToast('Картинка удалена');
                 await loadLocations();
             } catch (e) { showToast('Ошибка: ' + e.message); }
@@ -2288,6 +2307,8 @@
                 await api('/api/admin/locations/' + id + '/bottom-image', { method: 'DELETE' });
                 document.getElementById('locBottomImagePreview').innerHTML = '';
                 document.getElementById('locBottomImageDeleteBtn').style.display = 'none';
+                document.getElementById('locBottomImageDownloadBtn').style.display = 'none';
+                _locFormBottomImageUrl = null;
                 showToast('Картинка удалена');
                 await loadLocations();
             } catch (e) { showToast('Ошибка: ' + e.message); }
