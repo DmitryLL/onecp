@@ -812,10 +812,6 @@
                             <input type="text" id="locDescription" placeholder="Точка выдачи в..." style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
                         </div>
                         <div class="form-group" style="margin-bottom:14px;">
-                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Email для отчёта (необязательно)</label>
-                            <input type="text" id="locReportEmail" placeholder="email@example.com" style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
-                        </div>
-                        <div class="form-group" style="margin-bottom:14px;">
                             <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Порядок сортировки</label>
                             <input type="number" id="locSortOrder" value="0" style="width:100px;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
                         </div>
@@ -2104,12 +2100,11 @@
 
             let html = '';
             if (active.length) {
-                html += '<table class="data-table"><thead><tr><th>Название</th><th>Адрес</th><th>Slug</th><th>Email отчёта</th><th>Действия</th></tr></thead><tbody>' +
+                html += '<table class="data-table"><thead><tr><th>Название</th><th>Адрес</th><th>Slug</th><th>Действия</th></tr></thead><tbody>' +
                     active.map(loc => `<tr>
                         <td><strong>${escH(loc.name)}</strong>${loc.description ? '<br><span style="color:#888;font-size:.8rem;">' + escH(loc.description) + '</span>' : ''}</td>
                         <td>${escH(loc.address)}</td>
                         <td><code>/${escH(loc.slug)}</code></td>
-                        <td style="font-size:.85rem;color:#666;">${escH(loc.reportEmail || '—')}</td>
                         <td style="white-space:nowrap;">
                             <button class="btn btn-secondary btn-sm" onclick="editLocation(${loc.id})">Изменить</button>
                             <button class="btn btn-sm" style="background:#888;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="archiveLocation(${loc.id})">В архив</button>
@@ -2126,7 +2121,6 @@
                         <td><code>/${escH(loc.slug)}</code></td>
                         <td style="white-space:nowrap;">
                             <button class="btn btn-secondary btn-sm" onclick="restoreLocation(${loc.id})">Восстановить</button>
-                            <button class="btn btn-sm" style="background:#e74c3c;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="deleteLocation(${loc.id})">Удалить</button>
                         </td>
                     </tr>`).join('') + '</tbody></table>';
             }
@@ -2140,7 +2134,6 @@
             document.getElementById('locAddress').value = loc ? loc.address : '';
             document.getElementById('locSlug').value = loc ? loc.slug : '';
             document.getElementById('locDescription').value = loc ? (loc.description || '') : '';
-            document.getElementById('locReportEmail').value = loc ? (loc.reportEmail || '') : '';
             document.getElementById('locSortOrder').value = loc ? loc.sortOrder : 0;
             document.getElementById('locationFormTitle').textContent = loc ? 'Редактировать точку' : 'Новая точка';
             document.getElementById('locationFormOverlay').style.display = 'flex';
@@ -2162,7 +2155,6 @@
                 address: document.getElementById('locAddress').value,
                 slug: document.getElementById('locSlug').value,
                 description: document.getElementById('locDescription').value,
-                report_email: document.getElementById('locReportEmail').value,
                 sort_order: parseInt(document.getElementById('locSortOrder').value) || 0,
                 active: true,
             };
@@ -2200,22 +2192,6 @@
                 showToast('Точка восстановлена');
                 await loadLocations();
             } catch (e) { showToast('Ошибка: ' + e.message); }
-        }
-
-        function deleteLocation(id) {
-            const loc = adminLocations.find(l => l.id === id);
-            showConfirm(
-                'Удалить точку?',
-                loc ? '«' + loc.name + '» будет удалена.' : 'Точка будет удалена.',
-                'Удалить',
-                async () => {
-                    try {
-                        await api('/api/admin/locations/' + id, { method: 'DELETE' });
-                        showToast('Точка удалена');
-                        await loadLocations();
-                    } catch (e) { showToast('Ошибка: ' + e.message); }
-                }
-            );
         }
 
         // ===== QUESTIONS =====

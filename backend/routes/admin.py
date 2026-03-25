@@ -912,11 +912,3 @@ def restore_location(loc_id: int, admin: AdminUser = Depends(get_admin), db: Ses
     return {"ok": True}
 
 
-@router.delete("/locations/{loc_id}")
-def delete_location(loc_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
-    loc = db.query(Location).filter(Location.id == loc_id).first()
-    if not loc:
-        raise HTTPException(status_code=404, detail="Точка не найдена")
-    db.delete(loc)
-    db.commit()
-    return {"ok": True}
