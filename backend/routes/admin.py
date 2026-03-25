@@ -33,8 +33,8 @@ def validate_image_upload(file_data: bytes):
         raise HTTPException(status_code=400, detail="Файл повреждён или имеет неподдерживаемый формат")
 
 
-def compress_image(file_data: bytes) -> tuple[bytes, str]:
-    """Compress image to WebP, resize if larger than MAX_IMAGE_SIZE."""
+def compress_image(file_data: bytes, max_size: int = MAX_IMAGE_SIZE, quality: int = WEBP_QUALITY) -> tuple[bytes, str]:
+    """Compress image to WebP, resize if larger than max_size."""
     img = Image.open(BytesIO(file_data))
     if img.mode in ("RGBA", "P"):
         img = img.convert("RGBA")
@@ -42,10 +42,10 @@ def compress_image(file_data: bytes) -> tuple[bytes, str]:
         img = img.convert("RGB")
     # Resize if too large
     w, h = img.size
-    if w > MAX_IMAGE_SIZE or h > MAX_IMAGE_SIZE:
-        img.thumbnail((MAX_IMAGE_SIZE, MAX_IMAGE_SIZE), Image.LANCZOS)
+    if w > max_size or h > max_size:
+        img.thumbnail((max_size, max_size), Image.LANCZOS)
     buf = BytesIO()
-    img.save(buf, format="WEBP", quality=WEBP_QUALITY)
+    img.save(buf, format="WEBP", quality=quality)
     return buf.getvalue(), "webp"
 
 from database import get_db
@@ -924,7 +924,7 @@ def upload_location_image(loc_id: int, file: UploadFile = File(...), admin: Admi
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     raw = file.file.read()
     validate_image_upload(raw)
-    compressed, ext = compress_image(raw)
+    compressed, ext = compress_image(raw, max_size=2560, quality=90)
     filename = f"loc_{loc_id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = os.path.join(UPLOAD_DIR, filename)
     if loc.image_url:
