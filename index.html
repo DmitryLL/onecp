@@ -3221,6 +3221,20 @@
                         '</div></a>';
                 }).join('');
 
+                // Apply location grid columns from settings
+                try {
+                    var sResp = await fetch('/api/menu/settings');
+                    var sData = await sResp.json();
+                    var colsD = parseInt(sData.locColumnsDesktop) || 3;
+                    var colsM = parseInt(sData.locColumnsMobile) || 1;
+                    var stEl = document.createElement('style');
+                    stEl.id = 'locColsStyle';
+                    stEl.textContent =
+                        '.location-cards { grid-template-columns: repeat(' + colsD + ', 1fr) !important; max-width: ' + (colsD * 300) + 'px !important; }' +
+                        '@media (max-width: 600px) { .location-cards { grid-template-columns: repeat(' + colsM + ', 1fr) !important; max-width: ' + (colsM * 300) + 'px !important; } }';
+                    document.head.appendChild(stEl);
+                } catch (e) {}
+
                 document.getElementById('locationPicker').style.display = '';
                 document.getElementById('siteHeader').style.display = 'none';
                 document.querySelector('.hero').style.display = 'none';
