@@ -3150,6 +3150,18 @@
                 const lf = document.getElementById('locFooter');
                 if (lf) lf.innerHTML = nl2br(s.footer);
             }
+            // Location grid columns
+            var colsDesktop = parseInt(s.locColumnsDesktop) || 3;
+            var colsMobile = parseInt(s.locColumnsMobile) || 1;
+            var styleEl = document.getElementById('locColsStyle');
+            if (!styleEl) {
+                styleEl = document.createElement('style');
+                styleEl.id = 'locColsStyle';
+                document.head.appendChild(styleEl);
+            }
+            styleEl.textContent =
+                '.location-cards { grid-template-columns: repeat(' + colsDesktop + ', 1fr) !important; max-width: ' + (colsDesktop * 300) + 'px !important; }' +
+                '@media (max-width: 600px) { .location-cards { grid-template-columns: repeat(' + colsMobile + ', 1fr) !important; max-width: ' + (colsMobile * 300) + 'px !important; } }';
         } catch (e) {
             console.error('Failed to load settings:', e);
         }

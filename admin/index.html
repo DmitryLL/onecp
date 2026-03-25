@@ -784,6 +784,19 @@
                 <div class="page-header">
                     <h1>Точки продаж</h1>
                 </div>
+                <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap;background:#f9f7f4;border-radius:12px;padding:12px 18px;">
+                    <span style="font-size:.85rem;color:#888;">Точки в ряд:</span>
+                    <label style="font-size:.85rem;color:#555;">Компьютер
+                        <select id="locColsDesktop" onchange="saveLocCols()" style="padding:4px 8px;border:1.5px solid #d0d0d0;border-radius:6px;font-size:.9rem;margin-left:4px;">
+                            <option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
+                        </select>
+                    </label>
+                    <label style="font-size:.85rem;color:#555;">Телефон
+                        <select id="locColsMobile" onchange="saveLocCols()" style="padding:4px 8px;border:1.5px solid #d0d0d0;border-radius:6px;font-size:.9rem;margin-left:4px;">
+                            <option value="1" selected>1</option><option value="2">2</option><option value="3">3</option>
+                        </select>
+                    </label>
+                </div>
                 <button class="btn btn-primary" onclick="openLocationForm()" style="margin-bottom:16px;">+ Добавить точку</button>
                 <div id="locationsList"></div>
 
@@ -1923,6 +1936,27 @@
             try {
                 adminLocations = await api('/api/admin/locations');
                 renderLocations();
+                loadLocCols();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        async function loadLocCols() {
+            try {
+                const s = await api('/api/menu/settings');
+                if (s.locColumnsDesktop) document.getElementById('locColsDesktop').value = s.locColumnsDesktop;
+                if (s.locColumnsMobile) document.getElementById('locColsMobile').value = s.locColumnsMobile;
+            } catch (e) {}
+        }
+
+        async function saveLocCols() {
+            var desktop = document.getElementById('locColsDesktop').value;
+            var mobile = document.getElementById('locColsMobile').value;
+            try {
+                await api('/api/admin/settings', 'PUT', [
+                    { key: 'locColumnsDesktop', value: desktop },
+                    { key: 'locColumnsMobile', value: mobile }
+                ]);
+                showToast('Сохранено');
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
