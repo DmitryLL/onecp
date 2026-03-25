@@ -1952,10 +1952,13 @@
             var desktop = document.getElementById('locColsDesktop').value;
             var mobile = document.getElementById('locColsMobile').value;
             try {
-                await api('/api/admin/settings', 'PUT', [
-                    { key: 'locColumnsDesktop', value: desktop },
-                    { key: 'locColumnsMobile', value: mobile }
-                ]);
+                await api('/api/admin/settings', {
+                    method: 'PUT',
+                    body: [
+                        { key: 'locColumnsDesktop', value: desktop },
+                        { key: 'locColumnsMobile', value: mobile }
+                    ]
+                });
                 showToast('Сохранено');
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
