@@ -62,6 +62,9 @@ def init_db():
             if "image_url" not in loc_cols:
                 conn.execute(text("ALTER TABLE locations ADD COLUMN image_url VARCHAR(500)"))
                 logger.info("Added column locations.image_url")
+            if "bottom_image_url" not in loc_cols:
+                conn.execute(text("ALTER TABLE locations ADD COLUMN bottom_image_url VARCHAR(500)"))
+                logger.info("Added column locations.bottom_image_url")
         # Add password_hash to customers
         cust_cols = [c["name"] for c in insp.get_columns("customers")]
         if "password_hash" not in cust_cols:

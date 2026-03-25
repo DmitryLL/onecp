@@ -1669,17 +1669,18 @@
             padding: 40px 24px;
             background: var(--beige);
         }
-        .bottom-divider::before,
-        .bottom-divider::after {
-            content: '';
+        .divider-line {
             flex: 1;
             max-width: 260px;
             height: 1px;
-            background: linear-gradient(to var(--dir), transparent, var(--brown-dark));
             opacity: .18;
         }
-        .bottom-divider::before { --dir: right; }
-        .bottom-divider::after  { --dir: left; }
+        .divider-line:first-child {
+            background: linear-gradient(to right, transparent, var(--brown-dark));
+        }
+        .divider-line:last-child {
+            background: linear-gradient(to left, transparent, var(--brown-dark));
+        }
         .bottom-divider svg {
             width: 28px;
             height: 28px;
@@ -2034,7 +2035,9 @@
 
 <!-- HERO-TO-CONTENT DIVIDER -->
 <div class="bottom-divider" style="background:var(--beige);padding:24px 24px 0;">
+    <span class="divider-line"></span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 010 8h-1"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+    <span class="divider-line"></span>
 </div>
 
 <!-- BEIGE WRAPPER -->
@@ -2277,9 +2280,11 @@
 
 <!-- BOTTOM DIVIDER + BANNER -->
 <div class="bottom-divider" style="padding:20px 24px;">
+    <span class="divider-line"></span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 010 8h-1"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+    <span class="divider-line"></span>
 </div>
-<div class="bottom-banner"><img src="images/bottom-banner.png" alt="One Coffee Place"></div>
+<div class="bottom-banner"><img id="bottomBannerImg" src="images/bottom-banner.png" alt="One Coffee Place"></div>
 
 <!-- FOOTER -->
 <footer>
@@ -3098,7 +3103,7 @@
             var resp = await fetch('/api/menu/locations');
             var locs = await resp.json();
             locs.forEach(function(loc) {
-                LOCATIONS['/' + loc.slug] = { name: loc.name, address: loc.address, description: loc.description || ('Точка выдачи — ' + loc.name), imageUrl: loc.imageUrl || null };
+                LOCATIONS['/' + loc.slug] = { name: loc.name, address: loc.address, description: loc.description || ('Точка выдачи — ' + loc.name), imageUrl: loc.imageUrl || null, bottomImageUrl: loc.bottomImageUrl || null };
             });
 
             locInfo = LOCATIONS[window.location.pathname] || null;
@@ -3108,6 +3113,9 @@
             if (locInfo) {
                 if (locInfo.imageUrl) {
                     document.querySelector('.hero').style.backgroundImage = "url('" + locInfo.imageUrl + "')";
+                }
+                if (locInfo.bottomImageUrl) {
+                    document.getElementById('bottomBannerImg').src = locInfo.bottomImageUrl;
                 }
                 document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
                 document.getElementById('orderAddress').value = locInfo.address;

@@ -819,6 +819,13 @@
                             <button type="button" id="locImageDeleteBtn" class="btn btn-danger btn-sm" style="margin-top:8px;display:none;" onclick="deleteLocImage()">Удалить картинку</button>
                         </div>
                         <div class="form-group" style="margin-bottom:14px;">
+                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Фото для низа страницы</label>
+                            <p style="font-size:.75rem;color:#999;margin:0 0 6px;">Рекомендуемый размер: 2500×800 px, формат JPEG/PNG/WebP</p>
+                            <div id="locBottomImagePreview" style="margin-bottom:8px;"></div>
+                            <input type="file" id="locBottomImage" accept="image/*" style="width:100%;padding:8px;background:#f5f5f5;border:1.5px solid #d0d0d0;border-radius:8px;color:#555;font-size:.9rem;">
+                            <button type="button" id="locBottomImageDeleteBtn" class="btn btn-danger btn-sm" style="margin-top:8px;display:none;" onclick="deleteLocBottomImage()">Удалить картинку</button>
+                        </div>
+                        <div class="form-group" style="margin-bottom:14px;">
                             <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Порядок сортировки</label>
                             <input type="number" id="locSortOrder" value="0" class="no-spin" style="width:100px;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
                         </div>
@@ -2150,6 +2157,14 @@
                 document.getElementById('locImagePreview').innerHTML = '';
                 document.getElementById('locImageDeleteBtn').style.display = 'none';
             }
+            document.getElementById('locBottomImage').value = '';
+            if (loc && loc.bottomImageUrl) {
+                document.getElementById('locBottomImagePreview').innerHTML = '<img src="' + loc.bottomImageUrl + '" style="width:200px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #ddd;">';
+                document.getElementById('locBottomImageDeleteBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('locBottomImagePreview').innerHTML = '';
+                document.getElementById('locBottomImageDeleteBtn').style.display = 'none';
+            }
             document.getElementById('locationFormTitle').textContent = loc ? 'Редактировать точку' : 'Новая точка';
             document.getElementById('locationFormOverlay').style.display = 'flex';
         }
@@ -2181,7 +2196,7 @@
                     const res = await api('/api/admin/locations', { method: 'POST', body: data });
                     locId = res.id;
                 }
-                // Upload image if selected
+                // Upload images if selected
                 const fileInput = document.getElementById('locImage');
                 if (fileInput.files.length && locId) {
                     const fd = new FormData();
@@ -2189,7 +2204,16 @@
                     const r = await fetch('/api/admin/locations/' + locId + '/image', {
                         method: 'POST', headers: { 'Authorization': 'Bearer ' + adminToken }, body: fd
                     });
-                    if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Ошибка загрузки'); }
+                    if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Ошибка загрузки шапки'); }
+                }
+                const bottomInput = document.getElementById('locBottomImage');
+                if (bottomInput.files.length && locId) {
+                    const fd = new FormData();
+                    fd.append('file', bottomInput.files[0]);
+                    const r = await fetch('/api/admin/locations/' + locId + '/bottom-image', {
+                        method: 'POST', headers: { 'Authorization': 'Bearer ' + adminToken }, body: fd
+                    });
+                    if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Ошибка загрузки нижнего фото'); }
                 }
                 closeLocationForm();
                 showToast('Точка сохранена');
@@ -2204,6 +2228,18 @@
                 await api('/api/admin/locations/' + id + '/image', { method: 'DELETE' });
                 document.getElementById('locImagePreview').innerHTML = '';
                 document.getElementById('locImageDeleteBtn').style.display = 'none';
+                showToast('Картинка удалена');
+                await loadLocations();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        async function deleteLocBottomImage() {
+            const id = document.getElementById('locEditId').value;
+            if (!id) return;
+            try {
+                await api('/api/admin/locations/' + id + '/bottom-image', { method: 'DELETE' });
+                document.getElementById('locBottomImagePreview').innerHTML = '';
+                document.getElementById('locBottomImageDeleteBtn').style.display = 'none';
                 showToast('Картинка удалена');
                 await loadLocations();
             } catch (e) { showToast('Ошибка: ' + e.message); }
