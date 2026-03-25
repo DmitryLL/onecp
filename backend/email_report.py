@@ -41,14 +41,29 @@ def format_date_ru(d):
 
 
 # ===== Styles =====
-TITLE_FONT = Font(bold=True, size=14, color="3A2A1A")
-SUB_FONT = Font(size=11, color="777777")
-STATS_FONT = Font(bold=True, size=11, color="2E7D32")
+TITLE_FONT = Font(bold=True, size=16, color="3A2A1A")
+SUB_FONT = Font(size=11, color="888888")
+STATS_FONT = Font(bold=True, size=12, color="2E7D32")
+LOC_FONT = Font(bold=True, size=11, color="4A3728")
 HEADER_FONT = Font(bold=True, size=11, color="FFFFFF")
 HEADER_FILL = PatternFill(start_color="4A3728", end_color="4A3728", fill_type="solid")
-TOTAL_FONT = Font(bold=True, size=11, color="3A2A1A")
-TOTAL_FILL = PatternFill(start_color="F5EFE6", end_color="F5EFE6", fill_type="solid")
-THIN_BORDER_TOP = Border(top=Side(style="thin", color="BBBBBB"))
+HEADER_ALIGN = Alignment(horizontal="center", vertical="center", wrap_text=True)
+TOTAL_FONT = Font(bold=True, size=11, color="FFFFFF")
+TOTAL_FILL = PatternFill(start_color="4A3728", end_color="4A3728", fill_type="solid")
+TOTAL_LABEL_ALIGN = Alignment(horizontal="right", vertical="center")
+TOTAL_NUM_ALIGN = Alignment(horizontal="center", vertical="center")
+EVEN_FILL = PatternFill(start_color="F8F5F0", end_color="F8F5F0", fill_type="solid")
+ODD_FILL = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+SEP_FILL = PatternFill(start_color="EDE8E0", end_color="EDE8E0", fill_type="solid")
+THIN_BORDER = Border(
+    top=Side(style="thin", color="D5CFC7"),
+    bottom=Side(style="thin", color="D5CFC7"),
+    left=Side(style="thin", color="D5CFC7"),
+    right=Side(style="thin", color="D5CFC7"),
+)
+CENTER_ALIGN = Alignment(horizontal="center", vertical="center")
+RIGHT_ALIGN = Alignment(horizontal="right", vertical="center")
+LEFT_ALIGN = Alignment(horizontal="left", vertical="center")
 
 
 def get_delivery_date(created_at):
@@ -150,16 +165,24 @@ def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes
         cell = ws.cell(row=header_row, column=col)
         cell.font = HEADER_FONT
         cell.fill = HEADER_FILL
-        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.alignment = HEADER_ALIGN
+        cell.border = THIN_BORDER
 
     # Data
+    num_cols = len(headers)
     for idx, o in enumerate(loc_orders):
         if idx > 0:
-            ws.append([])
+            ws.append([""] * num_cols)
+            sep_row = ws.max_row
+            for col in range(1, num_cols + 1):
+                c = ws.cell(row=sep_row, column=col)
+                c.fill = SEP_FILL
+            ws.row_dimensions[sep_row].height = 4
         phone = o.customer.phone if o.customer else "—"
         name = o.customer.name if o.customer and o.customer.name else "—"
         created_vlad = o.created_at.astimezone(VLAD_TZ) if o.created_at else None
         time_str = created_vlad.strftime("%H:%M") if created_vlad else "—"
+        row_fill = EVEN_FILL if idx % 2 == 1 else ODD_FILL
         for i, it in enumerate(o.items):
             dish_name = it.dish.name if it.dish else "—"
             ws.append([
@@ -173,6 +196,17 @@ def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes
                 f"{o.total:.0f} ₽" if i == 0 else "",
                 (o.comment or "") if i == 0 else "",
             ])
+            row_num = ws.max_row
+            for col in range(1, num_cols + 1):
+                c = ws.cell(row=row_num, column=col)
+                c.fill = row_fill
+                c.border = THIN_BORDER
+                if col in (1, 2, 6):
+                    c.alignment = CENTER_ALIGN
+                elif col in (7, 8):
+                    c.alignment = RIGHT_ALIGN
+                else:
+                    c.alignment = LEFT_ALIGN
 
     # Total row
     ws.append([])
@@ -183,7 +217,8 @@ def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes
         cell = ws.cell(row=total_row, column=col)
         cell.font = TOTAL_FONT
         cell.fill = TOTAL_FILL
-        cell.border = THIN_BORDER_TOP
+        cell.border = THIN_BORDER
+        cell.alignment = TOTAL_LABEL_ALIGN if col <= 7 else TOTAL_NUM_ALIGN
 
     # Column widths
     widths = [8, 10, 22, 16, 30, 10, 12, 14, 24]
@@ -243,16 +278,29 @@ def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = 
         cell = ws.cell(row=header_row, column=col)
         cell.font = HEADER_FONT
         cell.fill = HEADER_FILL
-        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.alignment = HEADER_ALIGN
+        cell.border = THIN_BORDER
 
     # Data
     num = 1
-    for name in sorted(totals.keys()):
-        row = [num, name]
+    for dish_name in sorted(totals.keys()):
+        row = [num, dish_name]
         for loc in loc_names:
-            row.append(per_loc[loc].get(name, 0))
-        row.append(totals[name])
+            row.append(per_loc[loc].get(dish_name, 0))
+        row.append(totals[dish_name])
         ws.append(row)
+        row_num = ws.max_row
+        row_fill = EVEN_FILL if num % 2 == 0 else ODD_FILL
+        for col in range(1, len(headers) + 1):
+            c = ws.cell(row=row_num, column=col)
+            c.fill = row_fill
+            c.border = THIN_BORDER
+            if col == 1:
+                c.alignment = CENTER_ALIGN
+            elif col == 2:
+                c.alignment = LEFT_ALIGN
+            else:
+                c.alignment = CENTER_ALIGN
         num += 1
 
     # Total row
@@ -267,7 +315,8 @@ def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = 
         cell = ws.cell(row=total_row, column=col)
         cell.font = TOTAL_FONT
         cell.fill = TOTAL_FILL
-        cell.border = THIN_BORDER_TOP
+        cell.border = THIN_BORDER
+        cell.alignment = TOTAL_LABEL_ALIGN if col <= 2 else TOTAL_NUM_ALIGN
 
     # Column widths
     ws.column_dimensions["A"].width = 6

@@ -1897,13 +1897,22 @@
             ws[ref].s = style;
         }
 
-        // Shared header style
-        var xlHeaderFill = { fill: { fgColor: { rgb: '4A3728' } }, font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, alignment: { horizontal: 'center', vertical: 'center' }, border: { bottom: { style: 'thin', color: { rgb: '999999' } } } };
-        var xlTitleStyle = { font: { bold: true, sz: 14, color: { rgb: '3A2A1A' } }, alignment: { horizontal: 'left' } };
-        var xlSubStyle = { font: { sz: 11, color: { rgb: '777777' } }, alignment: { horizontal: 'left' } };
-        var xlTotalStyle = { font: { bold: true, sz: 11, color: { rgb: '3A2A1A' } }, fill: { fgColor: { rgb: 'F5EFE6' } }, border: { top: { style: 'thin', color: { rgb: 'BBBBBB' } } } };
-        var xlCellEven = { fill: { fgColor: { rgb: 'FAFAFA' } } };
-        var xlSepStyle = { fill: { fgColor: { rgb: 'E8E0D6' } } };
+        // Shared Excel styles
+        var xlBorder = { top: { style: 'thin', color: { rgb: 'D5CFC7' } }, bottom: { style: 'thin', color: { rgb: 'D5CFC7' } }, left: { style: 'thin', color: { rgb: 'D5CFC7' } }, right: { style: 'thin', color: { rgb: 'D5CFC7' } } };
+        var xlHeaderFill = { fill: { fgColor: { rgb: '4A3728' } }, font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: xlBorder };
+        var xlTitleStyle = { font: { bold: true, sz: 16, color: { rgb: '3A2A1A' } }, alignment: { horizontal: 'left', vertical: 'center' } };
+        var xlSubStyle = { font: { sz: 11, color: { rgb: '888888' } }, alignment: { horizontal: 'left' } };
+        var xlStatsStyle = { font: { bold: true, sz: 12, color: { rgb: '2E7D32' } }, alignment: { horizontal: 'left' } };
+        var xlLocStyle = { font: { bold: true, sz: 11, color: { rgb: '4A3728' } }, alignment: { horizontal: 'left' } };
+        var xlTotalStyle = { font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '4A3728' } }, border: xlBorder, alignment: { horizontal: 'center' } };
+        var xlTotalLabelStyle = { font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '4A3728' } }, border: xlBorder, alignment: { horizontal: 'right' } };
+        var xlDataOdd = { fill: { fgColor: { rgb: 'FFFFFF' } }, border: xlBorder, alignment: { vertical: 'center' } };
+        var xlDataEven = { fill: { fgColor: { rgb: 'F8F5F0' } }, border: xlBorder, alignment: { vertical: 'center' } };
+        var xlNumOdd = { fill: { fgColor: { rgb: 'FFFFFF' } }, border: xlBorder, alignment: { horizontal: 'center', vertical: 'center' } };
+        var xlNumEven = { fill: { fgColor: { rgb: 'F8F5F0' } }, border: xlBorder, alignment: { horizontal: 'center', vertical: 'center' } };
+        var xlMoneyOdd = { fill: { fgColor: { rgb: 'FFFFFF' } }, border: xlBorder, alignment: { horizontal: 'right', vertical: 'center' } };
+        var xlMoneyEven = { fill: { fgColor: { rgb: 'F8F5F0' } }, border: xlBorder, alignment: { horizontal: 'right', vertical: 'center' } };
+        var xlOrderSep = { fill: { fgColor: { rgb: 'EDE8E0' } }, font: { sz: 2, color: { rgb: 'EDE8E0' } } };
 
         function getLocSuffix() {
             return activeLocFilter ? ' — ' + activeLocFilter : ' — все точки';
@@ -1982,21 +1991,46 @@
             styleCell(ws, 'A1', xlTitleStyle);
             styleCell(ws, 'A2', xlSubStyle);
             styleCell(ws, 'A3', xlSubStyle);
-            var statsRow = headerRow - 2; // row before empty row
-            styleCell(ws, XLSX.utils.encode_cell({ r: statsRow, c: 0 }), { font: { bold: true, sz: 11, color: { rgb: '2E7D32' } } });
-            if (activeLocFilter) styleCell(ws, 'A4', { font: { bold: true, sz: 11, color: { rgb: '4A3728' } } });
+            var statsRow = headerRow - 2;
+            styleCell(ws, XLSX.utils.encode_cell({ r: statsRow, c: 0 }), xlStatsStyle);
+            if (activeLocFilter) styleCell(ws, 'A4', xlLocStyle);
+            // Header row
             for (var c = 0; c < 9; c++) {
-                var ref = XLSX.utils.encode_cell({ r: headerRow, c: c });
-                styleCell(ws, ref, xlHeaderFill);
+                styleCell(ws, XLSX.utils.encode_cell({ r: headerRow, c: c }), xlHeaderFill);
             }
-            // Style total row
-            var totalRow = data.length - 1;
+            // Data rows — zebra stripes + alignment
+            var dataStartRow = headerRow + 1;
+            var orderIdx = 0;
+            for (var r = dataStartRow; r < data.length - 2; r++) {
+                var rowData = data[r];
+                if (!rowData || rowData.length === 0) {
+                    // Separator row
+                    for (var c = 0; c < 9; c++) styleCell(ws, XLSX.utils.encode_cell({ r: r, c: c }), xlOrderSep);
+                    orderIdx++;
+                    continue;
+                }
+                var isEven = orderIdx % 2 === 1;
+                var base = isEven ? xlDataEven : xlDataOdd;
+                var num = isEven ? xlNumEven : xlNumOdd;
+                var money = isEven ? xlMoneyEven : xlMoneyOdd;
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 0 }), num);   // №
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 1 }), num);   // Время
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 2 }), base);  // Клиент
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 3 }), base);  // Телефон
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 4 }), base);  // Блюдо
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 5 }), num);   // Кол-во
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 6 }), money); // Цена
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 7 }), money); // Сумма
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 8 }), base);  // Комментарий
+            }
+            // Total row
+            var totalRowIdx = data.length - 1;
             for (var c = 0; c < 9; c++) {
-                var ref = XLSX.utils.encode_cell({ r: totalRow, c: c });
-                styleCell(ws, ref, xlTotalStyle);
+                var st = c === 6 ? xlTotalLabelStyle : xlTotalStyle;
+                styleCell(ws, XLSX.utils.encode_cell({ r: totalRowIdx, c: c }), st);
             }
 
-            ws['!rows'] = [{ hpt: 24 }, { hpt: 18 }, { hpt: 18 }, { hpt: 18 }, { hpt: 8 }];
+            ws['!rows'] = [{ hpt: 28 }, { hpt: 18 }, { hpt: 18 }, { hpt: 20 }, { hpt: 6 }];
 
             var wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Отчёт по гостям');
@@ -2079,18 +2113,32 @@
             // Apply styles
             styleCell(ws, 'A1', xlTitleStyle);
             styleCell(ws, 'A2', xlSubStyle);
-            styleCell(ws, 'A3', { font: { bold: true, sz: 11, color: { rgb: '2E7D32' } } });
+            styleCell(ws, 'A3', xlStatsStyle);
+            // Header row
             for (var c = 0; c < numCols; c++) {
-                var ref = XLSX.utils.encode_cell({ r: headerRow, c: c });
-                styleCell(ws, ref, xlHeaderFill);
+                styleCell(ws, XLSX.utils.encode_cell({ r: headerRow, c: c }), xlHeaderFill);
             }
+            // Data rows — zebra stripes + alignment
+            var dataStartRow = headerRow + 1;
+            for (var r = dataStartRow; r < data.length - 2; r++) {
+                if (!data[r] || data[r].length === 0) continue;
+                var isEven = (r - dataStartRow) % 2 === 1;
+                var base = isEven ? xlDataEven : xlDataOdd;
+                var num = isEven ? xlNumEven : xlNumOdd;
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 0 }), num);  // №
+                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 1 }), base); // Блюдо
+                for (var c = 2; c < numCols; c++) {
+                    styleCell(ws, XLSX.utils.encode_cell({ r: r, c: c }), num); // Quantities
+                }
+            }
+            // Total row
             var totalRowIdx = data.length - 1;
             for (var c = 0; c < numCols; c++) {
-                var ref = XLSX.utils.encode_cell({ r: totalRowIdx, c: c });
-                styleCell(ws, ref, xlTotalStyle);
+                var st = c <= 1 ? xlTotalLabelStyle : xlTotalStyle;
+                styleCell(ws, XLSX.utils.encode_cell({ r: totalRowIdx, c: c }), st);
             }
 
-            ws['!rows'] = [{ hpt: 24 }, { hpt: 18 }, { hpt: 18 }, { hpt: 8 }];
+            ws['!rows'] = [{ hpt: 28 }, { hpt: 18 }, { hpt: 20 }, { hpt: 6 }];
 
             var wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Кухня');
