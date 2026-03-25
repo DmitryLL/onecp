@@ -1921,7 +1921,13 @@
             return activeLocFilter ? ' (' + activeLocFilter + ')' : ' (все точки)';
         }
 
+        var _ordersExporting = false;
         async function exportOrdersExcel() {
+            if (_ordersExporting) return;
+            _ordersExporting = true;
+            try { await _exportOrdersExcelInner(); } finally { _ordersExporting = false; }
+        }
+        async function _exportOrdersExcelInner() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { showToast('Выберите дату'); return; }
             try {
@@ -2037,9 +2043,15 @@
             var dd = dateStr.split('-');
             XLSX.writeFile(wb, 'Отчет по гостям на ' + dd[2] + '.' + dd[1] + '.' + dd[0] + getLocFilenameSuffix() + '.xlsx');
             showToast('Отчёт по гостям скачан');
-        }
+        }  // end _exportOrdersExcelInner
 
+        var _kitchenExporting = false;
         async function exportKitchenExcel() {
+            if (_kitchenExporting) return;
+            _kitchenExporting = true;
+            try { await _exportKitchenExcelInner(); } finally { _kitchenExporting = false; }
+        }
+        async function _exportKitchenExcelInner() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { showToast('Выберите дату'); return; }
             try {
@@ -2145,7 +2157,7 @@
             var dd = dateStr.split('-');
             XLSX.writeFile(wb, 'Отчет для кухни на ' + dd[2] + '.' + dd[1] + '.' + dd[0] + getLocFilenameSuffix() + '.xlsx');
             showToast('Отчёт для кухни скачан');
-        }
+        }  // end _exportKitchenExcelInner
 
         // ===== LOCATIONS =====
         let adminLocations = [];
