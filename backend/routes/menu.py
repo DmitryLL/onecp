@@ -130,6 +130,7 @@ def get_locations(db: Session = Depends(get_db)):
             "address": loc.address,
             "slug": loc.slug,
             "description": loc.description,
+            "imageUrl": loc.image_url,
         }
         for loc in locs
     ]

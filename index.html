@@ -3100,7 +3100,7 @@
             var resp = await fetch('/api/menu/locations');
             var locs = await resp.json();
             locs.forEach(function(loc) {
-                LOCATIONS['/' + loc.slug] = { name: loc.name, address: loc.address, description: loc.description || ('Точка выдачи — ' + loc.name) };
+                LOCATIONS['/' + loc.slug] = { name: loc.name, address: loc.address, description: loc.description || ('Точка выдачи — ' + loc.name), imageUrl: loc.imageUrl || null };
             });
 
             locInfo = LOCATIONS[window.location.pathname] || null;
@@ -3108,6 +3108,9 @@
             isLocationPage = !!locInfo;
 
             if (locInfo) {
+                if (locInfo.imageUrl) {
+                    document.querySelector('.hero').style.backgroundImage = "url('" + locInfo.imageUrl + "')";
+                }
                 document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
                 document.getElementById('orderAddress').value = locInfo.address;
                 document.getElementById('siteHeroTitle').textContent = locInfo.description;

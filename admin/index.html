@@ -812,6 +812,13 @@
                             <input type="text" id="locDescription" placeholder="Точка выдачи в..." style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
                         </div>
                         <div class="form-group" style="margin-bottom:14px;">
+                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Фото для шапки</label>
+                            <p style="font-size:.75rem;color:#999;margin:0 0 6px;">Рекомендуемый размер: 2000×1400 px, формат JPEG/PNG/WebP</p>
+                            <div id="locImagePreview" style="margin-bottom:8px;"></div>
+                            <input type="file" id="locImage" accept="image/*" style="width:100%;padding:8px;background:#f5f5f5;border:1.5px solid #d0d0d0;border-radius:8px;color:#555;font-size:.9rem;">
+                            <button type="button" id="locImageDeleteBtn" class="btn btn-danger btn-sm" style="margin-top:8px;display:none;" onclick="deleteLocImage()">Удалить картинку</button>
+                        </div>
+                        <div class="form-group" style="margin-bottom:14px;">
                             <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Порядок сортировки</label>
                             <input type="number" id="locSortOrder" value="0" style="width:100px;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
                         </div>
@@ -2135,6 +2142,14 @@
             document.getElementById('locSlug').value = loc ? loc.slug : '';
             document.getElementById('locDescription').value = loc ? (loc.description || '') : '';
             document.getElementById('locSortOrder').value = loc ? loc.sortOrder : 0;
+            document.getElementById('locImage').value = '';
+            if (loc && loc.imageUrl) {
+                document.getElementById('locImagePreview').innerHTML = '<img src="' + loc.imageUrl + '" style="width:200px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #ddd;">';
+                document.getElementById('locImageDeleteBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('locImagePreview').innerHTML = '';
+                document.getElementById('locImageDeleteBtn').style.display = 'none';
+            }
             document.getElementById('locationFormTitle').textContent = loc ? 'Редактировать точку' : 'Новая точка';
             document.getElementById('locationFormOverlay').style.display = 'flex';
         }
@@ -2159,13 +2174,37 @@
                 active: true,
             };
             try {
+                let locId = id;
                 if (id) {
                     await api('/api/admin/locations/' + id, { method: 'PUT', body: data });
                 } else {
-                    await api('/api/admin/locations', { method: 'POST', body: data });
+                    const res = await api('/api/admin/locations', { method: 'POST', body: data });
+                    locId = res.id;
+                }
+                // Upload image if selected
+                const fileInput = document.getElementById('locImage');
+                if (fileInput.files.length && locId) {
+                    const fd = new FormData();
+                    fd.append('file', fileInput.files[0]);
+                    const r = await fetch('/api/admin/locations/' + locId + '/image', {
+                        method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd
+                    });
+                    if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Ошибка загрузки'); }
                 }
                 closeLocationForm();
                 showToast('Точка сохранена');
+                await loadLocations();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        async function deleteLocImage() {
+            const id = document.getElementById('locEditId').value;
+            if (!id) return;
+            try {
+                await api('/api/admin/locations/' + id + '/image', { method: 'DELETE' });
+                document.getElementById('locImagePreview').innerHTML = '';
+                document.getElementById('locImageDeleteBtn').style.display = 'none';
+                showToast('Картинка удалена');
                 await loadLocations();
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }

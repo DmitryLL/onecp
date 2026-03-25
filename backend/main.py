@@ -56,6 +56,12 @@ def init_db():
                 if old_col in q_cols2:
                     conn.execute(text(f"ALTER TABLE questions DROP COLUMN {old_col}"))
                     logger.info(f"Dropped column questions.{old_col}")
+        # Add image_url to locations
+        if "locations" in insp.get_table_names():
+            loc_cols = [c["name"] for c in insp.get_columns("locations")]
+            if "image_url" not in loc_cols:
+                conn.execute(text("ALTER TABLE locations ADD COLUMN image_url VARCHAR(500)"))
+                logger.info("Added column locations.image_url")
         # Add password_hash to customers
         cust_cols = [c["name"] for c in insp.get_columns("customers")]
         if "password_hash" not in cust_cols:

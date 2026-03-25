@@ -838,6 +838,7 @@ def list_locations(admin: AdminUser = Depends(get_admin), db: Session = Depends(
             "slug": loc.slug,
             "description": loc.description,
             "reportEmail": loc.report_email,
+            "imageUrl": loc.image_url,
             "sortOrder": loc.sort_order,
             "active": loc.active,
         }
@@ -909,6 +910,45 @@ def restore_location(loc_id: int, admin: AdminUser = Depends(get_admin), db: Ses
         raise HTTPException(status_code=404, detail="Точка не найдена")
     loc.active = True
     db.commit()
+    return {"ok": True}
+
+
+@router.post("/locations/{loc_id}/image")
+def upload_location_image(loc_id: int, file: UploadFile = File(...), admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    loc = db.query(Location).filter(Location.id == loc_id).first()
+    if not loc:
+        raise HTTPException(status_code=404, detail="Точка не найдена")
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Допустимые форматы: JPEG, PNG, WebP, GIF")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    raw = file.file.read()
+    validate_image_upload(raw)
+    compressed, ext = compress_image(raw)
+    filename = f"loc_{loc_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    if loc.image_url:
+        old_path = os.path.join(UPLOAD_DIR, os.path.basename(loc.image_url))
+        if os.path.exists(old_path):
+            os.remove(old_path)
+    with open(filepath, "wb") as f:
+        f.write(compressed)
+    loc.image_url = f"/uploads/{filename}"
+    db.commit()
+    return {"ok": True, "imageUrl": loc.image_url}
+
+
+@router.delete("/locations/{loc_id}/image")
+def delete_location_image(loc_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    loc = db.query(Location).filter(Location.id == loc_id).first()
+    if not loc:
+        raise HTTPException(status_code=404, detail="Точка не найдена")
+    if loc.image_url:
+        old_path = os.path.join(UPLOAD_DIR, os.path.basename(loc.image_url))
+        if os.path.exists(old_path):
+            os.remove(old_path)
+        loc.image_url = None
+        db.commit()
     return {"ok": True}
 
 

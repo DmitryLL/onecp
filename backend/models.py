@@ -152,6 +152,7 @@ class Location(Base):
     slug = Column(String(200), unique=True, nullable=False, index=True)
     description = Column(Text, nullable=True)
     report_email = Column(String(300), nullable=True)
+    image_url = Column(String(500), nullable=True)
     sort_order = Column(Integer, default=0)
     active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
