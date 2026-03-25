@@ -3,6 +3,7 @@ import uuid
 import shutil
 from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
@@ -1006,3 +1007,101 @@ def delete_location_bottom_image(loc_id: int, admin: AdminUser = Depends(get_adm
     return {"ok": True}
 
 
+# ===== EXCEL REPORTS =====
+
+@router.get("/export/guests")
+def export_guests_excel(date: str, location: str = "", admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    from datetime import date as date_type
+    from email_report import build_guests_excel, get_delivery_date, VLAD_TZ
+    try:
+        target_date = date_type.fromisoformat(date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Неверная дата")
+
+    orders = (
+        db.query(Order)
+        .options(joinedload(Order.items).joinedload(OrderItem.dish), joinedload(Order.customer))
+        .all()
+    )
+    filtered = [o for o in orders if o.created_at and get_delivery_date(o.created_at) == target_date]
+
+    if location:
+        data = build_guests_excel(filtered, location, target_date)
+        if not data:
+            raise HTTPException(status_code=404, detail="Нет заказов")
+        filename = f"Отчет по гостям на {target_date.strftime('%d.%m.%Y')} ({location}).xlsx"
+    else:
+        # All locations in one file with multiple sheets
+        from email_report import get_locations_map
+        from openpyxl import load_workbook
+        import io
+        locations_map = get_locations_map(db)
+        combined_wb = None
+        for loc_address in locations_map.keys():
+            loc_data = build_guests_excel(filtered, loc_address, target_date)
+            if loc_data:
+                loc_wb = load_workbook(io.BytesIO(loc_data))
+                if combined_wb is None:
+                    combined_wb = loc_wb
+                    combined_wb.active.title = loc_address[:31]
+                else:
+                    src_ws = loc_wb.active
+                    new_ws = combined_wb.create_sheet(title=loc_address[:31])
+                    for row in src_ws.iter_rows():
+                        for cell in row:
+                            new_cell = new_ws.cell(row=cell.row, column=cell.column, value=cell.value)
+                            if cell.has_style:
+                                new_cell.font = cell.font
+                                new_cell.fill = cell.fill
+                                new_cell.alignment = cell.alignment
+                                new_cell.border = cell.border
+                    for mc in src_ws.merged_cells.ranges:
+                        new_ws.merge_cells(str(mc))
+                    for col_letter, dim in src_ws.column_dimensions.items():
+                        new_ws.column_dimensions[col_letter].width = dim.width
+                    for row_num, dim in src_ws.row_dimensions.items():
+                        if dim.height:
+                            new_ws.row_dimensions[row_num].height = dim.height
+        if combined_wb is None:
+            raise HTTPException(status_code=404, detail="Нет заказов")
+        buf = io.BytesIO()
+        combined_wb.save(buf)
+        data = buf.getvalue()
+        filename = f"Отчет по гостям на {target_date.strftime('%d.%m.%Y')} (все точки).xlsx"
+
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+    )
+
+
+@router.get("/export/kitchen")
+def export_kitchen_excel(date: str, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    from datetime import date as date_type
+    from email_report import build_kitchen_excel, get_delivery_date, get_locations_map
+    try:
+        target_date = date_type.fromisoformat(date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Неверная дата")
+
+    orders = (
+        db.query(Order)
+        .options(joinedload(Order.items).joinedload(OrderItem.dish), joinedload(Order.customer))
+        .all()
+    )
+    filtered = [o for o in orders if o.created_at and get_delivery_date(o.created_at) == target_date]
+    if not filtered:
+        raise HTTPException(status_code=404, detail="Нет заказов")
+
+    locations_map = get_locations_map(db)
+    data = build_kitchen_excel(filtered, target_date, locations_map)
+    if not data:
+        raise HTTPException(status_code=404, detail="Нет заказов")
+
+    filename = f"Отчет для кухни на {target_date.strftime('%d.%m.%Y')} (все точки).xlsx"
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+    )

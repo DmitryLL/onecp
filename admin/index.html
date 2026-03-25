@@ -1873,291 +1873,48 @@
         }
 
         // ===== EXPORT EXCEL =====
-        function loadXlsx() {
-            return new Promise((resolve, reject) => {
-                if (window.XLSX) { resolve(); return; }
-                const s = document.createElement('script');
-                s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
-                s.onload = resolve;
-                s.onerror = () => reject(new Error('Не удалось загрузить библиотеку Excel'));
-                document.head.appendChild(s);
-            });
-        }
 
-        // Helper: format date as "25 марта 2026, среда"
-        function formatDateRu(d) {
-            var months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-            var days = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
-            return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ', ' + days[d.getDay()];
-        }
 
-        // Helper: apply styles to a cell range
-        function styleCell(ws, ref, style) {
-            if (!ws[ref]) ws[ref] = { v: '', t: 's' };
-            ws[ref].s = style;
-        }
-
-        // Shared Excel styles
-        var xlBorder = { top: { style: 'thin', color: { rgb: 'D5CFC7' } }, bottom: { style: 'thin', color: { rgb: 'D5CFC7' } }, left: { style: 'thin', color: { rgb: 'D5CFC7' } }, right: { style: 'thin', color: { rgb: 'D5CFC7' } } };
-        var xlHeaderFill = { fill: { fgColor: { rgb: '4A3728' } }, font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: xlBorder };
-        var xlTitleStyle = { font: { bold: true, sz: 16, color: { rgb: '3A2A1A' } }, alignment: { horizontal: 'left', vertical: 'center' } };
-        var xlSubStyle = { font: { sz: 11, color: { rgb: '888888' } }, alignment: { horizontal: 'left' } };
-        var xlStatsStyle = { font: { bold: true, sz: 12, color: { rgb: '2E7D32' } }, alignment: { horizontal: 'left' } };
-        var xlLocStyle = { font: { bold: true, sz: 11, color: { rgb: '4A3728' } }, alignment: { horizontal: 'left' } };
-        var xlTotalStyle = { font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '4A3728' } }, border: xlBorder, alignment: { horizontal: 'center' } };
-        var xlTotalLabelStyle = { font: { bold: true, sz: 11, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '4A3728' } }, border: xlBorder, alignment: { horizontal: 'right' } };
-        var xlDataOdd = { fill: { fgColor: { rgb: 'FFFFFF' } }, border: xlBorder, alignment: { vertical: 'center' } };
-        var xlDataEven = { fill: { fgColor: { rgb: 'F8F5F0' } }, border: xlBorder, alignment: { vertical: 'center' } };
-        var xlNumOdd = { fill: { fgColor: { rgb: 'FFFFFF' } }, border: xlBorder, alignment: { horizontal: 'center', vertical: 'center' } };
-        var xlNumEven = { fill: { fgColor: { rgb: 'F8F5F0' } }, border: xlBorder, alignment: { horizontal: 'center', vertical: 'center' } };
-        var xlMoneyOdd = { fill: { fgColor: { rgb: 'FFFFFF' } }, border: xlBorder, alignment: { horizontal: 'right', vertical: 'center' } };
-        var xlMoneyEven = { fill: { fgColor: { rgb: 'F8F5F0' } }, border: xlBorder, alignment: { horizontal: 'right', vertical: 'center' } };
-        var xlOrderSep = { fill: { fgColor: { rgb: 'EDE8E0' } }, font: { sz: 2, color: { rgb: 'EDE8E0' } } };
-
-        function getLocSuffix() {
-            return activeLocFilter ? ' — ' + activeLocFilter : ' — все точки';
-        }
-        function getLocFilenameSuffix() {
-            return activeLocFilter ? ' (' + activeLocFilter + ')' : ' (все точки)';
-        }
-
-        var _ordersExporting = false;
         async function exportOrdersExcel() {
-            if (_ordersExporting) return;
-            _ordersExporting = true;
-            try { await _exportOrdersExcelInner(); } finally { _ordersExporting = false; }
-        }
-        async function _exportOrdersExcelInner() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { showToast('Выберите дату'); return; }
+            showToast('Загрузка отчёта...');
             try {
-                const orders = await api('/api/admin/orders');
-                allDateOrders = orders.filter(o => o.createdAt && getOrderDeliveryDate(o.createdAt) === dateStr);
-                applyLocFilter();
-            } catch (e) { showToast('Ошибка загрузки: ' + e.message); return; }
-            if (!dateOrders.length) { showToast('Нет заказов' + (activeLocFilter ? ' по точке ' + activeLocFilter : '')); return; }
-            showToast('Загрузка...');
-            try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
+                var url = '/api/admin/export/guests?date=' + dateStr;
+                if (activeLocFilter) url += '&location=' + encodeURIComponent(activeLocFilter);
+                const resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + adminToken } });
+                if (resp.status === 404) { showToast('Нет заказов'); return; }
+                if (!resp.ok) throw new Error('Ошибка сервера');
+                const blob = await resp.blob();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                var dd = dateStr.split('-');
+                var suffix = activeLocFilter ? ' (' + activeLocFilter + ')' : ' (все точки)';
+                a.download = 'Отчет по гостям на ' + dd[2] + '.' + dd[1] + '.' + dd[0] + suffix + '.xlsx';
+                a.click();
+                URL.revokeObjectURL(a.href);
+                showToast('Отчёт по гостям скачан');
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
 
-            var deliveryDate = new Date(dateStr + 'T00:00:00');
-
-            var data = [];
-            // Title block
-            data.push(['ONE COFFEE PLACE — Отчёт по гостям' + getLocSuffix()]);
-            data.push(['Заказ на: ' + formatDateRu(deliveryDate)]);
-            if (activeLocFilter) data.push(['Точка выдачи: ' + activeLocFilter]);
-            data.push(['Всего заказов: ' + dateOrders.length + '   |   Общая сумма: ' + dateOrders.reduce((s,o) => s + o.total, 0).toLocaleString('ru-RU') + ' ₽']);
-            data.push([]); // пустая строка
-
-            var headers = ['№','Время','Клиент','Телефон','Блюдо','Кол-во','Цена','Сумма','Комментарий'];
-            var headerRow = data.length;
-            data.push(headers);
-
-            dateOrders.forEach((o, idx) => {
-                if (idx > 0) data.push([]); // разделитель между заказами
-                o.items.forEach((it, i) => {
-                    data.push([
-                        i === 0 ? o.id : '',
-                        i === 0 ? new Date(o.createdAt).toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'}) : '',
-                        i === 0 ? (o.customerName || '—') : '',
-                        i === 0 ? (o.customerPhone || '—') : '',
-                        it.name,
-                        it.qty,
-                        it.price + ' ₽',
-                        i === 0 ? o.total + ' ₽' : '',
-                        i === 0 ? (o.comment || '') : '',
-                    ]);
-                });
-            });
-
-            // Итоговая строка
-            data.push([]);
-            data.push(['', '', '', '', '', '', 'ИТОГО:', dateOrders.reduce((s,o) => s + o.total, 0).toLocaleString('ru-RU') + ' ₽', '']);
-
-            var ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [
-                { wch: 8 },  // №
-                { wch: 10 }, // Время
-                { wch: 22 }, // Клиент
-                { wch: 16 }, // Телефон
-                { wch: 30 }, // Блюдо
-                { wch: 10 }, // Кол-во
-                { wch: 12 }, // Цена
-                { wch: 14 }, // Сумма
-                { wch: 24 }, // Комментарий
-            ];
-
-            // Merge title rows across all columns
-            ws['!merges'] = [];
-            for (var r = 0; r < headerRow; r++) {
-                ws['!merges'].push({ s: { r: r, c: 0 }, e: { r: r, c: 8 } });
-            }
-
-            // Apply styles to title rows
-            styleCell(ws, 'A1', xlTitleStyle);
-            styleCell(ws, 'A2', xlSubStyle);
-            styleCell(ws, 'A3', xlSubStyle);
-            var statsRow = headerRow - 2;
-            styleCell(ws, XLSX.utils.encode_cell({ r: statsRow, c: 0 }), xlStatsStyle);
-            if (activeLocFilter) styleCell(ws, 'A4', xlLocStyle);
-            // Header row
-            for (var c = 0; c < 9; c++) {
-                styleCell(ws, XLSX.utils.encode_cell({ r: headerRow, c: c }), xlHeaderFill);
-            }
-            // Data rows — zebra stripes + alignment
-            var dataStartRow = headerRow + 1;
-            var orderIdx = 0;
-            for (var r = dataStartRow; r < data.length - 2; r++) {
-                var rowData = data[r];
-                if (!rowData || rowData.length === 0) {
-                    // Separator row
-                    for (var c = 0; c < 9; c++) styleCell(ws, XLSX.utils.encode_cell({ r: r, c: c }), xlOrderSep);
-                    orderIdx++;
-                    continue;
-                }
-                var isEven = orderIdx % 2 === 1;
-                var base = isEven ? xlDataEven : xlDataOdd;
-                var num = isEven ? xlNumEven : xlNumOdd;
-                var money = isEven ? xlMoneyEven : xlMoneyOdd;
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 0 }), num);   // №
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 1 }), num);   // Время
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 2 }), base);  // Клиент
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 3 }), base);  // Телефон
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 4 }), base);  // Блюдо
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 5 }), num);   // Кол-во
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 6 }), money); // Цена
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 7 }), money); // Сумма
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 8 }), base);  // Комментарий
-            }
-            // Total row
-            var totalRowIdx = data.length - 1;
-            for (var c = 0; c < 9; c++) {
-                var st = c === 6 ? xlTotalLabelStyle : xlTotalStyle;
-                styleCell(ws, XLSX.utils.encode_cell({ r: totalRowIdx, c: c }), st);
-            }
-
-            ws['!rows'] = [{ hpt: 28 }, { hpt: 18 }, { hpt: 18 }, { hpt: 20 }, { hpt: 6 }];
-
-            var wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Отчёт по гостям');
-            var dd = dateStr.split('-');
-            XLSX.writeFile(wb, 'Отчет по гостям на ' + dd[2] + '.' + dd[1] + '.' + dd[0] + getLocFilenameSuffix() + '.xlsx');
-            showToast('Отчёт по гостям скачан');
-        }  // end _exportOrdersExcelInner
-
-        var _kitchenExporting = false;
         async function exportKitchenExcel() {
-            if (_kitchenExporting) return;
-            _kitchenExporting = true;
-            try { await _exportKitchenExcelInner(); } finally { _kitchenExporting = false; }
-        }
-        async function _exportKitchenExcelInner() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { showToast('Выберите дату'); return; }
+            showToast('Загрузка отчёта...');
             try {
-                const orders = await api('/api/admin/orders');
-                allDateOrders = orders.filter(o => o.createdAt && getOrderDeliveryDate(o.createdAt) === dateStr);
-                applyLocFilter();
-            } catch (e) { showToast('Ошибка загрузки: ' + e.message); return; }
-            if (!dateOrders.length) { showToast('Нет заказов' + (activeLocFilter ? ' по точке ' + activeLocFilter : '')); return; }
-            try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
-
-            var deliveryDate = new Date(dateStr + 'T00:00:00');
-            var locNames = adminLocations.filter(l => l.active).map(l => l.address);
-            var numCols = 3 + locNames.length;
-
-            // Aggregate dishes per location and total
-            var perLoc = {};
-            locNames.forEach(l => { perLoc[l] = {}; });
-            var totals = {};
-            var totalPortions = 0;
-            dateOrders.forEach(o => {
-                var loc = o.address || '';
-                o.items.forEach(it => {
-                    if (totals[it.name]) totals[it.name] += it.qty;
-                    else totals[it.name] = it.qty;
-                    totalPortions += it.qty;
-                    if (perLoc[loc]) {
-                        if (perLoc[loc][it.name]) perLoc[loc][it.name] += it.qty;
-                        else perLoc[loc][it.name] = it.qty;
-                    }
-                });
-            });
-
-            var data = [];
-            // Title block
-            data.push(['ONE COFFEE PLACE — Отчёт для кухни' + getLocSuffix()]);
-            data.push(['Заказ на: ' + formatDateRu(deliveryDate)]);
-            data.push(['Всего заказов: ' + dateOrders.length + '   |   Всего порций: ' + totalPortions]);
-            data.push([]); // пустая строка
-
-            var headerRow = data.length;
-            data.push(['№', 'Блюдо'].concat(locNames).concat(['Итого']));
-
-            var num = 1;
-            Object.keys(totals).sort().forEach(name => {
-                var row = [num++, name];
-                locNames.forEach(loc => { row.push(perLoc[loc][name] || 0); });
-                row.push(totals[name]);
-                data.push(row);
-            });
-
-            // Итого
-            data.push([]);
-            var totalRow = ['', 'ИТОГО:'];
-            locNames.forEach(loc => {
-                var s = 0; Object.values(perLoc[loc]).forEach(v => { s += v; });
-                totalRow.push(s);
-            });
-            totalRow.push(totalPortions);
-            data.push(totalRow);
-
-            var ws = XLSX.utils.aoa_to_sheet(data);
-            ws['!cols'] = [{ wch: 6 }, { wch: 40 }];
-            locNames.forEach(() => { ws['!cols'].push({ wch: 16 }); });
-            ws['!cols'].push({ wch: 12 });
-
-            ws['!merges'] = [];
-            for (var r = 0; r < headerRow; r++) {
-                ws['!merges'].push({ s: { r: r, c: 0 }, e: { r: r, c: numCols - 1 } });
-            }
-
-            // Apply styles
-            styleCell(ws, 'A1', xlTitleStyle);
-            styleCell(ws, 'A2', xlSubStyle);
-            styleCell(ws, 'A3', xlStatsStyle);
-            // Header row
-            for (var c = 0; c < numCols; c++) {
-                styleCell(ws, XLSX.utils.encode_cell({ r: headerRow, c: c }), xlHeaderFill);
-            }
-            // Data rows — zebra stripes + alignment
-            var dataStartRow = headerRow + 1;
-            for (var r = dataStartRow; r < data.length - 2; r++) {
-                if (!data[r] || data[r].length === 0) continue;
-                var isEven = (r - dataStartRow) % 2 === 1;
-                var base = isEven ? xlDataEven : xlDataOdd;
-                var num = isEven ? xlNumEven : xlNumOdd;
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 0 }), num);  // №
-                styleCell(ws, XLSX.utils.encode_cell({ r: r, c: 1 }), base); // Блюдо
-                for (var c = 2; c < numCols; c++) {
-                    styleCell(ws, XLSX.utils.encode_cell({ r: r, c: c }), num); // Quantities
-                }
-            }
-            // Total row
-            var totalRowIdx = data.length - 1;
-            for (var c = 0; c < numCols; c++) {
-                var st = c <= 1 ? xlTotalLabelStyle : xlTotalStyle;
-                styleCell(ws, XLSX.utils.encode_cell({ r: totalRowIdx, c: c }), st);
-            }
-
-            ws['!rows'] = [{ hpt: 28 }, { hpt: 18 }, { hpt: 20 }, { hpt: 6 }];
-
-            var wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Кухня');
-            var dd = dateStr.split('-');
-            XLSX.writeFile(wb, 'Отчет для кухни на ' + dd[2] + '.' + dd[1] + '.' + dd[0] + getLocFilenameSuffix() + '.xlsx');
-            showToast('Отчёт для кухни скачан');
-        }  // end _exportKitchenExcelInner
+                const resp = await fetch('/api/admin/export/kitchen?date=' + dateStr, { headers: { 'Authorization': 'Bearer ' + adminToken } });
+                if (resp.status === 404) { showToast('Нет заказов'); return; }
+                if (!resp.ok) throw new Error('Ошибка сервера');
+                const blob = await resp.blob();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                var dd = dateStr.split('-');
+                a.download = 'Отчет для кухни на ' + dd[2] + '.' + dd[1] + '.' + dd[0] + ' (все точки).xlsx';
+                a.click();
+                URL.revokeObjectURL(a.href);
+                showToast('Отчёт для кухни скачан');
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
 
         // ===== LOCATIONS =====
         let adminLocations = [];
