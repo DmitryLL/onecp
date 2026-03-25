@@ -820,7 +820,7 @@
                         </div>
                         <div class="form-group" style="margin-bottom:14px;">
                             <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Порядок сортировки</label>
-                            <input type="number" id="locSortOrder" value="0" style="width:100px;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
+                            <input type="number" id="locSortOrder" value="0" class="no-spin" style="width:100px;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
                         </div>
                         <div style="display:flex;gap:12px;margin-top:20px;">
                             <button class="btn btn-primary" onclick="saveLocation()">Сохранить</button>
@@ -2187,7 +2187,7 @@
                     const fd = new FormData();
                     fd.append('file', fileInput.files[0]);
                     const r = await fetch('/api/admin/locations/' + locId + '/image', {
-                        method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd
+                        method: 'POST', headers: { 'Authorization': 'Bearer ' + adminToken }, body: fd
                     });
                     if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Ошибка загрузки'); }
                 }
