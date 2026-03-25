@@ -847,6 +847,20 @@ def list_locations(admin: AdminUser = Depends(get_admin), db: Session = Depends(
     ]
 
 
+class LocationReorder(BaseModel):
+    ids: list[int]
+
+
+@router.put("/locations/reorder")
+def reorder_locations(body: LocationReorder, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    for i, loc_id in enumerate(body.ids):
+        loc = db.query(Location).filter(Location.id == loc_id).first()
+        if loc:
+            loc.sort_order = i
+    db.commit()
+    return {"ok": True}
+
+
 @router.post("/locations")
 def create_location(body: LocationIn, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
     import re
