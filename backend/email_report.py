@@ -127,16 +127,8 @@ def load_orders_for_delivery_date(target_date: date_type):
         db.close()
 
 
-def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes | None:
-    """Build 'Отчёт по гостям' for a specific location."""
-    loc_orders = [o for o in orders if (o.address or "") == location]
-    if not loc_orders:
-        return None
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Отчёт по гостям"
-
+def _build_guests_sheet(ws, loc_orders, location: str, delivery_date: date_type):
+    """Fill a worksheet with guest report data for a specific location."""
     # Title block
     ws.append([f"ONE COFFEE PLACE — Отчёт по гостям — {location}"])
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=9)
@@ -224,6 +216,42 @@ def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes
     widths = [8, 10, 22, 16, 30, 10, 12, 14, 24]
     for i, w in enumerate(widths):
         ws.column_dimensions[chr(65 + i)].width = w
+
+
+def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes | None:
+    """Build 'Отчёт по гостям' for a specific location."""
+    loc_orders = [o for o in orders if (o.address or "") == location]
+    if not loc_orders:
+        return None
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Отчёт по гостям"
+    _build_guests_sheet(ws, loc_orders, location, delivery_date)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_type) -> bytes | None:
+    """Build 'Отчёт по гостям' with a sheet per location."""
+    wb = Workbook()
+    first = True
+    for location in locations:
+        loc_orders = [o for o in orders if (o.address or "") == location]
+        if not loc_orders:
+            continue
+        if first:
+            ws = wb.active
+            ws.title = location[:31]
+            first = False
+        else:
+            ws = wb.create_sheet(title=location[:31])
+        _build_guests_sheet(ws, loc_orders, location, delivery_date)
+
+    if first:
+        return None  # no sheets were created
 
     buf = io.BytesIO()
     wb.save(buf)
