@@ -3186,58 +3186,50 @@
 
     // Render QR codes with rounded modules on location cards
     (function() {
-        function roundRect(ctx, x, y, w, h, r) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.lineTo(x + w - r, y);
-            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-            ctx.lineTo(x + w, y + h - r);
-            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-            ctx.lineTo(x + r, y + h);
-            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-            ctx.lineTo(x, y + r);
-            ctx.quadraticCurveTo(x, y, x + r, y);
-            ctx.closePath();
-        }
-
-        function renderQR(container, url, fgColor) {
-            var qr = qrcode(0, 'M');
-            qr.addData(url, 'Byte');
-            qr.make();
-
-            var count = qr.getModuleCount();
-            var px = 256;
-            var canvas = document.createElement('canvas');
-            canvas.width = px;
-            canvas.height = px;
-            var ctx = canvas.getContext('2d');
-
-            // White rounded background
-            ctx.fillStyle = '#fff';
-            roundRect(ctx, 0, 0, px, px, 16);
-            ctx.fill();
-
-            var cellSize = px / (count + 2);
-            var offset = cellSize;
-            var radius = cellSize * 0.36;
-
-            ctx.fillStyle = fgColor || '#3a2a1a';
-
-            for (var r = 0; r < count; r++) {
-                for (var c = 0; c < count; c++) {
-                    if (!qr.isDark(r, c)) continue;
-                    var x = offset + c * cellSize;
-                    var y = offset + r * cellSize;
-                    roundRect(ctx, x, y, cellSize - 0.5, cellSize - 0.5, radius);
-                    ctx.fill();
-                }
-            }
-
-            container.appendChild(canvas);
-        }
-
-        // QR codes are now generated dynamically in initLocations()
     })();
+
+    function _qrRoundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    function renderQR(container, url, fgColor) {
+        var qr = qrcode(0, 'M');
+        qr.addData(url, 'Byte');
+        qr.make();
+        var count = qr.getModuleCount();
+        var px = 256;
+        var canvas = document.createElement('canvas');
+        canvas.width = px;
+        canvas.height = px;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        _qrRoundRect(ctx, 0, 0, px, px, 16);
+        ctx.fill();
+        var cellSize = px / (count + 2);
+        var offset = cellSize;
+        var radius = cellSize * 0.36;
+        ctx.fillStyle = fgColor || '#3a2a1a';
+        for (var r = 0; r < count; r++) {
+            for (var c = 0; c < count; c++) {
+                if (!qr.isDark(r, c)) continue;
+                var x = offset + c * cellSize;
+                var y = offset + r * cellSize;
+                _qrRoundRect(ctx, x, y, cellSize - 0.5, cellSize - 0.5, radius);
+                ctx.fill();
+            }
+        }
+        container.appendChild(canvas);
+    }
 </script>
 </body>
 </html>
