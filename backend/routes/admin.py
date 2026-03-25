@@ -1011,16 +1011,21 @@ def delete_location_bottom_image(loc_id: int, admin: AdminUser = Depends(get_adm
 
 @router.get("/export/guests")
 def export_guests_excel(date: str, location: str = "", admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
-    from datetime import date as date_type
-    from email_report import build_guests_excel, get_delivery_date, VLAD_TZ
+    from datetime import datetime, date as date_type, timedelta, timezone
+    from email_report import build_guests_excel, get_delivery_date, get_locations_map, VLAD_TZ
+    from urllib.parse import quote
+    import io
     try:
         target_date = date_type.fromisoformat(date)
     except ValueError:
         raise HTTPException(status_code=400, detail="Неверная дата")
 
+    # Load only recent orders (not all)
+    cutoff = datetime.combine(target_date - timedelta(days=3), datetime.min.time()).replace(tzinfo=timezone.utc)
     orders = (
         db.query(Order)
         .options(joinedload(Order.items).joinedload(OrderItem.dish), joinedload(Order.customer))
+        .filter(Order.created_at >= cutoff)
         .all()
     )
     filtered = [o for o in orders if o.created_at and get_delivery_date(o.created_at) == target_date]
@@ -1032,9 +1037,7 @@ def export_guests_excel(date: str, location: str = "", admin: AdminUser = Depend
         filename = f"Отчет по гостям на {target_date.strftime('%d.%m.%Y')} ({location}).xlsx"
     else:
         # All locations in one file with multiple sheets
-        from email_report import get_locations_map
         from openpyxl import load_workbook
-        import io
         locations_map = get_locations_map(db)
         combined_wb = None
         for loc_address in locations_map.keys():
@@ -1069,25 +1072,29 @@ def export_guests_excel(date: str, location: str = "", admin: AdminUser = Depend
         data = buf.getvalue()
         filename = f"Отчет по гостям на {target_date.strftime('%d.%m.%Y')} (все точки).xlsx"
 
+    encoded_filename = quote(filename)
     return Response(
         content=data,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"},
     )
 
 
 @router.get("/export/kitchen")
 def export_kitchen_excel(date: str, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
-    from datetime import date as date_type
+    from datetime import datetime, date as date_type, timedelta, timezone
     from email_report import build_kitchen_excel, get_delivery_date, get_locations_map
+    from urllib.parse import quote
     try:
         target_date = date_type.fromisoformat(date)
     except ValueError:
         raise HTTPException(status_code=400, detail="Неверная дата")
 
+    cutoff = datetime.combine(target_date - timedelta(days=3), datetime.min.time()).replace(tzinfo=timezone.utc)
     orders = (
         db.query(Order)
         .options(joinedload(Order.items).joinedload(OrderItem.dish), joinedload(Order.customer))
+        .filter(Order.created_at >= cutoff)
         .all()
     )
     filtered = [o for o in orders if o.created_at and get_delivery_date(o.created_at) == target_date]
@@ -1100,8 +1107,9 @@ def export_kitchen_excel(date: str, admin: AdminUser = Depends(get_admin), db: S
         raise HTTPException(status_code=404, detail="Нет заказов")
 
     filename = f"Отчет для кухни на {target_date.strftime('%d.%m.%Y')} (все точки).xlsx"
+    encoded_filename = quote(filename)
     return Response(
         content=data,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"},
     )
