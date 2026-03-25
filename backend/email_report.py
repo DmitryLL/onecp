@@ -314,7 +314,8 @@ def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = 
     for dish_name in sorted(totals.keys()):
         row = [num, dish_name]
         for loc in loc_names:
-            row.append(per_loc[loc].get(dish_name, 0))
+            val = per_loc[loc].get(dish_name, 0)
+            row.append(val if val else "")
         row.append(totals[dish_name])
         ws.append(row)
         row_num = ws.max_row
