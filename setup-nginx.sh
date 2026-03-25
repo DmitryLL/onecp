@@ -44,7 +44,7 @@ server {
     }
 
     # Admin panel routes
-    location ~ ^/(orders|questions|products|sets|calendar|clients|settings)(/|$) {
+    location ~ ^/(orders|questions|products|sets|calendar|clients|locations|settings)(/|$) {
         try_files $uri /admin/index.html;
     }
 
@@ -52,9 +52,8 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    location = /Sber { rewrite ^ /index.html last; }
-    location = /Skycity { rewrite ^ /index.html last; }
-    location = /InternationalBayViewtowers { rewrite ^ /index.html last; }
+    # Dynamic location pages — any single-segment path not matched above serves index.html
+    # (covers /Sber, /Skycity, /InternationalBayViewtowers, and any new locations)
 }
 NGINX
 

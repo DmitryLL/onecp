@@ -49,7 +49,7 @@ def compress_image(file_data: bytes) -> tuple[bytes, str]:
     return buf.getvalue(), "webp"
 
 from database import get_db
-from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question, SmsCode, CalendarDay, CalendarDaySet
+from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question, SmsCode, CalendarDay, CalendarDaySet, Location
 from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -812,4 +812,91 @@ def regenerate_calendar(admin: AdminUser = Depends(get_admin), db: Session = Dep
     db.commit()
 
     ensure_calendar_14_days(db)
+    return {"ok": True}
+
+
+# ===== LOCATIONS =====
+
+class LocationIn(BaseModel):
+    name: str
+    address: str
+    slug: str
+    description: str | None = None
+    report_email: str | None = None
+    sort_order: int = 0
+    active: bool = True
+
+
+@router.get("/locations")
+def list_locations(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    locs = db.query(Location).order_by(Location.sort_order, Location.id).all()
+    return [
+        {
+            "id": loc.id,
+            "name": loc.name,
+            "address": loc.address,
+            "slug": loc.slug,
+            "description": loc.description,
+            "reportEmail": loc.report_email,
+            "sortOrder": loc.sort_order,
+            "active": loc.active,
+        }
+        for loc in locs
+    ]
+
+
+@router.post("/locations")
+def create_location(body: LocationIn, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    import re
+    slug = body.slug.strip().lstrip("/")
+    if not slug or not re.match(r'^[a-zA-Z0-9_-]+$', slug):
+        raise HTTPException(status_code=400, detail="Slug может содержать только латинские буквы, цифры, дефис и подчёркивание")
+    existing = db.query(Location).filter(Location.slug == slug).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Точка с таким slug уже существует")
+    loc = Location(
+        name=body.name.strip(),
+        address=body.address.strip(),
+        slug=slug,
+        description=(body.description or "").strip() or None,
+        report_email=(body.report_email or "").strip() or None,
+        sort_order=body.sort_order,
+        active=body.active,
+    )
+    db.add(loc)
+    db.commit()
+    db.refresh(loc)
+    return {"ok": True, "id": loc.id}
+
+
+@router.put("/locations/{loc_id}")
+def update_location(loc_id: int, body: LocationIn, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    import re
+    loc = db.query(Location).filter(Location.id == loc_id).first()
+    if not loc:
+        raise HTTPException(status_code=404, detail="Точка не найдена")
+    slug = body.slug.strip().lstrip("/")
+    if not slug or not re.match(r'^[a-zA-Z0-9_-]+$', slug):
+        raise HTTPException(status_code=400, detail="Slug может содержать только латинские буквы, цифры, дефис и подчёркивание")
+    dup = db.query(Location).filter(Location.slug == slug, Location.id != loc_id).first()
+    if dup:
+        raise HTTPException(status_code=400, detail="Точка с таким slug уже существует")
+    loc.name = body.name.strip()
+    loc.address = body.address.strip()
+    loc.slug = slug
+    loc.description = (body.description or "").strip() or None
+    loc.report_email = (body.report_email or "").strip() or None
+    loc.sort_order = body.sort_order
+    loc.active = body.active
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/locations/{loc_id}")
+def delete_location(loc_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    loc = db.query(Location).filter(Location.id == loc_id).first()
+    if not loc:
+        raise HTTPException(status_code=404, detail="Точка не найдена")
+    db.delete(loc)
+    db.commit()
     return {"ok": True}

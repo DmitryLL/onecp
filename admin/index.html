@@ -666,6 +666,7 @@
                 <a href="/sets" onclick="navTo('sets',event)">🎁 Наборы</a>
                 <a href="/calendar" onclick="navTo('calendar',event)">📅 Календарь</a>
                 <a href="/clients" onclick="navTo('clients',event)">👥 Клиенты</a>
+                <a href="/locations" onclick="navTo('locations',event)">📍 Точки продаж</a>
                 <a href="/settings" onclick="navTo('settings',event)">📨 Рассылки</a>
             </nav>
             <div class="sidebar-bottom">
@@ -779,6 +780,51 @@
                     <h1>Вопросы</h1>
                 </div>
                 <div id="questionsList"></div>
+            </div>
+
+            <!-- LOCATIONS PANEL -->
+            <div id="locationsPanel" style="display:none;">
+                <div class="page-header">
+                    <h1>Точки продаж</h1>
+                </div>
+                <button class="btn btn-primary" onclick="openLocationForm()" style="margin-bottom:16px;">+ Добавить точку</button>
+                <div id="locationsList"></div>
+
+                <!-- Location form modal -->
+                <div id="locationFormOverlay" class="modal-overlay" onclick="if(event.target===this)closeLocationForm()" style="display:none;">
+                    <div style="background:#fff;border-radius:20px;padding:32px;width:95%;max-width:520px;margin:20px;">
+                        <h2 id="locationFormTitle" style="margin-bottom:20px;">Новая точка</h2>
+                        <input type="hidden" id="locEditId">
+                        <div class="form-group" style="margin-bottom:14px;">
+                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Название</label>
+                            <input type="text" id="locName" placeholder="Например: Sber" style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:14px;">
+                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Адрес</label>
+                            <input type="text" id="locAddress" placeholder="Например: Фонтанная 18" style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:14px;">
+                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Slug (латиницей, для URL)</label>
+                            <input type="text" id="locSlug" placeholder="Например: Sber" style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:14px;">
+                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Описание (для шапки страницы)</label>
+                            <input type="text" id="locDescription" placeholder="Точка выдачи в..." style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:14px;">
+                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Email для отчёта (необязательно)</label>
+                            <input type="text" id="locReportEmail" placeholder="email@example.com" style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:14px;">
+                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Порядок сортировки</label>
+                            <input type="number" id="locSortOrder" value="0" style="width:100px;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
+                        </div>
+                        <div style="display:flex;gap:12px;margin-top:20px;">
+                            <button class="btn btn-primary" onclick="saveLocation()">Сохранить</button>
+                            <button class="btn btn-secondary" onclick="closeLocationForm()">Отмена</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- SETTINGS PANEL -->
@@ -1380,8 +1426,8 @@
         }
 
         // ===== PANELS =====
-        const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, clients:5, settings:6};
-        const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', clients:'Клиенты', settings:'Рассылки'};
+        const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, clients:5, locations:6, settings:7};
+        const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', clients:'Клиенты', locations:'Точки продаж', settings:'Рассылки'};
         function navTo(panel, e) {
             if (e) e.preventDefault();
             history.pushState(null, '', '/' + panel);
@@ -1398,6 +1444,7 @@
             document.getElementById('customersPanel').style.display = 'none';
             document.getElementById('ordersPanel').style.display = 'none';
             document.getElementById('questionsPanel').style.display = 'none';
+            document.getElementById('locationsPanel').style.display = 'none';
             document.getElementById('settingsPanel').classList.remove('active');
 
             if (panel === 'orders') {
@@ -1419,6 +1466,9 @@
             } else if (panel === 'clients') {
                 document.getElementById('customersPanel').style.display = 'block';
                 loadCustomers();
+            } else if (panel === 'locations') {
+                document.getElementById('locationsPanel').style.display = 'block';
+                loadLocations();
             } else {
                 document.getElementById('settingsPanel').classList.add('active');
                 loadSettingsForm();
@@ -2030,6 +2080,95 @@
             var dd = dateStr.split('-');
             XLSX.writeFile(wb, 'Отчет для кухни на ' + dd[2] + '.' + dd[1] + '.' + dd[0] + getLocFilenameSuffix() + '.xlsx');
             showToast('Отчёт для кухни скачан');
+        }
+
+        // ===== LOCATIONS =====
+        let adminLocations = [];
+
+        async function loadLocations() {
+            try {
+                adminLocations = await api('/api/admin/locations');
+                renderLocations();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        function renderLocations() {
+            const container = document.getElementById('locationsList');
+            if (!adminLocations.length) {
+                container.innerHTML = '<p style="color:#666;padding:24px 0;">Точек продаж пока нет</p>';
+                return;
+            }
+            container.innerHTML = '<table class="data-table"><thead><tr><th>Название</th><th>Адрес</th><th>Slug</th><th>Email отчёта</th><th>Действия</th></tr></thead><tbody>' +
+                adminLocations.map(loc => `<tr>
+                    <td><strong>${escH(loc.name)}</strong>${loc.description ? '<br><span style="color:#888;font-size:.8rem;">' + escH(loc.description) + '</span>' : ''}</td>
+                    <td>${escH(loc.address)}</td>
+                    <td><code>/${escH(loc.slug)}</code></td>
+                    <td style="font-size:.85rem;color:#666;">${escH(loc.reportEmail || '—')}</td>
+                    <td style="white-space:nowrap;">
+                        <button class="btn btn-secondary btn-sm" onclick="editLocation(${loc.id})">Изменить</button>
+                        <button class="btn btn-sm" style="background:#e74c3c;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="deleteLocation(${loc.id})">Удалить</button>
+                    </td>
+                </tr>`).join('') + '</tbody></table>';
+        }
+
+        function openLocationForm(loc) {
+            document.getElementById('locEditId').value = loc ? loc.id : '';
+            document.getElementById('locName').value = loc ? loc.name : '';
+            document.getElementById('locAddress').value = loc ? loc.address : '';
+            document.getElementById('locSlug').value = loc ? loc.slug : '';
+            document.getElementById('locDescription').value = loc ? (loc.description || '') : '';
+            document.getElementById('locReportEmail').value = loc ? (loc.reportEmail || '') : '';
+            document.getElementById('locSortOrder').value = loc ? loc.sortOrder : 0;
+            document.getElementById('locationFormTitle').textContent = loc ? 'Редактировать точку' : 'Новая точка';
+            document.getElementById('locationFormOverlay').style.display = 'flex';
+        }
+
+        function closeLocationForm() {
+            document.getElementById('locationFormOverlay').style.display = 'none';
+        }
+
+        function editLocation(id) {
+            const loc = adminLocations.find(l => l.id === id);
+            if (loc) openLocationForm(loc);
+        }
+
+        async function saveLocation() {
+            const id = document.getElementById('locEditId').value;
+            const data = {
+                name: document.getElementById('locName').value,
+                address: document.getElementById('locAddress').value,
+                slug: document.getElementById('locSlug').value,
+                description: document.getElementById('locDescription').value,
+                report_email: document.getElementById('locReportEmail').value,
+                sort_order: parseInt(document.getElementById('locSortOrder').value) || 0,
+                active: true,
+            };
+            try {
+                if (id) {
+                    await api('/api/admin/locations/' + id, { method: 'PUT', body: data });
+                } else {
+                    await api('/api/admin/locations', { method: 'POST', body: data });
+                }
+                closeLocationForm();
+                showToast('Точка сохранена');
+                await loadLocations();
+            } catch (e) { showToast('Ошибка: ' + e.message); }
+        }
+
+        function deleteLocation(id) {
+            const loc = adminLocations.find(l => l.id === id);
+            showConfirm(
+                'Удалить точку?',
+                loc ? '«' + loc.name + '» будет удалена.' : 'Точка будет удалена.',
+                'Удалить',
+                async () => {
+                    try {
+                        await api('/api/admin/locations/' + id, { method: 'DELETE' });
+                        showToast('Точка удалена');
+                        await loadLocations();
+                    } catch (e) { showToast('Ошибка: ' + e.message); }
+                }
+            );
         }
 
         // ===== QUESTIONS =====

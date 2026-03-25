@@ -143,6 +143,20 @@ class CalendarDaySet(Base):
     dish_set = relationship("DishSet")
 
 
+class Location(Base):
+    __tablename__ = "locations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    address = Column(String(300), nullable=False)
+    slug = Column(String(200), unique=True, nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    report_email = Column(String(300), nullable=True)
+    sort_order = Column(Integer, default=0)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
 class Question(Base):
     __tablename__ = "questions"
 

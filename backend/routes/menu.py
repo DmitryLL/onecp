@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Dish, DishSet, DishSetItem, SiteSettings, Question, CalendarDay, CalendarDaySet
+from models import Dish, DishSet, DishSetItem, SiteSettings, Question, CalendarDay, CalendarDaySet, Location
 from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/menu", tags=["menu"])
@@ -118,6 +118,21 @@ def get_categories(db: Session = Depends(get_db)):
 def get_site_settings(db: Session = Depends(get_db)):
     settings = db.query(SiteSettings).all()
     return {s.key: s.value for s in settings}
+
+
+@router.get("/locations")
+def get_locations(db: Session = Depends(get_db)):
+    locs = db.query(Location).filter(Location.active == True).order_by(Location.sort_order, Location.id).all()
+    return [
+        {
+            "id": loc.id,
+            "name": loc.name,
+            "address": loc.address,
+            "slug": loc.slug,
+            "description": loc.description,
+        }
+        for loc in locs
+    ]
 
 
 class QuestionIn(BaseModel):

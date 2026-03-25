@@ -8,7 +8,7 @@ from passlib.hash import pbkdf2_sha256
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from database import engine, SessionLocal, Base
-from models import AdminUser, Dish, DishSet, DishSetItem, SiteSettings, Question, CalendarDay, CalendarDaySet
+from models import AdminUser, Dish, DishSet, DishSetItem, SiteSettings, Question, CalendarDay, CalendarDaySet, Location
 from routes.auth import router as auth_router
 from routes.menu import router as menu_router
 from routes.orders import router as orders_router

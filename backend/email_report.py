@@ -12,17 +12,24 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from sqlalchemy.orm import joinedload
 
 from database import SessionLocal
-from models import Order, OrderItem, SiteSettings
+from models import Order, OrderItem, SiteSettings, Location
 
 logger = logging.getLogger("onecp")
 
 VLAD_TZ = timezone(timedelta(hours=10))
 
-LOCATIONS = {
-    "Фонтанная 18": "reportEmailSber",
-    "Алеутская 45": "reportEmailSkycity",
-    "Енисейская 23": "reportEmailIbt",
-}
+def get_locations_map(db=None) -> dict[str, str | None]:
+    """Returns {address: report_email} from DB. Falls back to empty if no DB."""
+    close = False
+    if db is None:
+        db = SessionLocal()
+        close = True
+    try:
+        locs = db.query(Location).filter(Location.active == True).order_by(Location.sort_order, Location.id).all()
+        return {loc.address: loc.report_email for loc in locs}
+    finally:
+        if close:
+            db.close()
 
 MONTHS_RU = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
              'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
@@ -191,7 +198,7 @@ def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes
     return buf.getvalue()
 
 
-def build_kitchen_excel(orders, delivery_date: date_type) -> bytes | None:
+def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = None) -> bytes | None:
     """Build 'Отчёт для кухни' — aggregated across all locations with per-location columns."""
     if not orders:
         return None
@@ -200,7 +207,7 @@ def build_kitchen_excel(orders, delivery_date: date_type) -> bytes | None:
     ws = wb.active
     ws.title = "Кухня"
 
-    loc_names = list(LOCATIONS.keys())  # Фонтанная 18, Алеутская 45, Енисейская 23
+    loc_names = list((locations_map or get_locations_map()).keys())
     num_cols = 3 + len(loc_names)  # №, Блюдо, loc1, loc2, loc3, Итого
 
     # Aggregate dishes per location and total
@@ -366,13 +373,15 @@ def send_report(force=False):
         logger.error(f"[EMAIL REPORT] SMTP connection failed: {e}")
         raise
 
+    locations_map = get_locations_map()
+
     try:
         sent_count = 0
 
         # 1. Отчёт по гостям — per location
-        for location, setting_key in LOCATIONS.items():
-            loc_emails = parse_emails(settings.get(setting_key, ""))
-            recipients = list(set(loc_emails + general_emails))  # location + general
+        for location, report_email in locations_map.items():
+            loc_emails = parse_emails(report_email or "")
+            recipients = list(set(loc_emails + general_emails))
             if not recipients:
                 continue
 
@@ -388,12 +397,12 @@ def send_report(force=False):
 
         # 2. Отчёт для кухни — all locations combined
         all_kitchen_emails = set(general_emails)
-        for setting_key in LOCATIONS.values():
-            all_kitchen_emails.update(parse_emails(settings.get(setting_key, "")))
+        for report_email in locations_map.values():
+            all_kitchen_emails.update(parse_emails(report_email or ""))
         all_kitchen_emails = list(all_kitchen_emails)
 
         if all_kitchen_emails:
-            kitchen_data = build_kitchen_excel(orders, delivery_date)
+            kitchen_data = build_kitchen_excel(orders, delivery_date, locations_map)
             if kitchen_data:
                 subject = f"Отчёт для кухни на {date_str_file} — все точки"
                 filename = f"Отчет для кухни на {date_str_file} (все точки).xlsx"
