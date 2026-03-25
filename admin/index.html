@@ -766,9 +766,6 @@
 
                 <div id="ordersLocationTabs" style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;">
                     <button class="btn btn-sm loc-tab active" data-loc="" onclick="switchLocTab(this)" style="padding:8px 16px;border-radius:20px;font-size:.85rem;">Все заказы</button>
-                    <button class="btn btn-sm loc-tab" data-loc="Фонтанная 18" onclick="switchLocTab(this)" style="padding:8px 16px;border-radius:20px;font-size:.85rem;">Фонтанная 18</button>
-                    <button class="btn btn-sm loc-tab" data-loc="Алеутская 45" onclick="switchLocTab(this)" style="padding:8px 16px;border-radius:20px;font-size:.85rem;">Алеутская 45</button>
-                    <button class="btn btn-sm loc-tab" data-loc="Енисейская 23" onclick="switchLocTab(this)" style="padding:8px 16px;border-radius:20px;font-size:.85rem;">Енисейская 23</button>
                 </div>
 
                 <div id="ordersDateContent"></div>
@@ -810,6 +807,11 @@
                         <div class="form-group" style="margin-bottom:14px;">
                             <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Описание (для шапки страницы)</label>
                             <input type="text" id="locDescription" placeholder="Точка выдачи в..." style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:14px;">
+                            <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Email для отчёта по гостям</label>
+                            <p style="font-size:.75rem;color:#999;margin:0 0 4px;">Каждая строчка — отдельный адрес</p>
+                            <textarea id="locReportEmail" rows="2" placeholder="email@example.com" style="width:100%;padding:10px 14px;border:1.5px solid #d0d0d0;border-radius:8px;font-size:.95rem;resize:vertical;"></textarea>
                         </div>
                         <div class="form-group" style="margin-bottom:14px;">
                             <label style="display:block;font-size:.85rem;color:#666;margin-bottom:4px;">Фото для шапки</label>
@@ -890,18 +892,7 @@
                         <label>Все точки — сводный отчёт для кухни</label>
                         <textarea id="setReportRecipient" class="setting-field" rows="3" placeholder="owner@mail.ru&#10;manager@mail.ru" style="resize:vertical;"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label>Фонтанная 18 (Sber) — отчёт по гостям</label>
-                        <textarea id="setReportEmailSber" class="setting-field" rows="2" placeholder="sber@mail.ru" style="resize:vertical;"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Алеутская 45 (Sky City) — отчёт по гостям</label>
-                        <textarea id="setReportEmailSkycity" class="setting-field" rows="2" placeholder="skycity@mail.ru" style="resize:vertical;"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Енисейская 23 (IBT) — отчёт по гостям</label>
-                        <textarea id="setReportEmailIbt" class="setting-field" rows="2" placeholder="ibt@mail.ru" style="resize:vertical;"></textarea>
-                    </div>
+                    <p style="font-size:.8rem;color:#999;margin:8px 0;">Email-адреса для отчётов по гостям настраиваются в каждой точке продаж отдельно (вкладка «Точки продаж» → Изменить).</p>
                     <div class="form-group">
                         <label>Время отправки</label>
                         <input type="time" id="setReportTime" class="setting-field" value="13:00" style="max-width:160px;">
@@ -1808,10 +1799,24 @@
                 String(delivery.getDate()).padStart(2, '0');
         }
 
+        function buildLocationTabs() {
+            const container = document.getElementById('ordersLocationTabs');
+            let html = '<button class="btn btn-sm loc-tab active" data-loc="" onclick="switchLocTab(this)" style="padding:8px 16px;border-radius:20px;font-size:.85rem;">Все заказы</button>';
+            const activeLocs = adminLocations.filter(l => l.active);
+            activeLocs.forEach(loc => {
+                html += '<button class="btn btn-sm loc-tab" data-loc="' + escH(loc.address) + '" onclick="switchLocTab(this)" style="padding:8px 16px;border-radius:20px;font-size:.85rem;">' + escH(loc.address) + '</button>';
+            });
+            container.innerHTML = html;
+        }
+
         async function loadOrdersByDate() {
             const dateStr = document.getElementById('ordersDate').value;
             if (!dateStr) { document.getElementById('ordersDateContent').innerHTML = '<p style="color:#666;">Выберите дату</p>'; return; }
             try {
+                if (!adminLocations.length) {
+                    adminLocations = await api('/api/admin/locations');
+                }
+                buildLocationTabs();
                 const orders = await api('/api/admin/orders');
                 allDateOrders = orders.filter(o => o.createdAt && getOrderDeliveryDate(o.createdAt) === dateStr);
                 applyLocFilter();
@@ -1823,8 +1828,8 @@
 
             // Update tab counters
             var locCounts = { '': allDateOrders.length };
-            ['Фонтанная 18','Алеутская 45','Енисейская 23'].forEach(a => {
-                locCounts[a] = allDateOrders.filter(o => (o.address || '') === a).length;
+            adminLocations.filter(l => l.active).forEach(l => {
+                locCounts[l.address] = allDateOrders.filter(o => (o.address || '') === l.address).length;
             });
             document.querySelectorAll('.loc-tab').forEach(btn => {
                 var loc = btn.getAttribute('data-loc');
@@ -2012,8 +2017,8 @@
             try { await loadXlsx(); } catch (e) { showToast(e.message); return; }
 
             var deliveryDate = new Date(dateStr + 'T00:00:00');
-            var locNames = ['Фонтанная 18', 'Алеутская 45', 'Енисейская 23'];
-            var numCols = 3 + locNames.length; // №, Блюдо, loc1, loc2, loc3, Итого
+            var locNames = adminLocations.filter(l => l.active).map(l => l.address);
+            var numCols = 3 + locNames.length;
 
             // Aggregate dishes per location and total
             var perLoc = {};
@@ -2208,6 +2213,7 @@
             document.getElementById('locAddress').value = loc ? loc.address : '';
             document.getElementById('locSlug').value = loc ? loc.slug : '';
             document.getElementById('locDescription').value = loc ? (loc.description || '') : '';
+            document.getElementById('locReportEmail').value = loc ? (loc.reportEmail || '') : '';
             _locFormSlug = loc ? loc.slug : '';
             document.getElementById('locImage').value = '';
             _locFormImageUrl = (loc && loc.imageUrl) || null;
@@ -2251,6 +2257,7 @@
                 address: document.getElementById('locAddress').value,
                 slug: document.getElementById('locSlug').value,
                 description: document.getElementById('locDescription').value,
+                report_email: document.getElementById('locReportEmail').value,
                 active: true,
             };
             try {
@@ -2445,9 +2452,6 @@
                 document.getElementById('setReportSmtpEmail').value = s.reportSmtpEmail || '';
                 document.getElementById('setReportSmtpPassword').value = s.reportSmtpPassword || '';
                 document.getElementById('setReportRecipient').value = s.reportRecipient || '';
-                document.getElementById('setReportEmailSber').value = s.reportEmailSber || '';
-                document.getElementById('setReportEmailSkycity').value = s.reportEmailSkycity || '';
-                document.getElementById('setReportEmailIbt').value = s.reportEmailIbt || '';
                 document.getElementById('setReportTime').value = s.reportTime || '13:00';
             } catch (e) { /* first time, fields stay empty */ }
         }
@@ -2456,9 +2460,9 @@
 
         async function saveSettings() {
             const fields = ['heroTitle','heroSub','catalogTitle','catalogSub','aboutTitle','aboutSub','address','phone','email','schedule','footer',
-                'reportEnabled','reportSmtpHost','reportSmtpPort','reportSmtpEmail','reportSmtpPassword','reportRecipient','reportEmailSber','reportEmailSkycity','reportEmailIbt','reportTime'];
+                'reportEnabled','reportSmtpHost','reportSmtpPort','reportSmtpEmail','reportSmtpPassword','reportRecipient','reportTime'];
             const ids = ['setHeroTitle','setHeroSub','setCatalogTitle','setCatalogSub','setAboutTitle','setAboutSub','setAddress','setPhone','setEmail','setSchedule','setFooter',
-                'setReportEnabled','setReportSmtpHost','setReportSmtpPort','setReportSmtpEmail','setReportSmtpPassword','setReportRecipient','setReportEmailSber','setReportEmailSkycity','setReportEmailIbt','setReportTime'];
+                'setReportEnabled','setReportSmtpHost','setReportSmtpPort','setReportSmtpEmail','setReportSmtpPassword','setReportRecipient','setReportTime'];
             const body = fields.map((key, i) => {
                 const el = document.getElementById(ids[i]);
                 const value = el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;

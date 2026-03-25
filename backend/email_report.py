@@ -67,8 +67,7 @@ def get_report_settings() -> dict | None:
             SiteSettings.key.in_([
                 "reportEnabled", "reportSmtpHost", "reportSmtpPort",
                 "reportSmtpEmail", "reportSmtpPassword",
-                "reportRecipient", "reportEmailSber", "reportEmailSkycity",
-                "reportEmailIbt", "reportTime",
+                "reportRecipient", "reportTime",
             ])
         ).all()
         s = {row.key: row.value for row in settings}
@@ -76,13 +75,11 @@ def get_report_settings() -> dict | None:
             return None
         if not s.get("reportSmtpEmail") or not s.get("reportSmtpPassword"):
             return None
-        # Need at least one recipient
-        has_recipient = (
-            s.get("reportRecipient", "").strip() or
-            s.get("reportEmailSber", "").strip() or
-            s.get("reportEmailSkycity", "").strip() or
-            s.get("reportEmailIbt", "").strip()
-        )
+        # Need at least one recipient (general or per-location from DB)
+        locations_map = get_locations_map()
+        has_recipient = bool(s.get("reportRecipient", "").strip())
+        if not has_recipient:
+            has_recipient = any(v for v in locations_map.values() if v and v.strip())
         if not has_recipient:
             return None
         return s
@@ -238,7 +235,7 @@ def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = 
 
     ws.append([])  # empty row
 
-    # Headers: №, Блюдо, Фонтанная 18, Алеутская 45, Енисейская 23, Итого
+    # Headers: №, Блюдо, [locations...], Итого
     headers = ["№", "Блюдо"] + loc_names + ["Итого"]
     ws.append(headers)
     header_row = 5
