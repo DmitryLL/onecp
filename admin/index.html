@@ -2121,6 +2121,8 @@
                         <td><code>/${escH(loc.slug)}</code></td>
                         <td style="white-space:nowrap;">
                             <button class="btn btn-secondary btn-sm" onclick="editLocation(${loc.id})">Изменить</button>
+                            ${loc.imageUrl ? '<button class="btn btn-sm" style="background:#3498db;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="downloadLocImage(\'' + escH(loc.imageUrl) + '\',\'' + escH(loc.slug) + '_top\')">⬇ Шапка</button>' : ''}
+                            ${loc.bottomImageUrl ? '<button class="btn btn-sm" style="background:#3498db;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="downloadLocImage(\'' + escH(loc.bottomImageUrl) + '\',\'' + escH(loc.slug) + '_bottom\')">⬇ Низ</button>' : ''}
                             <button class="btn btn-sm" style="background:#888;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;" onclick="archiveLocation(${loc.id})">В архив</button>
                         </td>
                     </tr>`).join('') + '</tbody></table>';
@@ -2140,6 +2142,15 @@
             }
 
             container.innerHTML = html;
+        }
+
+        function downloadLocImage(url, name) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name + '.' + url.split('.').pop();
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         function openLocationForm(loc) {
