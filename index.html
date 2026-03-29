@@ -3299,7 +3299,6 @@
                 }
                 document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
                 document.getElementById('orderAddress').value = locInfo.address;
-                document.getElementById('siteHeroTitle').textContent = locInfo.description;
                 document.getElementById('siteHeroSub').innerHTML =
                     '<span class="hero-loc-info">' +
                         '<span class="hero-loc-chip"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + esc(locInfo.address) + '</span>' +
