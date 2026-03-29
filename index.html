@@ -2508,10 +2508,10 @@
         });
         document.querySelectorAll('.auth-digit,.forgot-digit').forEach(function(d) { d.value = ''; d.classList.remove('filled'); });
     }
-    function closeAuthModal() {
+    function closeAuthModal(keepFields) {
         document.getElementById('authOverlay').classList.remove('open');
         document.body.style.overflow = '';
-        clearAuthFields();
+        if (!keepFields) clearAuthFields();
     }
     function authShowLogin() { hideAllAuthPanels(); document.getElementById('authLogin').style.display = 'block'; }
     function authShowRegister() { hideAllAuthPanels(); document.getElementById('authReg1').style.display = 'block'; }
@@ -2578,7 +2578,7 @@
         if (pass1 !== pass2) { errEl.textContent = 'Пароли не совпадают'; return; }
         // Fields valid — show consent flow
         _pendingAction = 'register';
-        closeAuthModal();
+        closeAuthModal(true);
         showRegConsentModal(name, '+7' + phoneRaw);
     }
 
