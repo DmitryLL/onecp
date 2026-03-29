@@ -2501,10 +2501,9 @@
             } catch(e) { _ocAllowedDates = new Set(); }
 
             var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
-            var target = new Date(now);
-            target.setDate(target.getDate() + (now.getHours() >= 14 ? 2 : 1));
+            var target = now;
             var targetStr = target.getFullYear() + '-' + String(target.getMonth() + 1).padStart(2, '0') + '-' + String(target.getDate()).padStart(2, '0');
-            // If target date not in allowed, pick closest allowed date
+            // If today not in allowed, pick closest allowed date
             if (_ocAllowedDates.size && !_ocAllowedDates.has(targetStr)) {
                 var sorted = Array.from(_ocAllowedDates).sort();
                 var closest = sorted.find(d => d >= targetStr) || sorted[sorted.length - 1];
