@@ -800,6 +800,13 @@ def update_calendar_day(day_date: str, body: CalendarDayUpdate, admin: AdminUser
     return {"ok": True}
 
 
+@router.get("/calendar/dates")
+def get_calendar_dates(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    """Return all calendar day dates as a flat list."""
+    days = db.query(CalendarDay.date).order_by(CalendarDay.date).all()
+    return {"dates": [d.date.isoformat() for d in days]}
+
+
 @router.post("/calendar/regenerate")
 def regenerate_calendar(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
     """Delete all future days and regenerate."""

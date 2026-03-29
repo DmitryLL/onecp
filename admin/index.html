@@ -221,6 +221,11 @@
         .oc-cell.oc-wkend.oc-selected { color: #fff; }
         .oc-cell.oc-wkend.oc-other { color: #f0c0c0; }
         .oc-cell.oc-empty { cursor: default; }
+        .oc-cell.oc-disabled {
+            color: #ddd !important;
+            cursor: default;
+            pointer-events: none;
+        }
 
         /* ===== TABLE ===== */
         .table-wrap {
@@ -2484,16 +2489,30 @@
 
         // ===== ORDERS CALENDAR =====
         var _ocYear, _ocMonth, _ocSelected;
+        var _ocAllowedDates = new Set();
         const OC_MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
         const OC_MONTHS_SHORT = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
 
-        function ocInit() {
+        async function ocInit() {
+            try {
+                var res = await api('/api/admin/calendar/dates');
+                _ocAllowedDates = new Set(res.dates || []);
+            } catch(e) { _ocAllowedDates = new Set(); }
+
             var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
             var target = new Date(now);
             target.setDate(target.getDate() + (now.getHours() >= 14 ? 2 : 1));
+            var targetStr = target.getFullYear() + '-' + String(target.getMonth() + 1).padStart(2, '0') + '-' + String(target.getDate()).padStart(2, '0');
+            // If target date not in allowed, pick closest allowed date
+            if (_ocAllowedDates.size && !_ocAllowedDates.has(targetStr)) {
+                var sorted = Array.from(_ocAllowedDates).sort();
+                var closest = sorted.find(d => d >= targetStr) || sorted[sorted.length - 1];
+                targetStr = closest;
+                target = new Date(targetStr + 'T00:00:00');
+            }
             _ocYear = target.getFullYear();
             _ocMonth = target.getMonth();
-            _ocSelected = _ocYear + '-' + String(_ocMonth + 1).padStart(2, '0') + '-' + String(target.getDate()).padStart(2, '0');
+            _ocSelected = targetStr;
             document.getElementById('ordersDate').value = _ocSelected;
             ocUpdateLabel();
             ocRender();
@@ -2547,7 +2566,7 @@
             var todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
 
             var firstDay = new Date(_ocYear, _ocMonth, 1);
-            var startDow = (firstDay.getDay() + 6) % 7; // Mon=0
+            var startDow = (firstDay.getDay() + 6) % 7;
             var daysInMonth = new Date(_ocYear, _ocMonth + 1, 0).getDate();
             var prevMonthDays = new Date(_ocYear, _ocMonth, 0).getDate();
 
@@ -2558,19 +2577,30 @@
                 var m = _ocMonth - 1 < 0 ? 11 : _ocMonth - 1;
                 var y = _ocMonth - 1 < 0 ? _ocYear - 1 : _ocYear;
                 var ds = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var allowed = _ocAllowedDates.has(ds);
                 var dow = (startDow - i - 1 + 7) % 7;
                 var wk = dow >= 5 ? ' oc-wkend' : '';
-                html += '<div class="oc-cell oc-other' + wk + '" onclick="ocSelectDay(\'' + ds + '\')">' + d + '</div>';
+                if (allowed) {
+                    html += '<div class="oc-cell oc-other' + wk + '" onclick="ocSelectDay(\'' + ds + '\')">' + d + '</div>';
+                } else {
+                    html += '<div class="oc-cell oc-other oc-disabled' + wk + '">' + d + '</div>';
+                }
             }
             // Current month days
             for (var d = 1; d <= daysInMonth; d++) {
                 var ds = _ocYear + '-' + String(_ocMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var allowed = _ocAllowedDates.has(ds);
                 var dow = (startDow + d - 1) % 7;
                 var cls = 'oc-cell';
                 if (dow >= 5) cls += ' oc-wkend';
                 if (ds === todayStr) cls += ' oc-today';
                 if (ds === _ocSelected) cls += ' oc-selected';
-                html += '<div class="' + cls + '" onclick="ocSelectDay(\'' + ds + '\')">' + d + '</div>';
+                if (!allowed) cls += ' oc-disabled';
+                if (allowed) {
+                    html += '<div class="' + cls + '" onclick="ocSelectDay(\'' + ds + '\')">' + d + '</div>';
+                } else {
+                    html += '<div class="' + cls + '">' + d + '</div>';
+                }
             }
             // Next month leading days
             var totalCells = startDow + daysInMonth;
@@ -2579,9 +2609,14 @@
                 var m = _ocMonth + 1 > 11 ? 0 : _ocMonth + 1;
                 var y = _ocMonth + 1 > 11 ? _ocYear + 1 : _ocYear;
                 var ds = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var allowed = _ocAllowedDates.has(ds);
                 var dow = (totalCells + d - 1) % 7;
                 var wk = dow >= 5 ? ' oc-wkend' : '';
-                html += '<div class="oc-cell oc-other' + wk + '" onclick="ocSelectDay(\'' + ds + '\')">' + d + '</div>';
+                if (allowed) {
+                    html += '<div class="oc-cell oc-other' + wk + '" onclick="ocSelectDay(\'' + ds + '\')">' + d + '</div>';
+                } else {
+                    html += '<div class="oc-cell oc-other oc-disabled' + wk + '">' + d + '</div>';
+                }
             }
             document.getElementById('ocGrid').innerHTML = html;
         }
