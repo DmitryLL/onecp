@@ -2444,9 +2444,16 @@
         });
 
         // ===== NOTIFY =====
+        function getNotifyDate() {
+            const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
+            const d = now.getHours() >= 14 ? new Date(now.getTime() + 86400000) : now;
+            return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+        }
+
         async function loadNotifyPanel() {
             const container = document.getElementById('notifyLocations');
             container.innerHTML = '<p style="color:#888;">Загрузка точек...</p>';
+            const dateStr = getNotifyDate();
             try {
                 const data = await api('/api/admin/locations');
                 const locs = data.locations || data;
@@ -2463,7 +2470,7 @@
                         <div style="display:flex;align-items:center;gap:12px;">
                             <span id="notifyStatus_${loc.id}" style="font-size:.85rem;color:#888;"></span>
                             <button class="btn btn-primary btn-sm" onclick="sendPickupNotify(${loc.id}, '${loc.name.replace(/'/g, "\\'")}')">
-                                Отправить уведомление
+                                Отправить уведомление на ${dateStr}
                             </button>
                         </div>
                     </div>
@@ -2475,7 +2482,8 @@
 
         async function sendPickupNotify(locationId, locationName) {
             const status = document.getElementById('notifyStatus_' + locationId);
-            if (!confirm(`Отправить уведомление клиентам точки «${locationName}» о готовности заказа?`)) return;
+            const dateStr = getNotifyDate();
+            if (!confirm(`Отправить уведомление клиентам точки «${locationName}» на ${dateStr} о готовности заказа?`)) return;
             status.textContent = 'Отправка...';
             status.style.color = '#888';
             try {

@@ -432,12 +432,16 @@ def send_pickup_notification(location_id: int):
             raise ValueError("Точка не найдена")
 
         now_vlad = datetime.now(VLAD_TZ)
-        delivery_date = now_vlad.date()
+        if now_vlad.hour >= 14:
+            delivery_date = (now_vlad + timedelta(days=1)).date()
+        else:
+            delivery_date = now_vlad.date()
 
         orders = load_orders_for_delivery_date(delivery_date)
         loc_orders = [o for o in orders if (o.address or "") == location.address]
+        date_str_short = delivery_date.strftime("%d.%m")
         if not loc_orders:
-            raise ValueError(f"Нет заказов на сегодня для точки «{location.name}»")
+            raise ValueError(f"Нет заказов на {date_str_short} для точки «{location.name}»")
 
         # Collect unique customer emails
         customer_ids = list(set(o.customer_id for o in loc_orders))
