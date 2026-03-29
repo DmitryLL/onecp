@@ -1026,8 +1026,10 @@
                 <div class="page-header">
                     <h1>Уведомления</h1>
                 </div>
-                <p style="color:#999;margin-bottom:20px;font-size:.9rem;">Отправьте клиентам уведомление о том, что их заказ готов к выдаче на конкретной точке.</p>
-                <div id="notifyLocations" style="display:flex;flex-direction:column;gap:16px;"></div>
+                <div class="settings-card" style="background:#f9f9f9;border:1px dashed #d0d0d0;padding:16px 20px;">
+                    <p style="color:#666;font-size:.9rem;margin:0;">Отправьте клиентам уведомление о том, что их заказ готов к выдаче на конкретной точке. Уведомление получат все клиенты, оформившие заказ на указанную дату.</p>
+                </div>
+                <div id="notifyLocations" style="display:flex;flex-direction:column;gap:12px;"></div>
             </div>
         </div>
     </div>
@@ -2458,25 +2460,28 @@
                 const data = await api('/api/admin/locations');
                 const locs = data.locations || data;
                 if (!locs.length) {
-                    container.innerHTML = '<p style="color:#888;">Нет активных точек продаж.</p>';
+                    container.innerHTML = '<div class="settings-card" style="text-align:center;"><p style="color:#999;margin:0;">Нет активных точек продаж</p></div>';
                     return;
                 }
                 container.innerHTML = locs.map(loc => `
-                    <div style="background:#2a2a2a;border-radius:12px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
-                        <div>
-                            <div style="font-size:1.1rem;font-weight:600;color:#fff;">${loc.name}</div>
-                            <div style="color:#999;font-size:.85rem;margin-top:4px;">${loc.address}</div>
+                    <div class="settings-card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 24px;margin-bottom:0;">
+                        <div style="display:flex;align-items:center;gap:14px;">
+                            <div style="width:44px;height:44px;background:#f0ebe5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">📍</div>
+                            <div>
+                                <div style="font-size:1.05rem;font-weight:600;color:#1a1a1a;">${loc.name}</div>
+                                <div style="color:#888;font-size:.85rem;margin-top:2px;">${loc.address}</div>
+                            </div>
                         </div>
-                        <div style="display:flex;align-items:center;gap:12px;">
-                            <span id="notifyStatus_${loc.id}" style="font-size:.85rem;color:#888;"></span>
-                            <button class="btn btn-primary btn-sm" onclick="sendPickupNotify(${loc.id}, '${loc.name.replace(/'/g, "\\'")}')">
-                                Отправить уведомление на ${dateStr}
+                        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+                            <span id="notifyStatus_${loc.id}" style="font-size:.85rem;color:#888;white-space:nowrap;"></span>
+                            <button class="btn btn-primary btn-sm" onclick="sendPickupNotify(${loc.id}, '${loc.name.replace(/'/g, "\\'")}')" style="white-space:nowrap;">
+                                📨 Уведомить на ${dateStr}
                             </button>
                         </div>
                     </div>
                 `).join('');
             } catch (e) {
-                container.innerHTML = '<p style="color:#e74c3c;">Ошибка загрузки: ' + e.message + '</p>';
+                container.innerHTML = '<div class="settings-card"><p style="color:#e74c3c;margin:0;">Ошибка загрузки: ' + e.message + '</p></div>';
             }
         }
 
