@@ -803,7 +803,7 @@
 
                 <!-- Location form modal -->
                 <div id="locationFormOverlay" class="modal-overlay" onclick="if(event.target===this)closeLocationForm()" style="display:none;">
-                    <div style="background:#fff;border-radius:20px;padding:32px;width:95%;max-width:520px;margin:20px;">
+                    <div style="background:#fff;border-radius:20px;padding:32px;width:95%;max-width:520px;margin:20px;max-height:90vh;overflow-y:auto;">
                         <h2 id="locationFormTitle" style="margin-bottom:20px;">Новая точка</h2>
                         <input type="hidden" id="locEditId">
                         <div class="form-group" style="margin-bottom:14px;">
@@ -2039,11 +2039,10 @@
         }
 
         let _locFormImageUrl = null;
-        let _locFormBottomImageUrl = null;
         let _locFormSlug = '';
 
         function downloadLocImageFromForm(type) {
-            const url = type === 'top' ? _locFormImageUrl : _locFormBottomImageUrl;
+            const url = _locFormImageUrl;
             if (!url) return;
             const a = document.createElement('a');
             a.href = url;
@@ -2071,17 +2070,6 @@
                 document.getElementById('locImagePreview').innerHTML = '';
                 document.getElementById('locImageDeleteBtn').style.display = 'none';
                 document.getElementById('locImageDownloadBtn').style.display = 'none';
-            }
-            document.getElementById('locBottomImage').value = '';
-            _locFormBottomImageUrl = (loc && loc.bottomImageUrl) || null;
-            if (_locFormBottomImageUrl) {
-                document.getElementById('locBottomImagePreview').innerHTML = '<img src="' + _locFormBottomImageUrl + '" style="width:200px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #ddd;">';
-                document.getElementById('locBottomImageDeleteBtn').style.display = 'inline-block';
-                document.getElementById('locBottomImageDownloadBtn').style.display = 'inline-block';
-            } else {
-                document.getElementById('locBottomImagePreview').innerHTML = '';
-                document.getElementById('locBottomImageDeleteBtn').style.display = 'none';
-                document.getElementById('locBottomImageDownloadBtn').style.display = 'none';
             }
             document.getElementById('locationFormTitle').textContent = loc ? 'Редактировать точку' : 'Новая точка';
             document.getElementById('locationFormOverlay').style.display = 'flex';
@@ -2124,15 +2112,6 @@
                     });
                     if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Ошибка загрузки шапки'); }
                 }
-                const bottomInput = document.getElementById('locBottomImage');
-                if (bottomInput.files.length && locId) {
-                    const fd = new FormData();
-                    fd.append('file', bottomInput.files[0]);
-                    const r = await fetch('/api/admin/locations/' + locId + '/bottom-image', {
-                        method: 'POST', headers: { 'Authorization': 'Bearer ' + adminToken }, body: fd
-                    });
-                    if (!r.ok) { const e = await r.json(); throw new Error(e.detail || 'Ошибка загрузки нижнего фото'); }
-                }
                 closeLocationForm();
                 showToast('Точка сохранена');
                 await loadLocations();
@@ -2153,19 +2132,6 @@
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
-        async function deleteLocBottomImage() {
-            const id = document.getElementById('locEditId').value;
-            if (!id) return;
-            try {
-                await api('/api/admin/locations/' + id + '/bottom-image', { method: 'DELETE' });
-                document.getElementById('locBottomImagePreview').innerHTML = '';
-                document.getElementById('locBottomImageDeleteBtn').style.display = 'none';
-                document.getElementById('locBottomImageDownloadBtn').style.display = 'none';
-                _locFormBottomImageUrl = null;
-                showToast('Картинка удалена');
-                await loadLocations();
-            } catch (e) { showToast('Ошибка: ' + e.message); }
-        }
 
         function archiveLocation(id) {
             const loc = adminLocations.find(l => l.id === id);
