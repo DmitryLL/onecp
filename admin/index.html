@@ -741,15 +741,216 @@
         }
         .cal-day-select:hover, .cal-day-select:focus { border-color: #c8956c; outline: none; }
 
+        /* ===== MOBILE TOP BAR ===== */
+        .mobile-topbar {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            z-index: 150;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        }
+        .mobile-topbar .burger {
+            width: 40px; height: 40px;
+            background: none; border: none;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 10px;
+            transition: background .2s;
+        }
+        .mobile-topbar .burger:hover { background: #f0f0f0; }
+        .mobile-topbar .burger svg { width: 24px; height: 24px; color: #1a1a1a; }
+        .mobile-topbar .topbar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mobile-topbar .topbar-logo {
+            height: 32px; width: auto; border-radius: 6px;
+        }
+
+        /* ===== MOBILE MENU OVERLAY ===== */
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0,0,0,.4);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            transition: opacity .25s;
+        }
+        .mobile-menu-overlay.open {
+            opacity: 1;
+        }
+        .mobile-menu {
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 280px;
+            max-width: 80vw;
+            background: #fff;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(-100%);
+            transition: transform .25s ease;
+            box-shadow: 4px 0 24px rgba(0,0,0,.12);
+        }
+        .mobile-menu-overlay.open .mobile-menu {
+            transform: translateX(0);
+        }
+        .mobile-menu .mm-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .mobile-menu .mm-header img {
+            height: 36px; width: auto; border-radius: 8px;
+        }
+        .mobile-menu .mm-header span {
+            font-size: 1.1rem; font-weight: 700; color: #1a1a1a;
+        }
+        .mobile-menu .mm-nav {
+            flex: 1; display: flex; flex-direction: column; gap: 2px;
+            overflow-y: auto;
+        }
+        .mobile-menu .mm-nav a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px;
+            color: #777;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: background .2s, color .2s;
+        }
+        .mobile-menu .mm-nav a:hover, .mobile-menu .mm-nav a.active {
+            background: rgba(0,0,0,.05); color: #1a1a1a;
+        }
+        .mobile-menu .mm-bottom {
+            border-top: 1px solid #e0e0e0;
+            padding-top: 16px;
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .mobile-menu .mm-bottom a {
+            display: block;
+            color: #666; text-decoration: none;
+            padding: 12px 14px;
+            font-size: .95rem;
+            border-radius: 10px;
+            transition: background .2s;
+        }
+        .mobile-menu .mm-bottom a:hover { background: rgba(0,0,0,.05); }
+        .mobile-menu .mm-bottom a.mm-logout { color: #e74c3c; }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .sidebar { display: none; }
-            .main { margin-left: 0; padding: 16px; }
+            .main { margin-left: 0; padding: 16px; padding-top: 72px; }
+            .mobile-topbar { display: flex; }
+            .mobile-menu-overlay { display: block; pointer-events: none; }
+            .mobile-menu-overlay.open { pointer-events: auto; }
             .actions-cell { flex-direction: column; }
+
+            /* Tables scroll horizontally */
+            .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .table-wrap table { min-width: 600px; }
+
+            /* Page header stack */
+            .page-header { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+            .page-header h1 { font-size: 1.3rem; }
+
+            /* Modals full-width */
+            .modal-overlay > div, .modal-overlay .modal {
+                width: 95% !important;
+                max-width: 100% !important;
+                margin: 10px !important;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            .modal { padding: 24px 18px !important; }
+
+            /* Settings card */
+            .settings-card { padding: 18px !important; }
+
+            /* Sets panel */
+            #setsList { max-width: 100% !important; }
+            .set-card-header { flex-wrap: wrap; gap: 8px; }
+            .set-card-actions { width: 100%; display: flex; gap: 6px; }
+
+            /* Orders panel buttons */
+            #ordersPanel > div:nth-child(2) { flex-direction: column; gap: 8px; }
+
+            /* Calendar days */
+            .cal-day { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .cal-date { min-width: unset; }
+
+            /* Notify cards */
+            #notifyLocations .settings-card { padding: 14px !important; }
+
+            /* Users panel cards */
+            .user-card { flex-direction: column !important; }
+
+            /* Customers search */
+            #customerSearch { max-width: 100% !important; }
+
+            /* Location form */
+            #locationFormOverlay > div { width: 95% !important; padding: 20px !important; }
+
+            /* Loc cols setting */
+            #locationsPanel > div:first-of-type { flex-direction: column; gap: 8px; }
+
+            /* Orders location tabs scroll */
+            #ordersLocationTabs { overflow-x: auto; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+            #ordersLocationTabs .loc-tab { white-space: nowrap; flex-shrink: 0; }
         }
     </style>
 </head>
 <body>
+    <!-- MOBILE TOP BAR -->
+    <div class="mobile-topbar">
+        <button class="burger" onclick="toggleMobileMenu()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="topbar-title" id="mobileTitle">Заказы</span>
+        <img src="/images/logo_backup.png" alt="OCP" class="topbar-logo">
+    </div>
+
+    <!-- MOBILE MENU OVERLAY -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="if(event.target===this)closeMobileMenu()">
+        <div class="mobile-menu">
+            <div class="mm-header">
+                <img src="/images/logo_backup.png" alt="OCP">
+                <span>One Coffee Place</span>
+            </div>
+            <nav class="mm-nav" id="mobileNav">
+                <a href="#orders" onclick="mobileNavTo('orders',event)">📋 Заказы</a>
+                <a href="#questions" onclick="mobileNavTo('questions',event)">💬 Вопросы</a>
+                <a href="#products" onclick="mobileNavTo('products',event)">📦 Товары</a>
+                <a href="#sets" onclick="mobileNavTo('sets',event)">🎁 Наборы</a>
+                <a href="#calendar" onclick="mobileNavTo('calendar',event)">📅 Календарь</a>
+                <a href="#clients" onclick="mobileNavTo('clients',event)">👥 Клиенты</a>
+                <a href="#locations" onclick="mobileNavTo('locations',event)">📍 Точки продаж</a>
+                <a href="#settings" onclick="mobileNavTo('settings',event)">📨 Рассылки</a>
+                <a href="#notify" onclick="mobileNavTo('notify',event)">📣 Уведомления</a>
+                <a href="#users" onclick="mobileNavTo('users',event)" class="admin-only-nav">👤 Пользователи</a>
+            </nav>
+            <div class="mm-bottom">
+                <a href="/">← В каталог</a>
+                <a href="#" class="mm-logout" onclick="logout(); return false;">Выйти</a>
+            </div>
+        </div>
+    </div>
+
     <div class="layout">
         <!-- SIDEBAR -->
         <aside class="sidebar">
@@ -1233,6 +1434,7 @@
             } else {
                 document.querySelectorAll('.admin-only-nav').forEach(el => el.style.display = '');
             }
+            applyMobileRoleUI();
         }
 
         async function api(url, opts = {}) {
@@ -1701,6 +1903,7 @@
                 loadSettingsForm();
             }
             links[panelMap[panel]]?.classList.add('active');
+            updateMobileNav(panel);
         }
         window.addEventListener('hashchange', () => {
             const seg = location.hash.replace(/^#/, '') || 'orders';
@@ -2950,6 +3153,52 @@
                 }
             }
             document.getElementById('ocGrid').innerHTML = html;
+        }
+
+        // ===== MOBILE MENU =====
+        function toggleMobileMenu() {
+            const ov = document.getElementById('mobileMenuOverlay');
+            if (ov.classList.contains('open')) closeMobileMenu();
+            else openMobileMenu();
+        }
+        function openMobileMenu() {
+            const ov = document.getElementById('mobileMenuOverlay');
+            ov.style.pointerEvents = 'auto';
+            requestAnimationFrame(() => ov.classList.add('open'));
+        }
+        function closeMobileMenu() {
+            const ov = document.getElementById('mobileMenuOverlay');
+            ov.classList.remove('open');
+            setTimeout(() => { ov.style.pointerEvents = ''; }, 260);
+        }
+        function mobileNavTo(panel, e) {
+            if (e) e.preventDefault();
+            closeMobileMenu();
+            location.hash = panel;
+            showPanel(panel);
+        }
+        function updateMobileNav(panel) {
+            // Update mobile title
+            const title = panelTitles[panel] || 'One Coffee Place';
+            const mt = document.getElementById('mobileTitle');
+            if (mt) mt.textContent = title;
+            // Update active state in mobile nav
+            document.querySelectorAll('#mobileNav a').forEach(a => {
+                const href = a.getAttribute('href')?.replace('#', '');
+                a.classList.toggle('active', href === panel);
+            });
+        }
+        function applyMobileRoleUI() {
+            if (_userRole === 'operator') {
+                document.querySelectorAll('#mobileNav a').forEach(a => {
+                    if (!a.getAttribute('href')?.includes('notify')) a.style.display = 'none';
+                });
+                document.querySelectorAll('#mobileNav .admin-only-nav').forEach(el => el.style.display = 'none');
+                const catalogLink = document.querySelector('.mm-bottom a[href="/"]');
+                if (catalogLink) catalogLink.style.display = 'none';
+            } else {
+                document.querySelectorAll('#mobileNav .admin-only-nav').forEach(el => el.style.display = '');
+            }
         }
 
         // ===== INIT =====
