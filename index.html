@@ -3242,7 +3242,7 @@
                 return d.innerHTML.replace(/\n/g, '<br>');
             }
             if (s.heroTitle && !locInfo) document.getElementById('siteHeroTitle').innerHTML = nl2br(s.heroTitle);
-            if (s.heroSub && !locInfo) document.getElementById('siteHeroSub').innerHTML = nl2br(s.heroSub);
+            // heroSub заполняется только данными точки, не из настроек
             // catalogTitle now auto-generated with tomorrow's date
             // if (s.catalogTitle) document.getElementById('siteCatalogTitle').innerHTML = nl2br(s.catalogTitle);
             // if (s.catalogSub) document.getElementById('siteCatalogSub').innerHTML = nl2br(s.catalogSub);
