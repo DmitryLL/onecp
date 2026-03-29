@@ -756,15 +756,15 @@
             <div class="sidebar-logo"><img src="/images/logo_backup.png" alt="One Coffee Place" style="height:40px;width:auto;border-radius:8px;"></div>
             <div class="sidebar-sub">Панель управления</div>
             <nav class="sidebar-nav">
-                <a href="/orders" onclick="navTo('orders',event)">📋 Заказы</a>
-                <a href="/questions" onclick="navTo('questions',event)">💬 Вопросы</a>
-                <a href="/products" onclick="navTo('products',event)">📦 Товары</a>
-                <a href="/sets" onclick="navTo('sets',event)">🎁 Наборы</a>
-                <a href="/calendar" onclick="navTo('calendar',event)">📅 Календарь</a>
-                <a href="/clients" onclick="navTo('clients',event)">👥 Клиенты</a>
-                <a href="/locations" onclick="navTo('locations',event)">📍 Точки продаж</a>
-                <a href="/settings" onclick="navTo('settings',event)">📨 Рассылки</a>
-                <a href="/notify" onclick="navTo('notify',event)">📣 Уведомления</a>
+                <a href="#orders" onclick="navTo('orders',event)">📋 Заказы</a>
+                <a href="#questions" onclick="navTo('questions',event)">💬 Вопросы</a>
+                <a href="#products" onclick="navTo('products',event)">📦 Товары</a>
+                <a href="#sets" onclick="navTo('sets',event)">🎁 Наборы</a>
+                <a href="#calendar" onclick="navTo('calendar',event)">📅 Календарь</a>
+                <a href="#clients" onclick="navTo('clients',event)">👥 Клиенты</a>
+                <a href="#locations" onclick="navTo('locations',event)">📍 Точки продаж</a>
+                <a href="#settings" onclick="navTo('settings',event)">📨 Рассылки</a>
+                <a href="#notify" onclick="navTo('notify',event)">📣 Уведомления</a>
             </nav>
             <div class="sidebar-bottom">
                 <a href="/" class="sidebar-nav" style="color:#666;text-decoration:none;padding:10px 14px;font-size:.9rem;">← В каталог</a>
@@ -1562,7 +1562,7 @@
         const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', clients:'Клиенты', locations:'Точки продаж', settings:'Рассылки', notify:'Уведомления'};
         function navTo(panel, e) {
             if (e) e.preventDefault();
-            history.pushState(null, '', '/' + panel);
+            location.hash = panel;
             showPanel(panel);
         }
         function showPanel(panel) {
@@ -1611,8 +1611,8 @@
             }
             links[panelMap[panel]]?.classList.add('active');
         }
-        window.addEventListener('popstate', () => {
-            const seg = location.pathname.replace(/^\//, '') || 'orders';
+        window.addEventListener('hashchange', () => {
+            const seg = location.hash.replace(/^#/, '') || 'orders';
             showPanel(seg);
         });
 
@@ -2695,7 +2695,7 @@
 
         // ===== INIT =====
         ocInit();
-        const initPanel = location.pathname.replace(/^\//, '') || 'orders';
+        const initPanel = location.hash.replace(/^#/, '') || 'orders';
         showPanel(initPanel);
         loadDishes();
     </script>
