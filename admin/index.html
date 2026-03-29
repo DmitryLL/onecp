@@ -131,6 +131,94 @@
             font-size: .85rem;
         }
 
+        /* ===== ORDERS CALENDAR ===== */
+        .orders-calendar {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-width: 380px;
+            box-shadow: 0 2px 12px rgba(0,0,0,.06);
+        }
+        .oc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .oc-month-label {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-transform: capitalize;
+        }
+        .oc-nav {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            color: #555;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background .2s, color .2s;
+            line-height: 1;
+        }
+        .oc-nav:hover { background: #e0e0e0; color: #1a1a1a; }
+        .oc-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .oc-weekdays span {
+            font-size: .75rem;
+            font-weight: 600;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            padding: 4px 0;
+        }
+        .oc-weekdays .oc-weekend { color: #e57373; }
+        .oc-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .oc-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: .9rem;
+            color: #333;
+            cursor: pointer;
+            transition: all .15s;
+            border: 2px solid transparent;
+            font-weight: 500;
+        }
+        .oc-cell:hover { background: #f0f0f0; }
+        .oc-cell.oc-today {
+            border-color: #1a1a1a;
+            font-weight: 700;
+        }
+        .oc-cell.oc-selected {
+            background: #1a1a1a;
+            color: #fff;
+            font-weight: 700;
+        }
+        .oc-cell.oc-selected.oc-today { border-color: #1a1a1a; }
+        .oc-cell.oc-other { color: #ccc; }
+        .oc-cell.oc-wkend { color: #e57373; }
+        .oc-cell.oc-wkend.oc-selected { color: #fff; }
+        .oc-cell.oc-wkend.oc-other { color: #f0c0c0; }
+        .oc-cell.oc-empty { cursor: default; }
+
         /* ===== TABLE ===== */
         .table-wrap {
             background: #ffffff;
@@ -758,9 +846,19 @@
                     <h1>Заказы</h1>
                 </div>
 
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
-                    <label style="color:#aaa;font-size:.9rem;">Заказ на:</label>
-                    <input type="date" id="ordersDate" onchange="loadOrdersByDate()" style="padding:8px 14px;background:#f5f5f5;border:1.5px solid #d0d0d0;border-radius:8px;color:#333;font-size:.9rem;font-family:inherit;">
+                <input type="hidden" id="ordersDate">
+                <div class="orders-calendar" id="ordersCalendar">
+                    <div class="oc-header">
+                        <button class="oc-nav" onclick="ocNavMonth(-1)">&#8249;</button>
+                        <span class="oc-month-label" id="ocMonthLabel"></span>
+                        <button class="oc-nav" onclick="ocNavMonth(1)">&#8250;</button>
+                    </div>
+                    <div class="oc-weekdays">
+                        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span class="oc-weekend">Сб</span><span class="oc-weekend">Вс</span>
+                    </div>
+                    <div class="oc-grid" id="ocGrid"></div>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
                     <button class="btn btn-sm" onclick="exportOrdersExcel()" style="background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;">Отчёт по гостям</button>
                     <button class="btn btn-sm" onclick="exportKitchenExcel()" style="background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;">Отчёт для кухни</button>
                 </div>
@@ -2375,16 +2473,82 @@
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
-        // ===== INIT =====
-        // Default date = delivery target (tomorrow, or day after if past 14:00 Vladivostok)
-        (function() {
+        // ===== ORDERS CALENDAR =====
+        var _ocYear, _ocMonth, _ocSelected;
+        const OC_MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+        function ocInit() {
             var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
             var target = new Date(now);
             target.setDate(target.getDate() + (now.getHours() >= 14 ? 2 : 1));
-            document.getElementById('ordersDate').value = target.getFullYear() + '-' +
-                String(target.getMonth() + 1).padStart(2, '0') + '-' +
-                String(target.getDate()).padStart(2, '0');
-        })();
+            _ocYear = target.getFullYear();
+            _ocMonth = target.getMonth();
+            _ocSelected = _ocYear + '-' + String(_ocMonth + 1).padStart(2, '0') + '-' + String(target.getDate()).padStart(2, '0');
+            document.getElementById('ordersDate').value = _ocSelected;
+            ocRender();
+        }
+
+        function ocNavMonth(dir) {
+            _ocMonth += dir;
+            if (_ocMonth < 0) { _ocMonth = 11; _ocYear--; }
+            if (_ocMonth > 11) { _ocMonth = 0; _ocYear++; }
+            ocRender();
+        }
+
+        function ocSelectDay(dateStr) {
+            _ocSelected = dateStr;
+            document.getElementById('ordersDate').value = dateStr;
+            ocRender();
+            loadOrdersByDate();
+        }
+
+        function ocRender() {
+            document.getElementById('ocMonthLabel').textContent = OC_MONTHS_RU[_ocMonth] + ' ' + _ocYear;
+            var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
+            var todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+
+            var firstDay = new Date(_ocYear, _ocMonth, 1);
+            var startDow = (firstDay.getDay() + 6) % 7; // Mon=0
+            var daysInMonth = new Date(_ocYear, _ocMonth + 1, 0).getDate();
+            var prevMonthDays = new Date(_ocYear, _ocMonth, 0).getDate();
+
+            var html = '';
+            // Previous month trailing days
+            for (var i = startDow - 1; i >= 0; i--) {
+                var d = prevMonthDays - i;
+                var m = _ocMonth - 1 < 0 ? 11 : _ocMonth - 1;
+                var y = _ocMonth - 1 < 0 ? _ocYear - 1 : _ocYear;
+                var ds = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var dow = (startDow - i - 1 + 7) % 7;
+                var wk = dow >= 5 ? ' oc-wkend' : '';
+                html += '<div class="oc-cell oc-other' + wk + '" onclick="ocSelectDay(\'' + ds + '\')">' + d + '</div>';
+            }
+            // Current month days
+            for (var d = 1; d <= daysInMonth; d++) {
+                var ds = _ocYear + '-' + String(_ocMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var dow = (startDow + d - 1) % 7;
+                var cls = 'oc-cell';
+                if (dow >= 5) cls += ' oc-wkend';
+                if (ds === todayStr) cls += ' oc-today';
+                if (ds === _ocSelected) cls += ' oc-selected';
+                html += '<div class="' + cls + '" onclick="ocSelectDay(\'' + ds + '\')">' + d + '</div>';
+            }
+            // Next month leading days
+            var totalCells = startDow + daysInMonth;
+            var remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+            for (var d = 1; d <= remaining; d++) {
+                var m = _ocMonth + 1 > 11 ? 0 : _ocMonth + 1;
+                var y = _ocMonth + 1 > 11 ? _ocYear + 1 : _ocYear;
+                var ds = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                var dow = (totalCells + d - 1) % 7;
+                var wk = dow >= 5 ? ' oc-wkend' : '';
+                html += '<div class="oc-cell oc-other' + wk + '" onclick="ocSelectDay(\'' + ds + '\')">' + d + '</div>';
+            }
+            document.getElementById('ocGrid').innerHTML = html;
+        }
+
+        // ===== INIT =====
+        ocInit();
         const initPanel = location.pathname.replace(/^\//, '') || 'orders';
         showPanel(initPanel);
         loadDishes();
