@@ -1684,6 +1684,34 @@
             animation: cartBounce .45s cubic-bezier(.22,1,.36,1);
         }
 
+        /* ===== BOTTOM DIVIDER ===== */
+        .bottom-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 40px 24px;
+            background: var(--beige);
+        }
+        .divider-line {
+            flex: 1;
+            max-width: 260px;
+            height: 1px;
+            opacity: .18;
+        }
+        .divider-line:first-child {
+            background: linear-gradient(to right, transparent, var(--brown-dark));
+        }
+        .divider-line:last-child {
+            background: linear-gradient(to left, transparent, var(--brown-dark));
+        }
+        .bottom-divider svg {
+            width: 28px;
+            height: 28px;
+            color: var(--brown-dark);
+            opacity: .25;
+            flex-shrink: 0;
+        }
 
         /* ===== FOOTER ===== */
         footer {
