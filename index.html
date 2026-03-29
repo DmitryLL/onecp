@@ -2176,6 +2176,7 @@
                 <div style="background:var(--beige);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:10px;">
                     <div style="font-weight:600;color:var(--text);font-size:.95rem;" id="orderAuthName"></div>
                     <div style="font-size:.8rem;color:var(--text-light);" id="orderAuthEmail"></div>
+                    <div style="font-size:.8rem;color:var(--text-light);" id="orderAuthPhone"></div>
                 </div>
                 <button class="btn-checkout" onclick="submitAuthOrder()">Сделать заказ</button>
             </div>
@@ -2270,6 +2271,10 @@
             <p class="auth-sub">Введите имя и придумайте пароль</p>
             <div class="auth-error" id="authRegError3"></div>
             <input type="text" id="authRegName" placeholder="Ваше имя" maxlength="30" oninput="this.value=this.value.replace(/[^a-zA-Zа-яА-ЯёЁ \-]/g,'')">
+            <div class="auth-phone-row">
+                <span>+7</span>
+                <input type="tel" id="authRegPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
+            </div>
             <input type="password" id="authRegPass1" placeholder="Пароль (мин. 4 символа)">
             <input type="password" id="authRegPass2" placeholder="Повторите пароль">
             <button class="auth-btn" onclick="authDoRegister()">Зарегистрироваться</button>
@@ -2417,6 +2422,7 @@
             guestDiv.style.display = 'none';
             document.getElementById('orderAuthName').textContent = currentCustomer.name || '';
             document.getElementById('orderAuthEmail').textContent = currentCustomer.email || '';
+            document.getElementById('orderAuthPhone').textContent = currentCustomer.phone || '';
         } else {
             authDiv.style.display = 'none';
             guestDiv.style.display = 'block';
@@ -2492,16 +2498,19 @@
 
     async function authDoRegister() {
         var name = document.getElementById('authRegName').value.trim();
+        var phoneRaw = document.getElementById('authRegPhone').value.trim();
+        var phone = phoneRaw ? '+7' + phoneRaw : '';
         var pass1 = document.getElementById('authRegPass1').value;
         var pass2 = document.getElementById('authRegPass2').value;
         var errEl = document.getElementById('authRegError3');
         errEl.textContent = '';
         if (!name) { errEl.textContent = 'Введите имя'; return; }
+        if (phoneRaw && phoneRaw.length !== 10) { errEl.textContent = 'Введите 10 цифр номера телефона'; return; }
         if (pass1.length < 4) { errEl.textContent = 'Пароль минимум 4 символа'; return; }
         if (pass1 !== pass2) { errEl.textContent = 'Пароли не совпадают'; return; }
         try {
             var res = await api('/api/auth/register', { method: 'POST', body: {
-                email: authRegEmailSaved, code: authRegCodeSaved, name: name, password: pass1, password_confirm: pass2
+                email: authRegEmailSaved, code: authRegCodeSaved, name: name, phone: phone, password: pass1, password_confirm: pass2
             }});
             setAuth(res.token, res.customer);
             closeAuthModal();

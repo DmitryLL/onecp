@@ -404,6 +404,7 @@ def list_customers(admin: AdminUser = Depends(get_admin), db: Session = Depends(
             "id": c.id,
             "email": c.email,
             "name": c.name,
+            "phone": c.phone,
             "createdAt": c.created_at.isoformat() if c.created_at else None,
             "orderCount": order_count,
             "totalSpent": float(total_spent),

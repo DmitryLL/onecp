@@ -725,6 +725,7 @@
                             <tr>
                                 <th>Имя</th>
                                 <th>Email</th>
+                                <th>Телефон</th>
                                 <th>Дата регистрации</th>
                                 <th>Заказов</th>
                                 <th>История</th>
@@ -1701,7 +1702,7 @@
             const tbody = document.getElementById('customersBody');
             const pag = document.getElementById('customersPagination');
             if (!filtered.length) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666;padding:24px;">Зарегистрированных клиентов нет</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;padding:24px;">Зарегистрированных клиентов нет</td></tr>';
                 pag.innerHTML = '';
                 return;
             }
@@ -1713,6 +1714,7 @@
                 return `<tr>
                     <td>${escH(c.name || '—')}</td>
                     <td>${escH(c.email)}</td>
+                    <td>${escH(c.phone || '—')}</td>
                     <td style="color:#888;font-size:.85rem;">${c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '—'}</td>
                     <td>${c.orderCount || 0}${c.totalSpent ? ' <span style="color:#888;font-size:.8rem;">(' + c.totalSpent.toLocaleString('ru-RU') + ' ₽)</span>' : ''}</td>
                     <td>

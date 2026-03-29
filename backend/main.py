@@ -70,7 +70,7 @@ def init_db():
         if "password_hash" not in cust_cols:
             conn.execute(text("ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255)"))
             logger.info("Added column customers.password_hash")
-        # Migrate customers: phone -> email
+        # Migrate customers: phone -> email (old migration)
         cust_cols2 = [c["name"] for c in insp.get_columns("customers")]
         if "phone" in cust_cols2 and "email" not in cust_cols2:
             conn.execute(text("ALTER TABLE customers ADD COLUMN email VARCHAR(200)"))
@@ -95,6 +95,11 @@ def init_db():
         if "sms_codes" in insp.get_table_names():
             conn.execute(text("DROP TABLE sms_codes"))
             logger.info("Dropped old sms_codes table")
+        # Add phone column to customers (for registration)
+        cust_cols3 = [c["name"] for c in insp.get_columns("customers")]
+        if "phone" not in cust_cols3:
+            conn.execute(text("ALTER TABLE customers ADD COLUMN phone VARCHAR(20)"))
+            logger.info("Added column customers.phone")
         conn.commit()
 
     db = SessionLocal()

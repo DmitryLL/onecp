@@ -232,6 +232,7 @@ def verify_code(body: VerifyCodeRequest, request: Request, db: Session = Depends
             "id": customer.id,
             "email": customer.email,
             "name": customer.name,
+            "phone": customer.phone,
         },
     }
 
@@ -242,6 +243,7 @@ def get_me(customer: Customer = Depends(get_current_customer_dep)):
         "id": customer.id,
         "email": customer.email,
         "name": customer.name,
+        "phone": customer.phone,
         "has_password": customer.password_hash is not None,
     }
 
@@ -284,6 +286,7 @@ class RegisterRequest(BaseModel):
     email: str
     code: str
     name: str
+    phone: str = ""
     password: str
     password_confirm: str
 
@@ -338,6 +341,7 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
 
     customer.password_hash = pbkdf2_sha256.hash(body.password)
     customer.name = body.name.strip()
+    customer.phone = body.phone.strip() if body.phone else None
     db.commit()
     db.refresh(customer)
 
@@ -345,7 +349,7 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
     return {
         "ok": True,
         "token": token,
-        "customer": {"id": customer.id, "email": customer.email, "name": customer.name},
+        "customer": {"id": customer.id, "email": customer.email, "name": customer.name, "phone": customer.phone},
     }
 
 
@@ -361,5 +365,5 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(get_db)):
     return {
         "ok": True,
         "token": token,
-        "customer": {"id": customer.id, "email": customer.email, "name": customer.name},
+        "customer": {"id": customer.id, "email": customer.email, "name": customer.name, "phone": customer.phone},
     }
