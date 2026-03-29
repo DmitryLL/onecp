@@ -1684,57 +1684,6 @@
             animation: cartBounce .45s cubic-bezier(.22,1,.36,1);
         }
 
-        /* ===== BOTTOM BANNER ===== */
-        .bottom-banner {
-            width: 100%;
-            position: relative;
-            height: 146px;
-            background: #000 url('images/bottom-banner.png') center/cover no-repeat;
-        }
-
-        .bottom-banner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 10%;
-            background: linear-gradient(to bottom, var(--beige), transparent);
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .bottom-divider {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            padding: 40px 24px;
-            background: var(--beige);
-        }
-        .divider-line {
-            flex: 1;
-            max-width: 260px;
-            height: 1px;
-            opacity: .18;
-        }
-        .divider-line:first-child {
-            background: linear-gradient(to right, transparent, var(--brown-dark));
-        }
-        .divider-line:last-child {
-            background: linear-gradient(to left, transparent, var(--brown-dark));
-        }
-        .bottom-divider svg {
-            width: 28px;
-            height: 28px;
-            color: var(--brown-dark);
-            opacity: .25;
-            flex-shrink: 0;
-        }
-
-        .bottom-banner img {
-            display: none;
-        }
 
         /* ===== FOOTER ===== */
         footer {
@@ -1917,7 +1866,6 @@
             .mobile-cart-fab { display: flex; }
             .card:hover { transform: none; box-shadow: var(--shadow-card); }
             .hero { padding: 80px 20px 60px; }
-            .bottom-banner { height: 70px; }
             .hero h1 { font-size: 1.6rem; }
             .hero p { font-size: .95rem; }
             .hero-loc-chip { font-size: .78rem; padding: 7px 14px; }
@@ -2360,14 +2308,6 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
-
-<!-- BOTTOM DIVIDER + BANNER -->
-<div class="bottom-divider" style="padding:20px 24px;">
-    <span class="divider-line"></span>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 010 8h-1"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
-    <span class="divider-line"></span>
-</div>
-<div class="bottom-banner"><img id="bottomBannerImg" src="images/bottom-banner.png" alt="One Coffee Place"></div>
 
 <!-- FOOTER -->
 <footer>
@@ -3326,9 +3266,6 @@
                 if (locInfo.imageUrl) {
                     document.querySelector('.hero').style.backgroundImage = "url('" + locInfo.imageUrl + "')";
                 }
-                if (locInfo.bottomImageUrl) {
-                    document.querySelector('.bottom-banner').style.backgroundImage = "url('" + locInfo.bottomImageUrl + "')";
-                }
                 document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
                 document.getElementById('orderAddress').value = locInfo.address;
                 document.getElementById('siteHeroTitle').textContent = locInfo.description;
@@ -3376,7 +3313,6 @@
                 document.querySelector('.beige-wrapper').style.display = 'none';
                 var mainFooter = document.getElementById('siteFooter')?.closest('footer');
                 if (mainFooter) mainFooter.style.display = 'none';
-                document.querySelector('.bottom-banner').style.display = 'none';
                 document.getElementById('mobileCartFab').style.display = 'none';
                 document.getElementById('cartOverlay').style.display = 'none';
                 document.getElementById('mobileMenu').style.display = 'none';
