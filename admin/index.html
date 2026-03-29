@@ -2245,6 +2245,7 @@
                     adminLocations = await api('/api/admin/locations');
                 }
                 buildLocationTabs();
+                document.getElementById('ordersDateContent').innerHTML = '<p style="color:#999;">Загрузка заказов...</p>';
                 const orders = await api('/api/admin/orders');
                 allDateOrders = orders.filter(o => o.createdAt && getOrderDeliveryDate(o.createdAt) === dateStr);
                 applyLocFilter();
@@ -3213,6 +3214,8 @@
             } catch (e) { /* use cached role */ }
             applyRoleUI();
             ocInit();
+            // Preload locations so order tabs appear instantly
+            try { adminLocations = await api('/api/admin/locations'); } catch(e) {}
             const defaultPanel = _userRole === 'operator' ? 'notify' : 'orders';
             const initPanel = location.hash.replace(/^#/, '') || defaultPanel;
             showPanel(initPanel);
