@@ -2207,6 +2207,22 @@
     </div>
 </div>
 
+<!-- OFFER AGREEMENT MODAL -->
+<div class="detail-overlay" id="offerOverlay" onclick="if(event.target===event.currentTarget)closeOfferModal()">
+    <div class="detail-modal" style="padding:0;max-width:620px;overflow:hidden;">
+        <button class="detail-close" onclick="closeOfferModal()" style="z-index:10;">&times;</button>
+        <div style="background:linear-gradient(135deg,var(--brown),var(--gold));padding:24px 28px;text-align:center;">
+            <div style="font-size:1.6rem;margin-bottom:6px;">&#128220;</div>
+            <h3 style="color:#fff;font-size:1.1rem;font-weight:700;margin:0;">Договор публичной оферты</h3>
+            <p style="color:rgba(255,255,255,.75);font-size:.8rem;margin:6px 0 0;">Доставка обедов</p>
+        </div>
+        <div id="offerText" style="max-height:45vh;overflow-y:auto;font-size:.82rem;color:var(--text-light);line-height:1.7;text-align:left;padding:20px 24px;"></div>
+        <div style="padding:0 24px 24px;">
+            <button class="btn-checkout" onclick="acceptOffer()" style="width:100%;font-size:.9rem;padding:14px 20px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--brown),var(--gold));box-shadow:0 4px 16px rgba(139,90,43,.3);">Я принимаю условия оферты</button>
+        </div>
+    </div>
+</div>
+
 <!-- ORDER SUCCESS MODAL -->
 <div class="detail-overlay" id="orderSuccessOverlay" onclick="if(event.target===event.currentTarget)closeOrderSuccess()">
     <div class="detail-modal sms-modal">
@@ -3017,7 +3033,105 @@
 
     function acceptConsent() {
         closeConsentModal();
-        // Directly submit order (user is authenticated)
+        showOfferModal();
+    }
+
+    function showOfferModal() {
+        var siteUrl = window.location.origin;
+        var offerHtml = `
+<p style="text-align:center;font-weight:700;color:var(--text);font-size:.95rem;margin-bottom:4px;">ДОГОВОР ПУБЛИЧНОЙ ОФЕРТЫ (ДОСТАВКА ОБЕДОВ)</p>
+<p style="text-align:center;color:var(--text-light);font-size:.8rem;margin-bottom:16px;">Дата публикации: 29 марта 2026 г.<br>Интернет-сайт: ${esc(siteUrl)}</p>
+
+<p style="margin-bottom:14px;">Индивидуальный предприниматель <strong style="color:var(--text);">ИП ПАРЕНЧУК ДЕНИС ВИКТОРОВИЧ</strong>, в лице Паренчука Дениса Викторовича, действующего на основании Свидетельства, именуемое в дальнейшем «Исполнитель», публикует настоящий Договор публичной оферты (далее\u00a0— «Договор») на своем официальном сайте в сети Интернет.</p>
+<p style="margin-bottom:14px;">Любое физическое или юридическое лицо, осуществившее акцепт настоящего Договора в порядке, установленном п.\u00a02.5, именуется в дальнейшем «Заказчик» (или «Покупатель»).</p>
+<p style="margin-bottom:16px;">Настоящий Договор в соответствии со ст.\u00a0437 Гражданского кодекса РФ является публичной офертой.</p>
+
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:8px;">1. ТЕРМИНЫ И ОПРЕДЕЛЕНИЯ</p>
+<p style="margin-bottom:4px;"><strong>1.1.</strong> Оферта\u00a0— настоящий документ «Договор публичной оферты», размещенный в сети Интернет по адресу: ${esc(siteUrl)}.</p>
+<p style="margin-bottom:4px;"><strong>1.2.</strong> Акцепт\u00a0— полное и безоговорочное принятие условий Договора путем совершения действий, указанных в п.\u00a02.5.</p>
+<p style="margin-bottom:4px;"><strong>1.3.</strong> Товар\u00a0— готовые обеды (блюда), скомплектованные в соответствии с меню, опубликованным на Сайте.</p>
+<p style="margin:0;"><strong>1.4.</strong> Заказ\u00a0— оформленная на Сайте заявка Заказчика на поставку Товара, содержащая: перечень позиций (не менее 2-х), дату получения, место получения, время получения, контактные данные.</p>
+</div>
+
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:8px;">2. ПРЕДМЕТ ДОГОВОРА И ПОРЯДОК ЗАКЛЮЧЕНИЯ</p>
+<p style="margin-bottom:4px;"><strong>2.1.</strong> Исполнитель обязуется передать в собственность Заказчику Товар (готовые обеды), а Заказчик обязуется принять и оплатить Товар на условиях настоящего Договора.</p>
+<p style="margin-bottom:4px;"><strong>2.2.</strong> Заказ Товара осуществляется Заказчиком на Сайте Исполнителя.</p>
+<p style="margin-bottom:4px;"><strong>2.3.</strong> Минимальный объем Заказа: не менее 2 (Двух) позиций из действующего меню. Заказы, содержащие менее двух позиций, к исполнению не принимаются.</p>
+<p style="margin-bottom:4px;"><strong>2.4.</strong> Срок подачи Заказа: Заказ должен быть оформлен не позднее, чем за 24 (Двадцать четыре) часа до выбранного времени получения. Заказы, поданные с нарушением указанного срока, считаются поданными на следующие сутки.</p>
+<p style="margin:0;"><strong>2.5.</strong> Акцептом настоящей Оферты, то есть заключением Договора на указанных условиях, считается факт оформления Заказчиком Заказа на Сайте и нажатие кнопки «Оформить заказ» или «Подтвердить заказ».</p>
+</div>
+
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:8px;">3. УСЛОВИЯ ВЫПОЛНЕНИЯ ЗАКАЗА. МЕСТО И ВРЕМЯ ПОЛУЧЕНИЯ</p>
+<p style="margin-bottom:4px;"><strong>3.1.</strong> Место получения Товара определяется Заказчиком при оформлении Заказа и указывается в форме заказа.</p>
+<p style="margin-bottom:4px;"><strong>3.2.</strong> Время получения Товара выбирается Заказчиком из интервалов, доступных на Сайте, и фиксируется на сайте.</p>
+<p style="margin-bottom:4px;"><strong>3.3.</strong> Исполнитель обязуется обеспечить готовность Товара к выбранному Заказчиком времени получения.</p>
+<p style="margin:0;"><strong>3.4.</strong> Заказчик обязуется прибыть за Товаром в указанное место и время либо обеспечить присутствие своего представителя. В случае опоздания Заказчика, заказ хранится на точке выдачи до окончания его срока реализации. Исполнитель вправе утилизировать Товар без возврата предоплаты (если она была), либо переоформить выдачу на следующий срок по согласованию сторон.</p>
+</div>
+
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:8px;">4. ЦЕНА ТОВАРА И ПОРЯДОК ОПЛАТЫ</p>
+<p style="margin-bottom:4px;"><strong>4.1.</strong> Цена на каждую позицию Товара устанавливается Исполнителем в одностороннем порядке и публикуется на Сайте.</p>
+<p style="margin-bottom:4px;"><strong>4.2.</strong> Оплата Товара производится Заказчиком в момент получения Товара наличными денежными средствами либо безналичным способом (при наличии технической возможности) в месте получения.</p>
+<p style="margin:0;"><strong>4.3.</strong> Моментом оплаты считается поступление денежных средств в кассу или на расчетный счет Исполнителя в полном объеме.</p>
+</div>
+
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:8px;">5. ПОРЯДОК ВЫДАЧИ ТОВАРА И ОТВЕТСТВЕННОСТЬ ЗА НЕВЫВОЗ</p>
+<p style="margin-bottom:4px;"><strong>5.1.</strong> Обязанность Исполнителя по передаче Товара считается исполненной в момент передачи Товара Заказчику в согласованном месте и времени.</p>
+<p style="margin-bottom:4px;"><strong>5.2.</strong> Если Заказчик (Покупатель) не забрал заказанный и приготовленный Товар в установленное время, то такой Заказ считается невыкупленным.</p>
+<p style="margin-bottom:4px;"><strong>5.3.</strong> <em>Специальное условие об оплате предыдущего невыкупленного заказа:</em><br>В случае наличия у Заказчика неоплаченного и невыкупленного заказа (далее\u00a0— «Задолженность»), новый Заказ от такого Заказчика принимается Исполнителем только при условии обязательной оплаты стоимости предыдущего невыкупленного заказа.<br>При оформлении нового Заказа Заказчик подтверждает свое согласие на включение суммы задолженности за предыдущий невыкупленный заказ в счет к оплате при получении текущего Заказа. Оплата осуществляется единым платежом при получении нового Заказа. До момента погашения задолженности Исполнитель вправе приостановить исполнение новых Заказов.</p>
+<p style="margin-bottom:4px;"><strong>5.4.</strong> Оплата невыкупленного заказа по условиям п.\u00a05.3 не освобождает Заказчика от обязанности оплатить стоимость вновь заказанного Товара. При получении нового Заказа Заказчик оплачивает:<br>— Стоимость невыкупленного ранее Заказа;<br>— Стоимость текущего Заказа.</p>
+<p style="margin:0;"><strong>5.5.</strong> Исполнитель не осуществляет возврат стоимости Товара, который не был выкуплен по вине Заказчика, за исключением случаев ненадлежащего качества Товара, подтвержденного в соответствии с законодательством РФ.</p>
+</div>
+
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:8px;">6. ПРАВА И ОБЯЗАННОСТИ СТОРОН</p>
+<p style="margin-bottom:4px;"><strong>6.1. Исполнитель обязуется:</strong></p>
+<p style="margin-bottom:4px;padding-left:12px;">6.1.1. Приготовить Товар надлежащего качества и в установленный срок.</p>
+<p style="margin-bottom:8px;padding-left:12px;">6.1.2. Обеспечить возможность получения Товара в выбранное время и место.</p>
+<p style="margin-bottom:4px;"><strong>6.2. Заказчик обязуется:</strong></p>
+<p style="margin-bottom:4px;padding-left:12px;">6.2.1. Своевременно оформлять Заказы (не менее чем за 24 часа) с соблюдением минимального количества позиций (не менее 2-х).</p>
+<p style="margin-bottom:4px;padding-left:12px;">6.2.2. Своевременно прибыть за получением Товара.</p>
+<p style="margin:0;padding-left:12px;">6.2.3. Оплатить Товар в порядке, установленном Договором, включая оплату ранее невыкупленных заказов при оформлении нового.</p>
+</div>
+
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:8px;">7. ОТВЕТСТВЕННОСТЬ СТОРОН</p>
+<p style="margin-bottom:4px;"><strong>7.1.</strong> За неисполнение или ненадлежащее исполнение условий настоящего Договора Стороны несут ответственность в соответствии с действующим законодательством РФ.</p>
+<p style="margin:0;"><strong>7.2.</strong> В случае невывоза (неполучения) Товара по вине Заказчика без уведомления об отказе, Заказчик возмещает Исполнителю фактические затраты, связанные с производством и утилизацией Товара, в размере полной стоимости невыкупленного Заказа в порядке, предусмотренном п.\u00a05.3 настоящего Договора.</p>
+</div>
+
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:8px;">8. ФОРС-МАЖОР</p>
+<p style="margin:0;"><strong>8.1.</strong> Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему Договору, если это неисполнение явилось следствием обстоятельств непреодолимой силы (форс-мажор), возникших после заключения Договора в результате событий чрезвычайного характера, которые Стороны не могли предвидеть и предотвратить разумными мерами.</p>
+</div>
+
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:8px;">9. РЕКВИЗИТЫ ИСПОЛНИТЕЛЯ</p>
+<table style="width:100%;font-size:.82rem;border-collapse:collapse;">
+<tr><td style="padding:3px 8px 3px 0;color:var(--text-light);white-space:nowrap;vertical-align:top;">Наименование</td><td style="padding:3px 0;color:var(--text);">ИП ПАРЕНЧУК ДЕНИС ВИКТОРОВИЧ</td></tr>
+<tr><td style="padding:3px 8px 3px 0;color:var(--text-light);white-space:nowrap;vertical-align:top;">Юридический адрес</td><td style="padding:3px 0;color:var(--text);">690025 Россия, Приморский край, г.\u00a0Владивосток, ул.\u00a0Подгорная, д.\u00a01</td></tr>
+<tr><td style="padding:3px 8px 3px 0;color:var(--text-light);white-space:nowrap;vertical-align:top;">ИНН</td><td style="padding:3px 0;color:var(--text);">253904335130</td></tr>
+<tr><td style="padding:3px 8px 3px 0;color:var(--text-light);white-space:nowrap;vertical-align:top;">ОГРНИП</td><td style="padding:3px 0;color:var(--text);">313254329000016</td></tr>
+<tr><td style="padding:3px 8px 3px 0;color:var(--text-light);white-space:nowrap;vertical-align:top;">Телефон</td><td style="padding:3px 0;color:var(--text);">+7\u00a0(914)\u00a0727-38-89</td></tr>
+<tr><td style="padding:3px 8px 3px 0;color:var(--text-light);white-space:nowrap;vertical-align:top;">Адрес сайта</td><td style="padding:3px 0;color:var(--text);">${esc(siteUrl)}</td></tr>
+</table>
+</div>`;
+        document.getElementById('offerText').innerHTML = offerHtml;
+        document.getElementById('offerOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeOfferModal() {
+        document.getElementById('offerOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function acceptOffer() {
+        closeOfferModal();
         submitAuthOrder();
     }
 
