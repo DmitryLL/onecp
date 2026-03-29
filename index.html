@@ -2002,10 +2002,13 @@
             .loc-body { padding: 36px 16px 40px; border-radius: 24px 24px 0 0; }
             .loc-body h1 { font-size: 1.5rem; }
 
-            /* Location-specific heroes: reduce padding on mobile */
+            /* Location-specific heroes: more bottom space so chips sit lower */
             .hero.hero-sber,
             .hero.hero-ibt,
-            .hero.hero-sky { padding: 76px 16px 60px; }
+            .hero.hero-sky { padding: 76px 16px 80px; }
+            .hero.hero-sber .hero-loc-info,
+            .hero.hero-ibt .hero-loc-info,
+            .hero.hero-sky .hero-loc-info { margin-top: 18px; margin-bottom: 0; }
             .hero.hero-sber h1,
             .hero.hero-ibt h1,
             .hero.hero-sky h1 { font-size: 1.5rem; }
