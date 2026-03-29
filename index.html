@@ -3241,13 +3241,7 @@
                 d.textContent = text;
                 return d.innerHTML.replace(/\n/g, '<br>');
             }
-            if (s.heroTitle && !locInfo) document.getElementById('siteHeroTitle').innerHTML = nl2br(s.heroTitle);
-            // heroSub заполняется только данными точки, не из настроек
-            // catalogTitle now auto-generated with tomorrow's date
-            // if (s.catalogTitle) document.getElementById('siteCatalogTitle').innerHTML = nl2br(s.catalogTitle);
-            // if (s.catalogSub) document.getElementById('siteCatalogSub').innerHTML = nl2br(s.catalogSub);
-            if (s.aboutTitle) document.getElementById('siteAboutTitle').innerHTML = nl2br(s.aboutTitle);
-            if (s.aboutSub) document.getElementById('siteAboutSub').innerHTML = nl2br(s.aboutSub);
+            // Все надписи задаются в HTML, не из настроек
             if (s.address && !currentLocation) document.getElementById('siteAddress').innerHTML = nl2br(s.address);
             if (s.phone) document.getElementById('sitePhone').innerHTML = nl2br(s.phone);
             if (s.email) document.getElementById('siteEmail').innerHTML = nl2br(s.email);
