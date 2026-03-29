@@ -811,9 +811,9 @@
             background: #000 url('images/top-bg.png') center/cover no-repeat;
             color: #fff;
             padding-bottom: 100px;
-            padding-left: 24px;
-            padding-right: 24px;
-            text-align: center;
+            padding-left: 60px;
+            padding-right: 50%;
+            text-align: left;
             position: relative;
             max-width: none;
         }
@@ -825,9 +825,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background:
-                linear-gradient(to top, var(--beige) 0%, transparent 10%),
-                rgba(0,0,0,.25);
+            background: rgba(0,0,0,.25);
             pointer-events: none;
             z-index: 1;
         }
@@ -851,7 +849,7 @@
             font-size: 1.05rem;
             color: #fff;
             max-width: 560px;
-            margin: 0 auto 32px;
+            margin: 0 0 32px;
             font-weight: 400;
             line-height: 1.7;
             text-shadow: 0 2px 8px rgba(0,0,0,.8);
@@ -892,7 +890,7 @@
         /* Hero location info */
         .hero-loc-info {
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 10px;
             flex-wrap: wrap;
             margin-bottom: 20px;
@@ -1894,7 +1892,8 @@
             .mobile-menu.open { display: flex !important; }
             .mobile-cart-fab { display: flex; }
             .card:hover { transform: none; box-shadow: var(--shadow-card); }
-            .hero { padding: 80px 20px 60px; }
+            .hero { padding: 80px 20px 60px; padding-right: 20px; text-align: center; }
+            .hero p { margin: 0 auto 32px; }
             .hero h1 { font-size: 1.6rem; }
             .hero p { font-size: .95rem; }
             .hero-loc-chip { font-size: .78rem; padding: 7px 14px; }
