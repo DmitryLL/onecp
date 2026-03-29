@@ -10,7 +10,21 @@ class AdminUser(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
+    role = Column(String(20), default="admin")  # admin | operator
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    locations = relationship("AdminUserLocation", back_populates="admin_user", cascade="all, delete-orphan")
+
+
+class AdminUserLocation(Base):
+    __tablename__ = "admin_user_locations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    admin_user_id = Column(Integer, ForeignKey("admin_users.id", ondelete="CASCADE"), nullable=False)
+    location_id = Column(Integer, ForeignKey("locations.id", ondelete="CASCADE"), nullable=False)
+
+    admin_user = relationship("AdminUser", back_populates="locations")
+    location = relationship("Location")
 
 
 class Customer(Base):

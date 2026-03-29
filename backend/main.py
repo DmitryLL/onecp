@@ -8,7 +8,7 @@ from passlib.hash import pbkdf2_sha256
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from database import engine, SessionLocal, Base
-from models import AdminUser, Dish, DishSet, DishSetItem, SiteSettings, Question, CalendarDay, CalendarDaySet, Location
+from models import AdminUser, AdminUserLocation, Dish, DishSet, DishSetItem, SiteSettings, Question, CalendarDay, CalendarDaySet, Location
 from routes.auth import router as auth_router
 from routes.menu import router as menu_router
 from routes.orders import router as orders_router
@@ -100,6 +100,21 @@ def init_db():
         if "phone" not in cust_cols3:
             conn.execute(text("ALTER TABLE customers ADD COLUMN phone VARCHAR(20)"))
             logger.info("Added column customers.phone")
+        # Add role to admin_users
+        admin_cols = [c["name"] for c in insp.get_columns("admin_users")]
+        if "role" not in admin_cols:
+            conn.execute(text("ALTER TABLE admin_users ADD COLUMN role VARCHAR(20) DEFAULT 'admin'"))
+            logger.info("Added column admin_users.role")
+        # Create admin_user_locations table
+        if "admin_user_locations" not in insp.get_table_names():
+            conn.execute(text("""
+                CREATE TABLE admin_user_locations (
+                    id SERIAL PRIMARY KEY,
+                    admin_user_id INTEGER NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
+                    location_id INTEGER NOT NULL REFERENCES locations(id) ON DELETE CASCADE
+                )
+            """))
+            logger.info("Created admin_user_locations table")
         conn.commit()
 
     db = SessionLocal()

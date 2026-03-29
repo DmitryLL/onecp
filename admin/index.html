@@ -765,6 +765,7 @@
                 <a href="#locations" onclick="navTo('locations',event)">📍 Точки продаж</a>
                 <a href="#settings" onclick="navTo('settings',event)">📨 Рассылки</a>
                 <a href="#notify" onclick="navTo('notify',event)">📣 Уведомления</a>
+                <a href="#users" onclick="navTo('users',event)" class="admin-only-nav">👤 Пользователи</a>
             </nav>
             <div class="sidebar-bottom">
                 <a href="/" class="sidebar-nav" style="color:#666;text-decoration:none;padding:10px 14px;font-size:.9rem;">← В каталог</a>
@@ -1031,6 +1032,42 @@
                 </div>
                 <div id="notifyLocations" style="display:flex;flex-direction:column;gap:12px;"></div>
             </div>
+
+            <!-- USERS PANEL -->
+            <div id="usersPanel" style="display:none;">
+                <div class="page-header">
+                    <h1>Пользователи</h1>
+                    <button class="btn btn-primary" onclick="openUserForm()">+ Добавить пользователя</button>
+                </div>
+                <div class="settings-card" style="background:#f9f9f9;border:1px dashed #d0d0d0;padding:16px 20px;margin-bottom:16px;">
+                    <p style="color:#666;font-size:.9rem;margin:0;">Создавайте пользователей с ролью «Оператор» — они смогут только отправлять уведомления по назначенным им точкам.</p>
+                </div>
+                <div id="usersList"></div>
+
+                <!-- User Form Overlay -->
+                <div id="userFormOverlay" class="modal-overlay" onclick="if(event.target===this)closeUserForm()">
+                    <div class="modal" style="max-width:460px;">
+                        <h2 id="userFormTitle">Добавить пользователя</h2>
+                        <input type="hidden" id="userFormId" value="">
+                        <div class="form-group">
+                            <label>Логин</label>
+                            <input type="text" id="userFormLogin" placeholder="Введите логин" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label id="userFormPassLabel">Пароль</label>
+                            <input type="password" id="userFormPass" placeholder="Введите пароль" autocomplete="new-password">
+                        </div>
+                        <div class="form-group">
+                            <label>Доступ к точкам</label>
+                            <div id="userFormLocations" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn btn-secondary" onclick="closeUserForm()">Отмена</button>
+                            <button class="btn btn-primary" onclick="saveUser()">Сохранить</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1186,6 +1223,22 @@
         let adminToken = localStorage.getItem('onecp_admin_token');
         if (!adminToken) window.location.href = '/login';
 
+        let _userRole = localStorage.getItem('onecp_admin_role') || 'admin';
+        let _userLocationIds = JSON.parse(localStorage.getItem('onecp_admin_locs') || '[]');
+
+        function applyRoleUI() {
+            if (_userRole === 'operator') {
+                // Hide all sidebar links except notify
+                document.querySelectorAll('.sidebar-nav a').forEach(a => {
+                    if (!a.getAttribute('href')?.includes('notify')) a.style.display = 'none';
+                });
+                document.querySelectorAll('.admin-only-nav').forEach(el => el.style.display = 'none');
+                document.querySelector('.sidebar-bottom a[href="/"]')?.style.setProperty('display', 'none');
+            } else {
+                document.querySelectorAll('.admin-only-nav').forEach(el => el.style.display = '');
+            }
+        }
+
         async function api(url, opts = {}) {
             const headers = { ...opts.headers };
             if (opts.body && typeof opts.body === 'object') {
@@ -1194,7 +1247,7 @@
             }
             if (adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
             const res = await fetch(url, { ...opts, headers });
-            if (res.status === 401 || res.status === 403) {
+            if (res.status === 401) {
                 localStorage.removeItem('onecp_admin_token');
                 window.location.href = '/login';
                 return;
@@ -1593,8 +1646,8 @@
         }
 
         // ===== PANELS =====
-        const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, clients:5, locations:6, settings:7, notify:8};
-        const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', clients:'Клиенты', locations:'Точки продаж', settings:'Рассылки', notify:'Уведомления'};
+        const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, clients:5, locations:6, settings:7, notify:8, users:9};
+        const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', clients:'Клиенты', locations:'Точки продаж', settings:'Рассылки', notify:'Уведомления', users:'Пользователи'};
         function navTo(panel, e) {
             if (e) e.preventDefault();
             location.hash = panel;
@@ -1614,6 +1667,10 @@
             document.getElementById('locationsPanel').style.display = 'none';
             document.getElementById('settingsPanel').classList.remove('active');
             document.getElementById('notifyPanel').style.display = 'none';
+            document.getElementById('usersPanel').style.display = 'none';
+
+            // Operators can only access notify
+            if (_userRole === 'operator' && panel !== 'notify') panel = 'notify';
 
             if (panel === 'orders') {
                 document.getElementById('ordersPanel').style.display = 'block';
@@ -1640,6 +1697,9 @@
             } else if (panel === 'notify') {
                 document.getElementById('notifyPanel').style.display = 'block';
                 loadNotifyPanel();
+            } else if (panel === 'users') {
+                document.getElementById('usersPanel').style.display = 'block';
+                loadUsers();
             } else {
                 document.getElementById('settingsPanel').classList.add('active');
                 loadSettingsForm();
@@ -2493,7 +2553,11 @@
             const dateStr = getNotifyDate();
             try {
                 const data = await api('/api/admin/locations');
-                const locs = data.locations || data;
+                let locs = data.locations || data;
+                // Operators: filter to their allowed locations
+                if (_userRole === 'operator' && _userLocationIds.length) {
+                    locs = locs.filter(l => _userLocationIds.includes(l.id));
+                }
                 if (!locs.length) {
                     container.innerHTML = '<div class="settings-card" style="text-align:center;"><p style="color:#999;margin:0;">Нет активных точек продаж</p></div>';
                     return;
@@ -2575,9 +2639,136 @@
             }
         }
 
+        // ===== USERS =====
+        let _allLocations = [];
+
+        async function loadUsers() {
+            const list = document.getElementById('usersList');
+            list.innerHTML = '<p style="color:#888;">Загрузка...</p>';
+            try {
+                const data = await api('/api/admin/users');
+                const users = data.users || [];
+                if (!users.length) {
+                    list.innerHTML = '<div class="settings-card" style="text-align:center;"><p style="color:#999;margin:0;">Нет операторов. Создайте первого пользователя.</p></div>';
+                    return;
+                }
+                list.innerHTML = users.map(u => `
+                    <div class="settings-card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 24px;margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;gap:14px;">
+                            <div style="width:44px;height:44px;background:#f0ebe5;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">👤</div>
+                            <div>
+                                <div style="font-size:1.05rem;font-weight:600;color:#1a1a1a;">${u.username}</div>
+                                <div style="color:#888;font-size:.85rem;margin-top:2px;">
+                                    ${u.locations.length ? u.locations.map(l => '<span style="background:#f0ebe5;padding:2px 8px;border-radius:6px;margin-right:4px;font-size:.8rem;color:#4A3728;">' + l.name + '</span>').join('') : '<span style="color:#ccc;">Нет точек</span>'}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-shrink:0;">
+                            <button class="btn btn-secondary btn-sm" onclick="openUserForm(${u.id})">Изменить</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id}, '${u.username.replace(/'/g, "\\'")}')">Удалить</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = '<p style="color:#e74c3c;">Ошибка: ' + e.message + '</p>';
+            }
+        }
+
+        async function openUserForm(userId) {
+            // Load locations for checkboxes
+            try {
+                const data = await api('/api/admin/locations');
+                _allLocations = data.locations || data;
+            } catch (e) { _allLocations = []; }
+
+            const isEdit = !!userId;
+            document.getElementById('userFormTitle').textContent = isEdit ? 'Изменить пользователя' : 'Добавить пользователя';
+            document.getElementById('userFormId').value = userId || '';
+            document.getElementById('userFormLogin').value = '';
+            document.getElementById('userFormLogin').disabled = false;
+            document.getElementById('userFormPass').value = '';
+            document.getElementById('userFormPassLabel').textContent = isEdit ? 'Новый пароль (оставьте пустым, чтобы не менять)' : 'Пароль';
+
+            let checkedIds = [];
+            if (isEdit) {
+                try {
+                    const data = await api('/api/admin/users');
+                    const user = (data.users || []).find(u => u.id === userId);
+                    if (user) {
+                        document.getElementById('userFormLogin').value = user.username;
+                        document.getElementById('userFormLogin').disabled = true;
+                        checkedIds = user.locationIds || [];
+                    }
+                } catch (e) {}
+            }
+
+            const locsDiv = document.getElementById('userFormLocations');
+            locsDiv.innerHTML = _allLocations.map(loc => `
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;background:#f9f6f2;border-radius:8px;">
+                    <input type="checkbox" value="${loc.id}" ${checkedIds.includes(loc.id) ? 'checked' : ''} style="width:18px;height:18px;accent-color:#4A3728;">
+                    <span style="color:#333;font-size:.95rem;">${loc.name} <span style="color:#999;font-size:.8rem;">(${loc.address})</span></span>
+                </label>
+            `).join('');
+
+            document.getElementById('userFormOverlay').classList.add('open');
+        }
+
+        function closeUserForm() {
+            document.getElementById('userFormOverlay').classList.remove('open');
+        }
+
+        async function saveUser() {
+            const id = document.getElementById('userFormId').value;
+            const username = document.getElementById('userFormLogin').value.trim();
+            const password = document.getElementById('userFormPass').value;
+            const locationIds = [...document.querySelectorAll('#userFormLocations input:checked')].map(cb => parseInt(cb.value));
+
+            if (!id && (!username || !password)) {
+                showToast('Заполните логин и пароль');
+                return;
+            }
+
+            try {
+                if (id) {
+                    await api('/api/admin/users/' + id, {
+                        method: 'PUT',
+                        body: { password: password || null, location_ids: locationIds }
+                    });
+                    showToast('Пользователь обновлён');
+                } else {
+                    await api('/api/admin/users', {
+                        method: 'POST',
+                        body: { username, password, location_ids: locationIds }
+                    });
+                    showToast('Пользователь создан');
+                }
+                closeUserForm();
+                loadUsers();
+            } catch (e) {
+                showToast('Ошибка: ' + e.message);
+            }
+        }
+
+        function deleteUser(userId, username) {
+            showConfirm(
+                'Удалить пользователя?',
+                '«' + username + '» будет удалён. Это действие нельзя отменить.',
+                'Удалить',
+                async () => {
+                    try {
+                        await api('/api/admin/users/' + userId, { method: 'DELETE' });
+                        showToast('Пользователь удалён');
+                        loadUsers();
+                    } catch (e) { showToast('Ошибка: ' + e.message); }
+                }
+            );
+        }
+
         // ===== LOGOUT =====
         function logout() {
             localStorage.removeItem('onecp_admin_token');
+            localStorage.removeItem('onecp_admin_role');
+            localStorage.removeItem('onecp_admin_locs');
             window.location.href = '/login';
         }
 
@@ -2768,10 +2959,22 @@
         }
 
         // ===== INIT =====
-        ocInit();
-        const initPanel = location.hash.replace(/^#/, '') || 'orders';
-        showPanel(initPanel);
-        loadDishes();
+        // Fetch role from server on load
+        (async () => {
+            try {
+                const me = await api('/api/admin/me');
+                _userRole = me.role || 'admin';
+                _userLocationIds = me.locationIds || [];
+                localStorage.setItem('onecp_admin_role', _userRole);
+                localStorage.setItem('onecp_admin_locs', JSON.stringify(_userLocationIds));
+            } catch (e) { /* use cached role */ }
+            applyRoleUI();
+            ocInit();
+            const defaultPanel = _userRole === 'operator' ? 'notify' : 'orders';
+            const initPanel = location.hash.replace(/^#/, '') || defaultPanel;
+            showPanel(initPanel);
+            if (_userRole === 'admin') loadDishes();
+        })();
     </script>
 </body>
 </html>

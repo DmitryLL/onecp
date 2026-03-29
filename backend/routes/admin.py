@@ -65,7 +65,7 @@ def get_admin(request: Request, db: Session = Depends(get_db)) -> AdminUser:
     token = auth[7:]
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        if payload.get("role") != "admin":
+        if payload.get("role") not in ("admin", "operator"):
             raise HTTPException(status_code=403, detail="Not admin")
         admin_id = int(payload["sub"])
     except HTTPException:
@@ -75,6 +75,13 @@ def get_admin(request: Request, db: Session = Depends(get_db)) -> AdminUser:
     admin = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
     if not admin:
         raise HTTPException(status_code=401, detail="Admin not found")
+    return admin
+
+
+def require_admin_role(admin: AdminUser = Depends(get_admin)):
+    """Only allow users with role='admin'."""
+    if admin.role != "admin":
+        raise HTTPException(status_code=403, detail="Недостаточно прав")
     return admin
 
 
@@ -120,9 +127,16 @@ def admin_login(body: AdminLoginRequest, request: Request, db: Session = Depends
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
     from datetime import datetime, timedelta, timezone
+    role = admin.role or "admin"
     exp = datetime.now(timezone.utc) + timedelta(hours=24)
-    token = jwt.encode({"sub": str(admin.id), "role": "admin", "exp": exp}, JWT_SECRET, algorithm=JWT_ALGORITHM)
-    return {"ok": True, "token": token, "username": admin.username}
+    token = jwt.encode({"sub": str(admin.id), "role": role, "exp": exp}, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    # For operators, return their allowed location IDs
+    location_ids = []
+    if role == "operator":
+        from models import AdminUserLocation
+        locs = db.query(AdminUserLocation.location_id).filter(AdminUserLocation.admin_user_id == admin.id).all()
+        location_ids = [l[0] for l in locs]
+    return {"ok": True, "token": token, "username": admin.username, "role": role, "locationIds": location_ids}
 
 
 # ===== DISHES =====
@@ -1094,6 +1108,15 @@ def export_kitchen_excel(date: str, admin: AdminUser = Depends(get_admin), db: S
 @router.post("/notify/{location_id}")
 def send_pickup_notify(location_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
     """Send pickup-ready notification to customers with orders at given location for today."""
+    # Operators can only notify their assigned locations
+    if admin.role == "operator":
+        from models import AdminUserLocation
+        allowed = db.query(AdminUserLocation).filter(
+            AdminUserLocation.admin_user_id == admin.id,
+            AdminUserLocation.location_id == location_id
+        ).first()
+        if not allowed:
+            raise HTTPException(status_code=403, detail="Нет доступа к этой точке")
     from email_report import send_pickup_notification
     try:
         sent = send_pickup_notification(location_id)
@@ -1102,3 +1125,97 @@ def send_pickup_notify(location_id: int, admin: AdminUser = Depends(get_admin), 
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== USERS (admin-only) =====
+
+class UserIn(BaseModel):
+    username: str
+    password: str
+    location_ids: list[int] = []
+
+
+class UserUpdate(BaseModel):
+    password: str | None = None
+    location_ids: list[int] = []
+
+
+@router.get("/users")
+def list_users(admin: AdminUser = Depends(require_admin_role), db: Session = Depends(get_db)):
+    from models import AdminUserLocation
+    users = db.query(AdminUser).filter(AdminUser.role == "operator").order_by(AdminUser.id).all()
+    result = []
+    for u in users:
+        loc_ids = [rel.location_id for rel in u.locations]
+        locs = db.query(Location).filter(Location.id.in_(loc_ids)).all() if loc_ids else []
+        result.append({
+            "id": u.id,
+            "username": u.username,
+            "role": u.role,
+            "locationIds": loc_ids,
+            "locations": [{"id": l.id, "name": l.name} for l in locs],
+            "createdAt": u.created_at.isoformat() if u.created_at else None,
+        })
+    return {"users": result}
+
+
+@router.post("/users")
+def create_user(body: UserIn, admin: AdminUser = Depends(require_admin_role), db: Session = Depends(get_db)):
+    from models import AdminUserLocation
+    if not body.username or not body.password:
+        raise HTTPException(status_code=400, detail="Логин и пароль обязательны")
+    if len(body.password) < 4:
+        raise HTTPException(status_code=400, detail="Пароль слишком короткий (мин. 4 символа)")
+    existing = db.query(AdminUser).filter(AdminUser.username == body.username).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Пользователь с таким логином уже существует")
+    user = AdminUser(
+        username=body.username,
+        password_hash=pbkdf2_sha256.hash(body.password),
+        role="operator",
+    )
+    db.add(user)
+    db.flush()
+    for lid in body.location_ids:
+        db.add(AdminUserLocation(admin_user_id=user.id, location_id=lid))
+    db.commit()
+    return {"ok": True, "id": user.id}
+
+
+@router.put("/users/{user_id}")
+def update_user(user_id: int, body: UserUpdate, admin: AdminUser = Depends(require_admin_role), db: Session = Depends(get_db)):
+    from models import AdminUserLocation
+    user = db.query(AdminUser).filter(AdminUser.id == user_id, AdminUser.role == "operator").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    if body.password:
+        if len(body.password) < 4:
+            raise HTTPException(status_code=400, detail="Пароль слишком короткий (мин. 4 символа)")
+        user.password_hash = pbkdf2_sha256.hash(body.password)
+    # Update locations
+    db.query(AdminUserLocation).filter(AdminUserLocation.admin_user_id == user.id).delete()
+    for lid in body.location_ids:
+        db.add(AdminUserLocation(admin_user_id=user.id, location_id=lid))
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/users/{user_id}")
+def delete_user(user_id: int, admin: AdminUser = Depends(require_admin_role), db: Session = Depends(get_db)):
+    user = db.query(AdminUser).filter(AdminUser.id == user_id, AdminUser.role == "operator").first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    db.delete(user)
+    db.commit()
+    return {"ok": True}
+
+
+@router.get("/me")
+def get_me(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    """Return current user info including role and allowed locations."""
+    from models import AdminUserLocation
+    location_ids = []
+    if admin.role == "operator":
+        locs = db.query(AdminUserLocation.location_id).filter(AdminUserLocation.admin_user_id == admin.id).all()
+        location_ids = [l[0] for l in locs]
+    return {"id": admin.id, "username": admin.username, "role": admin.role or "admin", "locationIds": location_ids}
