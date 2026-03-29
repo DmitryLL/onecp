@@ -1912,8 +1912,9 @@
             .hero-loc-cta { font-size: .9rem; }
 
             header { background: transparent; }
+            header .header-inner { padding: 0 16px; height: 56px; justify-content: space-between; gap: 0; overflow: hidden; opacity: 0; transition: opacity .3s; }
             header.scrolled { background: var(--black); }
-            .header-inner { padding: 0 16px; height: 56px; justify-content: space-between; gap: 0; overflow: hidden; }
+            header.scrolled .header-inner { opacity: 1; }
             .logo { flex-shrink: 0; }
             .logo img { height: 36px; }
             nav.desktop { display: none !important; }
