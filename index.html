@@ -2563,7 +2563,7 @@
         var errEl = document.getElementById('authRegError3');
         errEl.textContent = '';
         if (!name) { errEl.textContent = 'Введите имя'; return; }
-        if (phoneRaw && phoneRaw.length !== 10) { errEl.textContent = 'Введите 10 цифр номера телефона'; return; }
+        if (!phoneRaw || phoneRaw.length !== 10) { errEl.textContent = 'Введите 10 цифр номера телефона'; return; }
         if (pass1.length < 4) { errEl.textContent = 'Пароль минимум 4 символа'; return; }
         if (pass1 !== pass2) { errEl.textContent = 'Пароли не совпадают'; return; }
         try {

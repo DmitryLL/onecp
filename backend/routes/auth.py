@@ -355,7 +355,7 @@ class RegisterRequest(BaseModel):
     email: str
     code: str
     name: str
-    phone: str = ""
+    phone: str
     password: str
     password_confirm: str
 
@@ -383,6 +383,9 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Пароль должен быть минимум 4 символа")
     if not body.name.strip():
         raise HTTPException(status_code=400, detail="Укажите имя")
+    phone_digits = "".join(c for c in body.phone if c.isdigit())
+    if len(phone_digits) != 11:
+        raise HTTPException(status_code=400, detail="Укажите номер телефона (10 цифр после +7)")
 
     # Verify email code
     email_code = (
