@@ -2328,7 +2328,7 @@
             </div>
             <input type="password" id="authRegPass1" placeholder="Пароль (мин. 4 символа)" maxlength="100">
             <input type="password" id="authRegPass2" placeholder="Повторите пароль" maxlength="100">
-            <button class="auth-btn" onclick="authDoRegister()">Зарегистрироваться</button>
+            <button class="auth-btn" onclick="authRegNext()">Далее</button>
         </div>
     </div>
 </div>
@@ -2554,10 +2554,12 @@
         document.getElementById('authReg3').style.display = 'block';
     }
 
-    async function authDoRegister() {
+    // pending action after consent+offer flow: "register" or "order"
+    var _pendingAction = null;
+
+    function authRegNext() {
         var name = document.getElementById('authRegName').value.trim();
         var phoneRaw = document.getElementById('authRegPhone').value.trim();
-        var phone = phoneRaw ? '+7' + phoneRaw : '';
         var pass1 = document.getElementById('authRegPass1').value;
         var pass2 = document.getElementById('authRegPass2').value;
         var errEl = document.getElementById('authRegError3');
@@ -2566,14 +2568,50 @@
         if (!phoneRaw || phoneRaw.length !== 10) { errEl.textContent = 'Введите 10 цифр номера телефона'; return; }
         if (pass1.length < 4) { errEl.textContent = 'Пароль минимум 4 символа'; return; }
         if (pass1 !== pass2) { errEl.textContent = 'Пароли не совпадают'; return; }
+        // Fields valid — show consent flow
+        _pendingAction = 'register';
+        closeAuthModal();
+        showRegConsentModal(name, '+7' + phoneRaw);
+    }
+
+    function showRegConsentModal(name, phone) {
+        var consentHtml = `<p style="margin-bottom:14px;">Я, <strong style="color:var(--text);">${esc(name)}</strong>, email <strong style="color:var(--text);">${esc(authRegEmailSaved)}</strong>, телефон <strong style="color:var(--text);">${esc(phone)}</strong>, пользователь сайта <strong style="color:var(--brown);">One coffee place</strong> (далее\u00a0— Сайт), в\u00a0соответствии с\u00a0Федеральным законом №\u00a0152-ФЗ «О\u00a0персональных данных», свободно, своей волей и\u00a0в\u00a0своем интересе выражаю конкретное, информированное и\u00a0сознательное согласие на\u00a0обработку моих персональных данных Оператору: <strong style="color:var(--text);">ИП\u00a0Паренчук\u00a0Д\u00a0В, ИНН\u00a0253904335130, адрес: 690025 г.\u00a0Владивосток ул.\u00a0Подгорная д.\u00a01</strong> (далее\u00a0— Оператор).</p>
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:6px;">1. Перечень персональных данных</p>
+<p style="margin-bottom:8px;">Я даю согласие на обработку следующих данных:</p>
+<ul style="padding-left:18px;margin:0;"><li style="margin-bottom:4px;">Фамилия, имя, отчество;</li><li style="margin-bottom:4px;">Адрес электронной почты;</li><li style="margin-bottom:4px;">Номер мобильного телефона;</li><li style="margin-bottom:4px;">Адрес доставки (для заказов навынос или доставки);</li><li>Данные о заказах и предпочтениях (в рамках программы лояльности).</li></ul>
+</div>
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:6px;">2. Цели обработки</p>
+<p style="margin-bottom:8px;">Данные обрабатываются исключительно для:</p>
+<ul style="padding-left:18px;margin:0;"><li style="margin-bottom:4px;">Идентификации при оформлении заказа или регистрации в личном кабинете;</li><li style="margin-bottom:4px;">Связи для подтверждения бронирования заказа или уточнения деталей заказа;</li><li style="margin-bottom:4px;">Доставки заказов (в том числе с передачей данных курьерским службам);</li><li style="margin-bottom:4px;">Информирования об акциях, новинках и специальных предложениях кофейни (при условии подписки на рассылку);</li><li>Сбора статистики для улучшения работы Сайта.</li></ul>
+</div>
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:6px;">3. Перечень действий с данными</p>
+<p style="margin:0;">Согласие дается на совершение следующих действий: сбор, запись, систематизацию, накопление, хранение, уточнение (обновление, изменение), извлечение, использование, передачу (предоставление, доступ третьим лицам для доставки), обезличивание, блокирование, удаление и уничтожение.</p>
+</div>
+<div style="background:var(--beige);border-radius:10px;padding:14px 16px;">
+<p style="font-weight:700;color:var(--text);margin-bottom:6px;">4. Срок действия и способ отзыва</p>
+<p style="margin:0;">Настоящее согласие действует с момента его предоставления до момента отзыва. Я могу отозвать согласие, направив письменное заявление на электронную почту Оператора: <a href="mailto:2592233@gmail.com" style="color:var(--brown);font-weight:600;">2592233@gmail.com</a> с пометкой «Отзыв согласия на обработку ПД».</p>
+</div>`;
+        document.getElementById('consentText').innerHTML = consentHtml;
+        document.getElementById('consentOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    async function authDoRegister() {
+        var name = document.getElementById('authRegName').value.trim();
+        var phoneRaw = document.getElementById('authRegPhone').value.trim();
+        var phone = '+7' + phoneRaw;
+        var pass1 = document.getElementById('authRegPass1').value;
+        var pass2 = document.getElementById('authRegPass2').value;
         try {
             var res = await api('/api/auth/register', { method: 'POST', body: {
                 email: authRegEmailSaved, code: authRegCodeSaved, name: name, phone: phone, password: pass1, password_confirm: pass2
             }});
             setAuth(res.token, res.customer);
-            closeAuthModal();
             showToast('Регистрация успешна! Добро пожаловать, ' + res.customer.name);
-        } catch (e) { errEl.textContent = e.message; }
+        } catch (e) { showToast(e.message); }
     }
 
     // Auth digit inputs (register)
@@ -2998,32 +3036,11 @@
             return;
         }
         const orderName = currentCustomer?.name || '';
-        if (!orderName) { showToast('Введите ваше имя'); return; }
+        if (!orderName) { showToast('Войдите в аккаунт'); return; }
         const email = currentCustomer?.email || '';
-        if (raw.length !== 10) { showToast('Введите 10 цифр номера'); return; }
-        const phone = getOrderPhone();
-        const consentHtml = `<p style="margin-bottom:14px;">Я, <strong style="color:var(--text);">${esc(orderName)}</strong>, email <strong style="color:var(--text);">${esc(email)}</strong>, пользователь сайта <strong style="color:var(--brown);">One coffee place</strong> (далее\u00a0— Сайт), в\u00a0соответствии с\u00a0Федеральным законом №\u00a0152-ФЗ «О\u00a0персональных данных», свободно, своей волей и\u00a0в\u00a0своем интересе выражаю конкретное, информированное и\u00a0сознательное согласие на\u00a0обработку моих персональных данных Оператору: <strong style="color:var(--text);">ИП\u00a0Паренчук\u00a0Д\u00a0В, ИНН\u00a0253904335130, адрес: 690025 г.\u00a0Владивосток ул.\u00a0Подгорная д.\u00a01</strong> (далее\u00a0— Оператор).</p>
-<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
-<p style="font-weight:700;color:var(--text);margin-bottom:6px;">1. Перечень персональных данных</p>
-<p style="margin-bottom:8px;">Я даю согласие на обработку следующих данных:</p>
-<ul style="padding-left:18px;margin:0;"><li style="margin-bottom:4px;">Фамилия, имя, отчество;</li><li style="margin-bottom:4px;">Адрес электронной почты;</li><li style="margin-bottom:4px;">Адрес доставки (для заказов навынос или доставки);</li><li>Данные о заказах и предпочтениях (в рамках программы лояльности).</li></ul>
-</div>
-<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
-<p style="font-weight:700;color:var(--text);margin-bottom:6px;">2. Цели обработки</p>
-<p style="margin-bottom:8px;">Данные обрабатываются исключительно для:</p>
-<ul style="padding-left:18px;margin:0;"><li style="margin-bottom:4px;">Идентификации при оформлении заказа или регистрации в личном кабинете;</li><li style="margin-bottom:4px;">Связи для подтверждения бронирования заказа или уточнения деталей заказа;</li><li style="margin-bottom:4px;">Доставки заказов (в том числе с передачей данных курьерским службам);</li><li style="margin-bottom:4px;">Информирования об акциях, новинках и специальных предложениях кофейни (при условии подписки на рассылку);</li><li>Сбора статистики для улучшения работы Сайта.</li></ul>
-</div>
-<div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
-<p style="font-weight:700;color:var(--text);margin-bottom:6px;">3. Перечень действий с данными</p>
-<p style="margin:0;">Согласие дается на совершение следующих действий: сбор, запись, систематизацию, накопление, хранение, уточнение (обновление, изменение), извлечение, использование, передачу (предоставление, доступ третьим лицам для доставки), обезличивание, блокирование, удаление и уничтожение.</p>
-</div>
-<div style="background:var(--beige);border-radius:10px;padding:14px 16px;">
-<p style="font-weight:700;color:var(--text);margin-bottom:6px;">4. Срок действия и способ отзыва</p>
-<p style="margin:0;">Настоящее согласие действует с момента его предоставления до момента отзыва. Я могу отозвать согласие, направив письменное заявление на электронную почту Оператора: <a href="mailto:2592233@gmail.com" style="color:var(--brown);font-weight:600;">2592233@gmail.com</a> с пометкой «Отзыв согласия на обработку ПД».</p>
-</div>`;
-        document.getElementById('consentText').innerHTML = consentHtml;
-        document.getElementById('consentOverlay').classList.add('open');
-        document.body.style.overflow = 'hidden';
+        const phone = currentCustomer?.phone || '';
+        _pendingAction = 'order';
+        showRegConsentModal(orderName, phone);
     }
 
     function closeConsentModal() {
@@ -3132,7 +3149,12 @@
 
     function acceptOffer() {
         closeOfferModal();
-        submitAuthOrder();
+        if (_pendingAction === 'register') {
+            authDoRegister();
+        } else {
+            submitAuthOrder();
+        }
+        _pendingAction = null;
     }
 
     let okTimerInterval = null;
