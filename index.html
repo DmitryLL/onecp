@@ -2617,7 +2617,7 @@
         if (!email || !email.includes('@')) { errEl.textContent = 'Введите корректный email'; return; }
         forgotEmailSaved = email;
         try {
-            await api('/api/auth/send-code', { method: 'POST', body: { email: forgotEmailSaved } });
+            await api('/api/auth/send-code', { method: 'POST', body: { email: forgotEmailSaved, purpose: 'reset' } });
             document.getElementById('authForgotEmailDisplay').textContent = forgotEmailSaved;
             hideAllAuthPanels();
             document.getElementById('authForgot2').style.display = 'block';

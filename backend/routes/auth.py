@@ -53,6 +53,7 @@ def normalize_email(email: str) -> str:
 
 class SendCodeRequest(BaseModel):
     email: str
+    purpose: str = "register"  # "register" or "reset"
 
     @field_validator("email")
     @classmethod
@@ -229,6 +230,13 @@ def send_code(body: SendCodeRequest, request: Request, db: Session = Depends(get
     # IP rate limit: max 5 requests per 5 minutes per IP
     client_ip = request.client.host if request.client else "unknown"
     check_rate_limit(f"email:{client_ip}", max_requests=5, window_seconds=300)
+
+    # For password reset, check that account exists
+    if body.purpose == "reset":
+        customer = db.query(Customer).filter(Customer.email == body.email).first()
+        if not customer or not customer.password_hash:
+            raise HTTPException(status_code=400, detail="Аккаунт с таким email не найден")
+
     # Rate limit: max 1 code per 60 seconds
     recent = (
         db.query(EmailCode)
