@@ -133,13 +133,16 @@
 
         /* ===== ORDERS CALENDAR ===== */
         .orders-calendar {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            z-index: 200;
             background: #fff;
             border: 1px solid #e0e0e0;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            max-width: 380px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.06);
+            border-radius: 12px;
+            padding: 14px;
+            width: 280px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.12);
         }
         .oc-header {
             display: flex;
@@ -148,14 +151,14 @@
             margin-bottom: 16px;
         }
         .oc-month-label {
-            font-size: 1.05rem;
+            font-size: .9rem;
             font-weight: 700;
             color: #1a1a1a;
             text-transform: capitalize;
         }
         .oc-nav {
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
             border: none;
             background: #f5f5f5;
             border-radius: 50%;
@@ -176,7 +179,7 @@
             margin-bottom: 8px;
         }
         .oc-weekdays span {
-            font-size: .75rem;
+            font-size: .7rem;
             font-weight: 600;
             color: #aaa;
             text-transform: uppercase;
@@ -187,7 +190,7 @@
         .oc-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
+            gap: 2px;
         }
         .oc-cell {
             aspect-ratio: 1;
@@ -195,7 +198,7 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            font-size: .9rem;
+            font-size: .8rem;
             color: #333;
             cursor: pointer;
             transition: all .15s;
@@ -847,18 +850,24 @@
                 </div>
 
                 <input type="hidden" id="ordersDate">
-                <div class="orders-calendar" id="ordersCalendar">
-                    <div class="oc-header">
-                        <button class="oc-nav" onclick="ocNavMonth(-1)">&#8249;</button>
-                        <span class="oc-month-label" id="ocMonthLabel"></span>
-                        <button class="oc-nav" onclick="ocNavMonth(1)">&#8250;</button>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+                    <div style="position:relative;">
+                        <button class="btn btn-sm" id="ocToggleBtn" onclick="ocToggle()" style="padding:8px 16px;background:#fff;border:1.5px solid #d0d0d0;color:#333;font-size:.9rem;display:flex;align-items:center;gap:8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            <span id="ocDateLabel"></span>
+                        </button>
+                        <div class="orders-calendar" id="ordersCalendar" style="display:none;">
+                            <div class="oc-header">
+                                <button class="oc-nav" onclick="ocNavMonth(-1)">&#8249;</button>
+                                <span class="oc-month-label" id="ocMonthLabel"></span>
+                                <button class="oc-nav" onclick="ocNavMonth(1)">&#8250;</button>
+                            </div>
+                            <div class="oc-weekdays">
+                                <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span class="oc-weekend">Сб</span><span class="oc-weekend">Вс</span>
+                            </div>
+                            <div class="oc-grid" id="ocGrid"></div>
+                        </div>
                     </div>
-                    <div class="oc-weekdays">
-                        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span class="oc-weekend">Сб</span><span class="oc-weekend">Вс</span>
-                    </div>
-                    <div class="oc-grid" id="ocGrid"></div>
-                </div>
-                <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
                     <button class="btn btn-sm" onclick="exportOrdersExcel()" style="background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;">Отчёт по гостям</button>
                     <button class="btn btn-sm" onclick="exportKitchenExcel()" style="background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;">Отчёт для кухни</button>
                 </div>
@@ -2476,6 +2485,7 @@
         // ===== ORDERS CALENDAR =====
         var _ocYear, _ocMonth, _ocSelected;
         const OC_MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+        const OC_MONTHS_SHORT = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
 
         function ocInit() {
             var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
@@ -2485,8 +2495,26 @@
             _ocMonth = target.getMonth();
             _ocSelected = _ocYear + '-' + String(_ocMonth + 1).padStart(2, '0') + '-' + String(target.getDate()).padStart(2, '0');
             document.getElementById('ordersDate').value = _ocSelected;
+            ocUpdateLabel();
             ocRender();
         }
+
+        function ocToggle() {
+            var cal = document.getElementById('ordersCalendar');
+            cal.style.display = cal.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function ocClose() {
+            document.getElementById('ordersCalendar').style.display = 'none';
+        }
+
+        document.addEventListener('click', function(e) {
+            var cal = document.getElementById('ordersCalendar');
+            var btn = document.getElementById('ocToggleBtn');
+            if (cal && btn && !cal.contains(e.target) && !btn.contains(e.target)) {
+                cal.style.display = 'none';
+            }
+        });
 
         function ocNavMonth(dir) {
             _ocMonth += dir;
@@ -2495,10 +2523,21 @@
             ocRender();
         }
 
+        function ocUpdateLabel() {
+            var parts = _ocSelected.split('-');
+            var d = parseInt(parts[2]), m = parseInt(parts[1]) - 1;
+            document.getElementById('ocDateLabel').textContent = d + ' ' + OC_MONTHS_SHORT[m] + ' ' + parts[0];
+        }
+
         function ocSelectDay(dateStr) {
             _ocSelected = dateStr;
             document.getElementById('ordersDate').value = dateStr;
+            var parts = dateStr.split('-');
+            _ocMonth = parseInt(parts[1]) - 1;
+            _ocYear = parseInt(parts[0]);
+            ocUpdateLabel();
             ocRender();
+            ocClose();
             loadOrdersByDate();
         }
 
