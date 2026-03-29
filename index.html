@@ -3047,19 +3047,8 @@
 
     // ===== ORDER =====
     function showConsentModal() {
-        // Validate: minimum 2 dishes from Суп/Горячее/Салат
-        const requiredCats = ['Суп', 'Горячее', 'Салат'];
-        const mainCount = cart.reduce((sum, item) => requiredCats.includes(item.category) ? sum + item.qty : sum, 0);
-        if (mainCount < 2) {
-            showToast('Добавьте минимум 2 блюда из разделов Суп, Горячее или Салат');
-            return;
-        }
-        const orderName = currentCustomer?.name || '';
-        if (!orderName) { showToast('Войдите в аккаунт'); return; }
-        const email = currentCustomer?.email || '';
-        const phone = currentCustomer?.phone || '';
-        _pendingAction = 'order';
-        showRegConsentModal(orderName, phone);
+        // No consent/offer needed for orders — only for registration
+        submitAuthOrder();
     }
 
     function closeConsentModal() {
@@ -3179,11 +3168,7 @@
 
     function acceptOffer() {
         closeOfferModal();
-        if (_pendingAction === 'register') {
-            authDoRegister();
-        } else {
-            submitAuthOrder();
-        }
+        authDoRegister();
         _pendingAction = null;
     }
 
