@@ -17,7 +17,7 @@ class Customer(Base):
     __tablename__ = "customers"
 
     id = Column(Integer, primary_key=True, index=True)
-    phone = Column(String(20), unique=True, nullable=False, index=True)
+    email = Column(String(200), unique=True, nullable=False, index=True)
     name = Column(String(100), nullable=True)
     password_hash = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -25,11 +25,11 @@ class Customer(Base):
     orders = relationship("Order", back_populates="customer")
 
 
-class SmsCode(Base):
-    __tablename__ = "sms_codes"
+class EmailCode(Base):
+    __tablename__ = "email_codes"
 
     id = Column(Integer, primary_key=True, index=True)
-    phone = Column(String(20), nullable=False, index=True)
+    email = Column(String(200), nullable=False, index=True)
     code = Column(String(6), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     used = Column(Boolean, default=False)

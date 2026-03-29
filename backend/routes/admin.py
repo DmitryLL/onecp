@@ -50,7 +50,7 @@ def compress_image(file_data: bytes, max_size: int = MAX_IMAGE_SIZE, quality: in
     return buf.getvalue(), "webp"
 
 from database import get_db
-from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question, SmsCode, CalendarDay, CalendarDaySet, Location
+from models import AdminUser, Dish, DishSet, DishSetItem, Order, OrderItem, Customer, SiteSettings, Question, EmailCode, CalendarDay, CalendarDaySet, Location
 from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -309,7 +309,7 @@ def list_orders(admin: AdminUser = Depends(get_admin), db: Session = Depends(get
     return [
         {
             "id": o.id,
-            "customerPhone": o.customer.phone if o.customer else "—",
+            "customerEmail": o.customer.email if o.customer else "—",
             "customerName": o.customer.name if o.customer else "—",
             "status": o.status,
             "statusLabel": status_labels.get(o.status, o.status),
@@ -342,7 +342,7 @@ def update_order_status(order_id: int, body: OrderStatusUpdate, admin: AdminUser
 def purge_all(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
     db.query(OrderItem).delete()
     db.query(Order).delete()
-    db.query(SmsCode).delete()
+    db.query(EmailCode).delete()
     db.query(Customer).delete()
     db.query(DishSetItem).delete()
     db.query(DishSet).delete()
@@ -354,9 +354,9 @@ def purge_all(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_d
 
 # ===== CUSTOMERS =====
 
-@router.get("/customers/{phone}/orders")
-def get_customer_orders(phone: str, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
-    customer = db.query(Customer).filter(Customer.phone == phone).first()
+@router.get("/customers/{email}/orders")
+def get_customer_orders(email: str, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    customer = db.query(Customer).filter(Customer.email == email).first()
     if not customer:
         return []
     orders = (
@@ -402,7 +402,7 @@ def list_customers(admin: AdminUser = Depends(get_admin), db: Session = Depends(
         total_spent = db.query(func.coalesce(func.sum(Order.total), 0)).filter(Order.customer_id == c.id).scalar()
         result.append({
             "id": c.id,
-            "phone": c.phone,
+            "email": c.email,
             "name": c.name,
             "createdAt": c.created_at.isoformat() if c.created_at else None,
             "orderCount": order_count,
@@ -416,7 +416,7 @@ def clear_customers_and_orders(admin: AdminUser = Depends(get_admin), db: Sessio
     db.query(OrderItem).delete()
     db.query(Order).delete()
     db.query(Customer).delete()
-    db.query(SmsCode).delete()
+    db.query(EmailCode).delete()
     db.commit()
     return {"ok": True}
 

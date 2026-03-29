@@ -70,6 +70,31 @@ def init_db():
         if "password_hash" not in cust_cols:
             conn.execute(text("ALTER TABLE customers ADD COLUMN password_hash VARCHAR(255)"))
             logger.info("Added column customers.password_hash")
+        # Migrate customers: phone -> email
+        cust_cols2 = [c["name"] for c in insp.get_columns("customers")]
+        if "phone" in cust_cols2 and "email" not in cust_cols2:
+            conn.execute(text("ALTER TABLE customers ADD COLUMN email VARCHAR(200)"))
+            conn.execute(text("UPDATE customers SET email = phone WHERE email IS NULL"))
+            conn.execute(text("ALTER TABLE customers DROP COLUMN phone"))
+            conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_customers_email ON customers (email)"))
+            logger.info("Migrated customers.phone to customers.email")
+        # Create email_codes table if not exists
+        if "email_codes" not in insp.get_table_names():
+            conn.execute(text("""
+                CREATE TABLE email_codes (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(200) NOT NULL,
+                    code VARCHAR(6) NOT NULL,
+                    created_at TIMESTAMPTZ DEFAULT NOW(),
+                    used BOOLEAN DEFAULT FALSE
+                )
+            """))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_email_codes_email ON email_codes (email)"))
+            logger.info("Created email_codes table")
+        # Drop old sms_codes table if exists
+        if "sms_codes" in insp.get_table_names():
+            conn.execute(text("DROP TABLE sms_codes"))
+            logger.info("Dropped old sms_codes table")
         conn.commit()
 
     db = SessionLocal()

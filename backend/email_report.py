@@ -170,7 +170,7 @@ def _build_guests_sheet(ws, loc_orders, location: str, delivery_date: date_type)
                 c = ws.cell(row=sep_row, column=col)
                 c.fill = SEP_FILL
             ws.row_dimensions[sep_row].height = 4
-        phone = o.customer.phone if o.customer else "—"
+        phone = o.customer.email if o.customer else "—"
         name = o.customer.name if o.customer and o.customer.name else "—"
         created_vlad = o.created_at.astimezone(VLAD_TZ) if o.created_at else None
         time_str = created_vlad.strftime("%H:%M") if created_vlad else "—"

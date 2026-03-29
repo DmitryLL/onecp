@@ -2175,7 +2175,7 @@
             <div id="orderAuth" style="display:none;">
                 <div style="background:var(--beige);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:10px;">
                     <div style="font-weight:600;color:var(--text);font-size:.95rem;" id="orderAuthName"></div>
-                    <div style="font-size:.8rem;color:var(--text-light);" id="orderAuthPhone"></div>
+                    <div style="font-size:.8rem;color:var(--text-light);" id="orderAuthEmail"></div>
                 </div>
                 <button class="btn-checkout" onclick="submitAuthOrder()">Сделать заказ</button>
             </div>
@@ -2206,46 +2206,19 @@
     </div>
 </div>
 
-<!-- SMS CONFIRMATION MODAL -->
-<div class="detail-overlay" id="smsOverlay" onclick="if(event.target===event.currentTarget)closeSmsModal()">
+<!-- ORDER SUCCESS MODAL -->
+<div class="detail-overlay" id="orderSuccessOverlay" onclick="if(event.target===event.currentTarget)closeOrderSuccess()">
     <div class="detail-modal sms-modal">
-        <button class="detail-close" onclick="closeSmsModal()" style="background:rgba(26,22,18,.15);color:var(--text);">&times;</button>
-        <!-- SMS Step 1: info + send -->
-        <div id="smsStep1">
-            <div class="sms-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            </div>
-            <h3>Подтверждение заказа</h3>
-            <p class="sms-subtitle">Для оформления заказа мы отправим SMS с 4-значным кодом на ваш номер телефона</p>
-            <button class="sms-btn-primary" onclick="orderSendCode()">Отправить код</button>
-        </div>
-        <!-- SMS Step 2: enter code -->
-        <div id="smsStep2" style="display:none;">
-            <div class="sms-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </div>
-            <h3>Введите код</h3>
-            <p class="sms-subtitle">Код отправлен на номер <span id="smsPhoneDisplay"></span></p>
-            <div class="sms-code-inputs">
-                <input type="text" inputmode="numeric" maxlength="1" class="sms-digit" data-index="0" autocomplete="one-time-code">
-                <input type="text" inputmode="numeric" maxlength="1" class="sms-digit" data-index="1">
-                <input type="text" inputmode="numeric" maxlength="1" class="sms-digit" data-index="2">
-                <input type="text" inputmode="numeric" maxlength="1" class="sms-digit" data-index="3">
-            </div>
-            <input type="hidden" id="orderSmsCode">
-            <button class="sms-btn-primary" onclick="confirmOrder()" style="margin-bottom:10px;">Подтвердить</button>
-            <button class="sms-btn-secondary" onclick="smsGoBack()">Отправить код ещё раз</button>
-        </div>
-        <!-- SMS Step 3: order success -->
-        <div id="smsStep3" style="display:none;">
+        <button class="detail-close" onclick="closeOrderSuccess()" style="background:rgba(26,22,18,.15);color:var(--text);">&times;</button>
+        <div id="orderSuccessContent">
             <div class="sms-success-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
             <h3>Заказ оформлен!</h3>
             <p class="sms-subtitle">Ваш номер заказа</p>
-            <p class="sms-order-number" id="smsOrderNumber"></p>
+            <p class="sms-order-number" id="orderSuccessNumber"></p>
             <p class="sms-subtitle" style="margin-top:12px;">Предоставьте номер заказа при получении</p>
-            <button class="sms-btn-primary" id="smsOkBtn" onclick="closeOrderSuccess()" disabled style="opacity:.5;cursor:not-allowed;">OK (<span id="smsOkTimer">5</span>)</button>
+            <button class="sms-btn-primary" id="orderSuccessOkBtn" onclick="closeOrderSuccess()" disabled style="opacity:.5;cursor:not-allowed;">OK (<span id="orderSuccessTimer">5</span>)</button>
         </div>
     </div>
 </div>
@@ -2259,34 +2232,28 @@
         <!-- Login -->
         <div id="authLogin">
             <h3>Вход</h3>
-            <p class="auth-sub">Введите телефон и пароль</p>
+            <p class="auth-sub">Введите email и пароль</p>
             <div class="auth-error" id="authLoginError"></div>
-            <div class="auth-phone-row">
-                <span>+7</span>
-                <input type="tel" id="authLoginPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
-            </div>
+            <input type="email" id="authLoginEmail" placeholder="email@example.com" style="width:100%;box-sizing:border-box;">
             <input type="password" id="authLoginPass" placeholder="Пароль">
             <button class="auth-btn" onclick="authDoLogin()">Войти</button>
             <div class="auth-switch">Нет аккаунта? <a onclick="authShowRegister()">Зарегистрироваться</a></div>
         </div>
 
-        <!-- Register Step 1: phone -->
+        <!-- Register Step 1: email -->
         <div id="authReg1" style="display:none;">
             <h3>Регистрация</h3>
-            <p class="auth-sub">Введите номер телефона для получения SMS-кода</p>
+            <p class="auth-sub">Введите email для получения кода подтверждения</p>
             <div class="auth-error" id="authRegError1"></div>
-            <div class="auth-phone-row">
-                <span>+7</span>
-                <input type="tel" id="authRegPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
-            </div>
+            <input type="email" id="authRegEmail" placeholder="email@example.com" style="width:100%;box-sizing:border-box;">
             <button class="auth-btn" onclick="authRegSendCode()">Отправить код</button>
             <div class="auth-switch">Уже есть аккаунт? <a onclick="authShowLogin()">Войти</a></div>
         </div>
 
-        <!-- Register Step 2: SMS code -->
+        <!-- Register Step 2: email code -->
         <div id="authReg2" style="display:none;">
             <h3>Введите код</h3>
-            <p class="auth-sub">Код отправлен на <span id="authRegPhoneDisplay"></span></p>
+            <p class="auth-sub">Код отправлен на <span id="authRegEmailDisplay"></span></p>
             <div class="auth-error" id="authRegError2"></div>
             <div class="auth-sms-digits">
                 <input type="text" inputmode="numeric" maxlength="1" class="auth-digit" data-idx="0">
@@ -2449,7 +2416,7 @@
             authDiv.style.display = 'block';
             guestDiv.style.display = 'none';
             document.getElementById('orderAuthName').textContent = currentCustomer.name || '';
-            document.getElementById('orderAuthPhone').textContent = currentCustomer.phone || '';
+            document.getElementById('orderAuthEmail').textContent = currentCustomer.email || '';
         } else {
             authDiv.style.display = 'none';
             guestDiv.style.display = 'block';
@@ -2479,36 +2446,37 @@
     }
 
     async function authDoLogin() {
-        var phone = '+7' + document.getElementById('authLoginPhone').value.trim();
+        var email = document.getElementById('authLoginEmail').value.trim();
         var pass = document.getElementById('authLoginPass').value;
         var errEl = document.getElementById('authLoginError');
         errEl.textContent = '';
+        if (!email) { errEl.textContent = 'Введите email'; return; }
         try {
-            var res = await api('/api/auth/login', { method: 'POST', body: { phone: phone, password: pass } });
+            var res = await api('/api/auth/login', { method: 'POST', body: { email: email, password: pass } });
             setAuth(res.token, res.customer);
             closeAuthModal();
             showToast('Вы вошли как ' + res.customer.name);
         } catch (e) { errEl.textContent = e.message; }
     }
 
-    var authRegPhoneSaved = '';
+    var authRegEmailSaved = '';
     var authRegCodeSaved = '';
 
     async function authRegSendCode() {
-        var raw = document.getElementById('authRegPhone').value.trim();
+        var email = document.getElementById('authRegEmail').value.trim();
         var errEl = document.getElementById('authRegError1');
         errEl.textContent = '';
-        if (raw.length !== 10) { errEl.textContent = 'Введите 10 цифр номера'; return; }
-        authRegPhoneSaved = '+7' + raw;
+        if (!email || !email.includes('@')) { errEl.textContent = 'Введите корректный email'; return; }
+        authRegEmailSaved = email;
         try {
-            await api('/api/auth/send-code', { method: 'POST', body: { phone: authRegPhoneSaved } });
-            document.getElementById('authRegPhoneDisplay').textContent = authRegPhoneSaved;
+            await api('/api/auth/send-code', { method: 'POST', body: { email: authRegEmailSaved } });
+            document.getElementById('authRegEmailDisplay').textContent = authRegEmailSaved;
             document.getElementById('authReg1').style.display = 'none';
             document.getElementById('authReg2').style.display = 'block';
             document.querySelectorAll('.auth-digit').forEach(d => { d.value = ''; d.classList.remove('filled'); });
             var first = document.querySelector('.auth-digit[data-idx="0"]');
             if (first) first.focus();
-            showToast('Код отправлен');
+            showToast('Код отправлен на email');
         } catch (e) { errEl.textContent = e.message; }
     }
 
@@ -2533,7 +2501,7 @@
         if (pass1 !== pass2) { errEl.textContent = 'Пароли не совпадают'; return; }
         try {
             var res = await api('/api/auth/register', { method: 'POST', body: {
-                phone: authRegPhoneSaved, code: authRegCodeSaved, name: name, password: pass1, password_confirm: pass2
+                email: authRegEmailSaved, code: authRegCodeSaved, name: name, password: pass1, password_confirm: pass2
             }});
             setAuth(res.token, res.customer);
             closeAuthModal();
@@ -2870,23 +2838,8 @@
         if (e.target === e.currentTarget) closeCart();
     }
 
-    // ===== ORDER: phone + SMS =====
-    function toggleOrderBtn() {
-        const btn = document.getElementById('orderSendCodeBtn');
-        const name = document.getElementById('orderName').value.trim();
-        const phone = document.getElementById('orderPhone').value.trim();
-        const ok = name.length > 0 && phone.length === 10;
-        btn.disabled = !ok;
-        btn.style.opacity = ok ? '1' : '.5';
-        btn.style.cursor = ok ? 'pointer' : 'not-allowed';
-    }
-
-    function getOrderPhone() {
-        return '+7' + document.getElementById('orderPhone').value.trim();
-    }
-
+    // ===== ORDER =====
     function showConsentModal() {
-        if (document.getElementById('orderSendCodeBtn').disabled) return;
         // Validate: minimum 2 dishes from Суп/Горячее/Салат
         const requiredCats = ['Суп', 'Горячее', 'Салат'];
         const mainCount = cart.reduce((sum, item) => requiredCats.includes(item.category) ? sum + item.qty : sum, 0);
@@ -2894,16 +2847,16 @@
             showToast('Добавьте минимум 2 блюда из разделов Суп, Горячее или Салат');
             return;
         }
-        const orderName = document.getElementById('orderName').value.trim();
+        const orderName = currentCustomer?.name || '';
         if (!orderName) { showToast('Введите ваше имя'); return; }
-        const raw = document.getElementById('orderPhone').value.trim();
+        const email = currentCustomer?.email || '';
         if (raw.length !== 10) { showToast('Введите 10 цифр номера'); return; }
         const phone = getOrderPhone();
-        const consentHtml = `<p style="margin-bottom:14px;">Я, <strong style="color:var(--text);">${esc(orderName)}</strong>, номер телефона <strong style="color:var(--text);">${esc(phone)}</strong>, пользователь сайта <strong style="color:var(--brown);">One coffee place</strong> (далее\u00a0— Сайт), в\u00a0соответствии с\u00a0Федеральным законом №\u00a0152-ФЗ «О\u00a0персональных данных», свободно, своей волей и\u00a0в\u00a0своем интересе выражаю конкретное, информированное и\u00a0сознательное согласие на\u00a0обработку моих персональных данных Оператору: <strong style="color:var(--text);">ИП\u00a0Паренчук\u00a0Д\u00a0В, ИНН\u00a0253904335130, адрес: 690025 г.\u00a0Владивосток ул.\u00a0Подгорная д.\u00a01</strong> (далее\u00a0— Оператор).</p>
+        const consentHtml = `<p style="margin-bottom:14px;">Я, <strong style="color:var(--text);">${esc(orderName)}</strong>, email <strong style="color:var(--text);">${esc(email)}</strong>, пользователь сайта <strong style="color:var(--brown);">One coffee place</strong> (далее\u00a0— Сайт), в\u00a0соответствии с\u00a0Федеральным законом №\u00a0152-ФЗ «О\u00a0персональных данных», свободно, своей волей и\u00a0в\u00a0своем интересе выражаю конкретное, информированное и\u00a0сознательное согласие на\u00a0обработку моих персональных данных Оператору: <strong style="color:var(--text);">ИП\u00a0Паренчук\u00a0Д\u00a0В, ИНН\u00a0253904335130, адрес: 690025 г.\u00a0Владивосток ул.\u00a0Подгорная д.\u00a01</strong> (далее\u00a0— Оператор).</p>
 <div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
 <p style="font-weight:700;color:var(--text);margin-bottom:6px;">1. Перечень персональных данных</p>
 <p style="margin-bottom:8px;">Я даю согласие на обработку следующих данных:</p>
-<ul style="padding-left:18px;margin:0;"><li style="margin-bottom:4px;">Фамилия, имя, отчество;</li><li style="margin-bottom:4px;">Номер контактного телефона;</li><li style="margin-bottom:4px;">Адрес доставки (для заказов навынос или доставки);</li><li>Данные о заказах и предпочтениях (в рамках программы лояльности).</li></ul>
+<ul style="padding-left:18px;margin:0;"><li style="margin-bottom:4px;">Фамилия, имя, отчество;</li><li style="margin-bottom:4px;">Адрес электронной почты;</li><li style="margin-bottom:4px;">Адрес доставки (для заказов навынос или доставки);</li><li>Данные о заказах и предпочтениях (в рамках программы лояльности).</li></ul>
 </div>
 <div style="background:var(--beige);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
 <p style="font-weight:700;color:var(--text);margin-bottom:6px;">2. Цели обработки</p>
@@ -2930,126 +2883,27 @@
 
     function acceptConsent() {
         closeConsentModal();
-        document.getElementById('smsStep1').style.display = 'block';
-        document.getElementById('smsStep2').style.display = 'none';
-        document.getElementById('smsOverlay').classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeSmsModal() {
-        document.getElementById('smsOverlay').classList.remove('open');
-        document.body.style.overflow = '';
-    }
-
-    function smsGoBack() {
-        document.getElementById('smsStep1').style.display = 'block';
-        document.getElementById('smsStep2').style.display = 'none';
-    }
-
-    // 4-digit separate inputs logic
-    function initSmsDigits() {
-        const digits = document.querySelectorAll('.sms-digit');
-        digits.forEach((input, idx) => {
-            input.addEventListener('input', (e) => {
-                const val = e.target.value.replace(/\D/g, '');
-                e.target.value = val.slice(0, 1);
-                if (val && idx < 3) digits[idx + 1].focus();
-                e.target.classList.toggle('filled', !!val);
-                syncSmsCode();
-            });
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && !e.target.value && idx > 0) {
-                    digits[idx - 1].focus();
-                    digits[idx - 1].value = '';
-                    digits[idx - 1].classList.remove('filled');
-                    syncSmsCode();
-                }
-                if (e.key === 'Enter') confirmOrder();
-            });
-            input.addEventListener('paste', (e) => {
-                e.preventDefault();
-                const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 4);
-                paste.split('').forEach((ch, i) => {
-                    if (digits[i]) { digits[i].value = ch; digits[i].classList.add('filled'); }
-                });
-                if (digits[Math.min(paste.length, 3)]) digits[Math.min(paste.length, 3)].focus();
-                syncSmsCode();
-            });
-        });
-    }
-    function syncSmsCode() {
-        const digits = document.querySelectorAll('.sms-digit');
-        document.getElementById('orderSmsCode').value = Array.from(digits).map(d => d.value).join('');
-    }
-    function clearSmsDigits() {
-        document.querySelectorAll('.sms-digit').forEach(d => { d.value = ''; d.classList.remove('filled'); });
-        document.getElementById('orderSmsCode').value = '';
-    }
-    initSmsDigits();
-
-    async function orderSendCode() {
-        const phone = getOrderPhone();
-        try {
-            await api('/api/auth/send-code', { method: 'POST', body: { phone } });
-            document.getElementById('smsPhoneDisplay').textContent = phone;
-            document.getElementById('smsStep1').style.display = 'none';
-            document.getElementById('smsStep2').style.display = 'block';
-            clearSmsDigits();
-            document.querySelector('.sms-digit[data-index="0"]').focus();
-            showToast('Код отправлен на ваш телефон');
-        } catch (e) {
-            showToast(e.message);
-        }
-    }
-
-    async function confirmOrder() {
-        if (cart.length === 0) return;
-        const phone = getOrderPhone();
-        const code = document.getElementById('orderSmsCode')?.value?.trim();
-        if (!code) { showToast('Введите код'); return; }
-        const comment = document.getElementById('orderComment')?.value || '';
-        const address = document.getElementById('orderAddress')?.value || '';
-        try {
-            const customerName = document.getElementById('orderName')?.value?.trim() || null;
-            const res = await api('/api/orders/', {
-                method: 'POST',
-                body: {
-                    phone,
-                    sms_code: code,
-                    items: cart.map(c => ({ dish_id: c.id, quantity: c.qty })),
-                    comment: comment || null,
-                    address: address || null,
-                    customer_name: customerName,
-                }
-            });
-            cart = [];
-            updateCartBadge();
-            showOrderSuccess(res.order.id);
-        } catch (e) {
-            showToast(e.message);
-        }
+        // Directly submit order (user is authenticated)
+        submitAuthOrder();
     }
 
     let okTimerInterval = null;
 
     function showOrderSuccess(orderId) {
-        document.getElementById('smsStep1').style.display = 'none';
-        document.getElementById('smsStep2').style.display = 'none';
-        document.getElementById('smsStep3').style.display = 'block';
-        document.getElementById('smsOrderNumber').textContent = '#' + orderId;
-        document.getElementById('smsOverlay').classList.add('open');
-        const btn = document.getElementById('smsOkBtn');
-        const timerSpan = document.getElementById('smsOkTimer');
+        document.getElementById('orderSuccessNumber').textContent = '#' + orderId;
+        document.getElementById('orderSuccessOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        const btn = document.getElementById('orderSuccessOkBtn');
         let sec = 5;
         btn.disabled = true;
         btn.style.opacity = '.5';
         btn.style.cursor = 'not-allowed';
-        btn.innerHTML = 'OK (<span id="smsOkTimer">' + sec + '</span>)';
+        btn.innerHTML = 'OK (<span id="orderSuccessTimer">' + sec + '</span>)';
         if (okTimerInterval) clearInterval(okTimerInterval);
         okTimerInterval = setInterval(() => {
             sec--;
             if (sec > 0) {
-                btn.innerHTML = 'OK (<span id="smsOkTimer">' + sec + '</span>)';
+                btn.innerHTML = 'OK (<span id="orderSuccessTimer">' + sec + '</span>)';
             } else {
                 clearInterval(okTimerInterval);
                 okTimerInterval = null;
@@ -3063,20 +2917,15 @@
 
     function closeOrderSuccess() {
         if (okTimerInterval) { clearInterval(okTimerInterval); okTimerInterval = null; }
-        closeSmsModal();
+        document.getElementById('orderSuccessOverlay').classList.remove('open');
+        document.body.style.overflow = '';
         closeCart();
         document.getElementById('orderAddress').value = currentLocation || '';
         document.getElementById('orderComment').value = '';
-        clearSmsDigits();
-        // Clear cart and update UI
         cart = [];
         updateCartBadge();
         renderCart();
         renderCatalog();
-    }
-
-    function checkout() {
-        // Not used anymore — flow is inline in cart
     }
 
     // ===== MOBILE MENU =====

@@ -2,16 +2,19 @@ import os
 import random
 import secrets
 import logging
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 from jose import jwt
 from passlib.hash import pbkdf2_sha256
 
 from database import get_db
-from models import Customer, SmsCode, Order, OrderItem
+from models import Customer, EmailCode, Order, OrderItem
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger("onecp")
@@ -22,9 +25,6 @@ if not JWT_SECRET:
     logger.critical("JWT_SECRET not set! Generated random secret — tokens will NOT survive restart. Set JWT_SECRET env var!")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_MINUTES = 60 * 24  # 24 hours
-
-SMS_PROVIDER = os.getenv("SMS_PROVIDER", "mock")  # mock | smsru
-SMSRU_API_KEY = os.getenv("SMSRU_API_KEY", "")
 
 # Simple in-memory IP rate limiter
 _rate_limits: dict[str, list[float]] = {}
@@ -41,49 +41,47 @@ def check_rate_limit(key: str, max_requests: int, window_seconds: int):
     _rate_limits[key] = entries
 
 
-def normalize_phone(phone: str) -> str:
-    digits = "".join(c for c in phone if c.isdigit())
-    if digits.startswith("8") and len(digits) == 11:
-        digits = "7" + digits[1:]
-    if not digits.startswith("7") or len(digits) != 11:
-        raise ValueError("Введите корректный номер телефона (10 цифр после +7)")
-    return "+" + digits
+def normalize_email(email: str) -> str:
+    email = email.strip().lower()
+    if not email or "@" not in email:
+        raise ValueError("Введите корректный email")
+    local, domain = email.rsplit("@", 1)
+    if not local or not domain or "." not in domain:
+        raise ValueError("Введите корректный email")
+    return email
 
 
 class SendCodeRequest(BaseModel):
-    phone: str
+    email: str
 
-    @field_validator("phone")
+    @field_validator("email")
     @classmethod
-    def validate_phone(cls, v: str) -> str:
-        return normalize_phone(v)
+    def validate_email(cls, v: str) -> str:
+        return normalize_email(v)
 
 
 class VerifyCodeRequest(BaseModel):
-    phone: str
+    email: str
     code: str
 
-    @field_validator("phone")
+    @field_validator("email")
     @classmethod
-    def validate_phone(cls, v: str) -> str:
-        return normalize_phone(v)
+    def validate_email(cls, v: str) -> str:
+        return normalize_email(v)
 
 
 class UpdateNameRequest(BaseModel):
     name: str
 
 
-def create_token(customer_id: int, phone: str) -> str:
+def create_token(customer_id: int, email: str) -> str:
     exp = datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES)
-    return jwt.encode({"sub": str(customer_id), "phone": phone, "exp": exp}, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return jwt.encode({"sub": str(customer_id), "email": email, "exp": exp}, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 def get_current_customer(db: Session = Depends(get_db), token: str = None) -> Customer:
     """Dependency — extracts customer from Authorization header."""
     pass  # overridden below
-
-
-from fastapi import Request
 
 
 def get_current_customer_dep(request: Request, db: Session = Depends(get_db)) -> Customer:
@@ -102,65 +100,79 @@ def get_current_customer_dep(request: Request, db: Session = Depends(get_db)) ->
     return customer
 
 
-def send_sms(phone: str, code: str):
-    """Send SMS via configured provider. Raises Exception on failure."""
-    if SMS_PROVIDER == "mock":
-        logger.info(f"[MOCK SMS] Phone: {phone}, Code: {code}")
+def _get_smtp_settings(db: Session) -> dict | None:
+    """Get SMTP settings from SiteSettings (same as email_report)."""
+    from models import SiteSettings
+    rows = db.query(SiteSettings).filter(
+        SiteSettings.key.in_(["reportSmtpHost", "reportSmtpPort", "reportSmtpEmail", "reportSmtpPassword"])
+    ).all()
+    settings = {r.key: r.value for r in rows}
+    email = settings.get("reportSmtpEmail", "").strip()
+    password = settings.get("reportSmtpPassword", "").strip()
+    if not email or not password:
+        return None
+    return settings
+
+
+def send_email_code(recipient: str, code: str, db: Session):
+    """Send verification code via email using SMTP settings from SiteSettings."""
+    settings = _get_smtp_settings(db)
+    if not settings:
+        logger.info(f"[MOCK EMAIL] To: {recipient}, Code: {code}")
         return
 
-    if SMS_PROVIDER == "smsru":
-        import urllib.request
-        import urllib.parse
-        import urllib.error
-        import json
-        phone_digits = phone.lstrip("+")
-        params = urllib.parse.urlencode({
-            "api_id": SMSRU_API_KEY,
-            "to": phone_digits,
-            "msg": f"One Coffee Place: ваш код {code}",
-            "json": 1,
-        })
-        try:
-            resp = urllib.request.urlopen(f"https://sms.ru/sms/send?{params}", timeout=15)
-            body = resp.read().decode("utf-8")
-            logger.info(f"[SMS.RU] Phone: {phone_digits}, Response: {body}")
-            data = json.loads(body)
+    smtp_email = settings["reportSmtpEmail"].strip()
+    smtp_pass = settings["reportSmtpPassword"].strip()
+    smtp_host = settings.get("reportSmtpHost", "").strip()
+    smtp_port = settings.get("reportSmtpPort", "").strip()
 
-            # Check overall request status
-            if data.get("status") != "OK":
-                error_msg = data.get("status_text", body)
-                logger.error(f"[SMS.RU] Request failed: {error_msg}")
-                raise Exception(f"SMS.RU error: {error_msg}")
+    if smtp_host and ":" in smtp_host:
+        parts = smtp_host.split(":")
+        smtp_host = parts[0]
+        if not smtp_port:
+            smtp_port = parts[1]
+    if not smtp_host:
+        from email_report import detect_smtp
+        smtp_host, smtp_port = detect_smtp(smtp_email)
+    else:
+        smtp_port = int(smtp_port) if smtp_port else 465
 
-            # Check per-phone delivery status
-            sms_data = data.get("sms", {})
-            phone_status = sms_data.get(phone_digits, {})
-            if isinstance(phone_status, dict) and phone_status.get("status") == "ERROR":
-                error_msg = phone_status.get("status_text", "Unknown error")
-                status_code = phone_status.get("status_code", "")
-                logger.error(f"[SMS.RU] Delivery failed for {phone_digits}: {error_msg} (code: {status_code})")
-                raise Exception(f"SMS не доставлена: {error_msg}")
+    msg = MIMEMultipart()
+    msg["From"] = smtp_email
+    msg["To"] = recipient
+    msg["Subject"] = "One Coffee Place — код подтверждения"
 
-            logger.info(f"[SMS.RU] SMS sent OK to {phone_digits}")
+    body = f"""Ваш код подтверждения: {code}
 
-        except (json.JSONDecodeError, KeyError) as e:
-            logger.error(f"[SMS.RU] Bad response: {e}")
-            raise Exception("Ошибка ответа от SMS провайдера")
-        except urllib.error.URLError as e:
-            logger.error(f"[SMS.RU] Network error: {e}")
-            raise Exception("Не удалось подключиться к SMS провайдеру")
+Код действителен в течение 5 минут.
+
+Если вы не запрашивали код, просто проигнорируйте это письмо.
+
+— One Coffee Place"""
+
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+
+    try:
+        server = smtplib.SMTP_SSL(smtp_host, int(smtp_port), timeout=15)
+        server.login(smtp_email, smtp_pass)
+        server.sendmail(smtp_email, [recipient], msg.as_string())
+        server.quit()
+        logger.info(f"[EMAIL] Verification code sent to {recipient}")
+    except Exception as e:
+        logger.error(f"[EMAIL] Failed to send to {recipient}: {e}")
+        raise Exception(f"Не удалось отправить email: {e}")
 
 
 @router.post("/send-code")
 def send_code(body: SendCodeRequest, request: Request, db: Session = Depends(get_db)):
-    # IP rate limit: max 5 SMS requests per 5 minutes per IP
+    # IP rate limit: max 5 requests per 5 minutes per IP
     client_ip = request.client.host if request.client else "unknown"
-    check_rate_limit(f"sms:{client_ip}", max_requests=5, window_seconds=300)
+    check_rate_limit(f"email:{client_ip}", max_requests=5, window_seconds=300)
     # Rate limit: max 1 code per 60 seconds
     recent = (
-        db.query(SmsCode)
-        .filter(SmsCode.phone == body.phone, SmsCode.used == False)
-        .order_by(SmsCode.created_at.desc())
+        db.query(EmailCode)
+        .filter(EmailCode.email == body.email, EmailCode.used == False)
+        .order_by(EmailCode.created_at.desc())
         .first()
     )
     if recent and (datetime.now(timezone.utc) - recent.created_at.replace(tzinfo=timezone.utc)).total_seconds() < 60:
@@ -168,57 +180,57 @@ def send_code(body: SendCodeRequest, request: Request, db: Session = Depends(get
 
     code = f"{random.randint(1000, 9999)}"
 
-    sms_code = SmsCode(phone=body.phone, code=code)
-    db.add(sms_code)
+    email_code = EmailCode(email=body.email, code=code)
+    db.add(email_code)
     db.commit()
 
     try:
-        send_sms(body.phone, code)
+        send_email_code(body.email, code, db)
     except Exception as e:
-        logger.error(f"[SMS] Failed to send to {body.phone}: {e}")
-        raise HTTPException(status_code=502, detail=f"Не удалось отправить SMS: {e}")
+        logger.error(f"[EMAIL] Failed to send to {body.email}: {e}")
+        raise HTTPException(status_code=502, detail=f"Не удалось отправить код: {e}")
 
-    return {"ok": True, "message": "Код отправлен"}
+    return {"ok": True, "message": "Код отправлен на email"}
 
 
 @router.post("/verify-code")
 def verify_code(body: VerifyCodeRequest, request: Request, db: Session = Depends(get_db)):
     client_ip = request.client.host if request.client else "unknown"
     check_rate_limit(f"verify:{client_ip}", max_requests=10, window_seconds=300)
-    sms_code = (
-        db.query(SmsCode)
-        .filter(SmsCode.phone == body.phone, SmsCode.code == body.code, SmsCode.used == False)
-        .order_by(SmsCode.created_at.desc())
+    email_code = (
+        db.query(EmailCode)
+        .filter(EmailCode.email == body.email, EmailCode.code == body.code, EmailCode.used == False)
+        .order_by(EmailCode.created_at.desc())
         .first()
     )
 
-    if not sms_code:
+    if not email_code:
         raise HTTPException(status_code=400, detail="Неверный код")
 
     # Code expires after 5 minutes
-    age = (datetime.now(timezone.utc) - sms_code.created_at.replace(tzinfo=timezone.utc)).total_seconds()
+    age = (datetime.now(timezone.utc) - email_code.created_at.replace(tzinfo=timezone.utc)).total_seconds()
     if age > 300:
         raise HTTPException(status_code=400, detail="Код истёк, запросите новый")
 
-    sms_code.used = True
+    email_code.used = True
 
     # Find or create customer
-    customer = db.query(Customer).filter(Customer.phone == body.phone).first()
+    customer = db.query(Customer).filter(Customer.email == body.email).first()
     if not customer:
-        customer = Customer(phone=body.phone)
+        customer = Customer(email=body.email)
         db.add(customer)
 
     db.commit()
     db.refresh(customer)
 
-    token = create_token(customer.id, customer.phone)
+    token = create_token(customer.id, customer.email)
 
     return {
         "ok": True,
         "token": token,
         "customer": {
             "id": customer.id,
-            "phone": customer.phone,
+            "email": customer.email,
             "name": customer.name,
         },
     }
@@ -228,7 +240,7 @@ def verify_code(body: VerifyCodeRequest, request: Request, db: Session = Depends
 def get_me(customer: Customer = Depends(get_current_customer_dep)):
     return {
         "id": customer.id,
-        "phone": customer.phone,
+        "email": customer.email,
         "name": customer.name,
         "has_password": customer.password_hash is not None,
     }
@@ -269,26 +281,26 @@ def get_my_orders(customer: Customer = Depends(get_current_customer_dep), db: Se
 
 
 class RegisterRequest(BaseModel):
-    phone: str
+    email: str
     code: str
     name: str
     password: str
     password_confirm: str
 
-    @field_validator("phone")
+    @field_validator("email")
     @classmethod
-    def validate_phone(cls, v: str) -> str:
-        return normalize_phone(v)
+    def validate_email(cls, v: str) -> str:
+        return normalize_email(v)
 
 
 class LoginRequest(BaseModel):
-    phone: str
+    email: str
     password: str
 
-    @field_validator("phone")
+    @field_validator("email")
     @classmethod
-    def validate_phone(cls, v: str) -> str:
-        return normalize_phone(v)
+    def validate_email(cls, v: str) -> str:
+        return normalize_email(v)
 
 
 @router.post("/register")
@@ -300,24 +312,24 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
     if not body.name.strip():
         raise HTTPException(status_code=400, detail="Укажите имя")
 
-    # Verify SMS code
-    sms_code = (
-        db.query(SmsCode)
-        .filter(SmsCode.phone == body.phone, SmsCode.code == body.code, SmsCode.used == False)
-        .order_by(SmsCode.created_at.desc())
+    # Verify email code
+    email_code = (
+        db.query(EmailCode)
+        .filter(EmailCode.email == body.email, EmailCode.code == body.code, EmailCode.used == False)
+        .order_by(EmailCode.created_at.desc())
         .first()
     )
-    if not sms_code:
+    if not email_code:
         raise HTTPException(status_code=400, detail="Неверный код")
-    age = (datetime.now(timezone.utc) - sms_code.created_at.replace(tzinfo=timezone.utc)).total_seconds()
+    age = (datetime.now(timezone.utc) - email_code.created_at.replace(tzinfo=timezone.utc)).total_seconds()
     if age > 300:
         raise HTTPException(status_code=400, detail="Код истёк, запросите новый")
-    sms_code.used = True
+    email_code.used = True
 
     # Find or create customer
-    customer = db.query(Customer).filter(Customer.phone == body.phone).first()
+    customer = db.query(Customer).filter(Customer.email == body.email).first()
     if not customer:
-        customer = Customer(phone=body.phone)
+        customer = Customer(email=body.email)
         db.add(customer)
         db.flush()
 
@@ -329,11 +341,11 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(customer)
 
-    token = create_token(customer.id, customer.phone)
+    token = create_token(customer.id, customer.email)
     return {
         "ok": True,
         "token": token,
-        "customer": {"id": customer.id, "phone": customer.phone, "name": customer.name},
+        "customer": {"id": customer.id, "email": customer.email, "name": customer.name},
     }
 
 
@@ -341,13 +353,13 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
 def login(body: LoginRequest, request: Request, db: Session = Depends(get_db)):
     client_ip = request.client.host if request.client else "unknown"
     check_rate_limit(f"login:{client_ip}", max_requests=10, window_seconds=300)
-    customer = db.query(Customer).filter(Customer.phone == body.phone).first()
+    customer = db.query(Customer).filter(Customer.email == body.email).first()
     if not customer or not customer.password_hash or not pbkdf2_sha256.verify(body.password, customer.password_hash):
-        raise HTTPException(status_code=401, detail="Неверный логин или пароль")
+        raise HTTPException(status_code=401, detail="Неверный email или пароль")
 
-    token = create_token(customer.id, customer.phone)
+    token = create_token(customer.id, customer.email)
     return {
         "ok": True,
         "token": token,
-        "customer": {"id": customer.id, "phone": customer.phone, "name": customer.name},
+        "customer": {"id": customer.id, "email": customer.email, "name": customer.name},
     }

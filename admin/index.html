@@ -724,7 +724,7 @@
                         <thead>
                             <tr>
                                 <th>Имя</th>
-                                <th>Телефон</th>
+                                <th>Email</th>
                                 <th>Дата регистрации</th>
                                 <th>Заказов</th>
                                 <th>История</th>
@@ -1697,7 +1697,7 @@
             const search = (document.getElementById('customerSearch').value || '').trim();
             const isDigits = /^\d+$/.test(search);
             const searchActive = search && ((isDigits && search.length >= 4) || (!isDigits && search.length >= 2));
-            const filtered = searchActive ? customers.filter(c => c.phone.includes(search) || (c.name || '').toLowerCase().includes(search.toLowerCase())) : customers;
+            const filtered = searchActive ? customers.filter(c => (c.email || '').toLowerCase().includes(search.toLowerCase()) || (c.name || '').toLowerCase().includes(search.toLowerCase())) : customers;
             const tbody = document.getElementById('customersBody');
             const pag = document.getElementById('customersPagination');
             if (!filtered.length) {
@@ -1712,11 +1712,11 @@
             tbody.innerHTML = page.map(c => {
                 return `<tr>
                     <td>${escH(c.name || '—')}</td>
-                    <td>${escH(c.phone)}</td>
+                    <td>${escH(c.email)}</td>
                     <td style="color:#888;font-size:.85rem;">${c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '—'}</td>
                     <td>${c.orderCount || 0}${c.totalSpent ? ' <span style="color:#888;font-size:.8rem;">(' + c.totalSpent.toLocaleString('ru-RU') + ' ₽)</span>' : ''}</td>
                     <td>
-                        <button class="btn btn-secondary btn-sm" onclick="showCustomerOrders('${escH(c.phone)}', '${escH(c.name || c.phone)}')">
+                        <button class="btn btn-secondary btn-sm" onclick="showCustomerOrders('${escH(c.email)}', '${escH(c.name || c.email)}')">
                             История заказов
                         </button>
                     </td>
@@ -1731,16 +1731,16 @@
 
         function escH(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-        async function showCustomerOrders(phone, name) {
+        async function showCustomerOrders(email, name) {
             let orders;
             try {
-                orders = await api('/api/admin/customers/' + encodeURIComponent(phone) + '/orders');
+                orders = await api('/api/admin/customers/' + encodeURIComponent(email) + '/orders');
             } catch (e) {
-                orders = allOrders.filter(o => o.customerPhone === phone);
+                orders = allOrders.filter(o => o.customerEmail === email);
             }
             document.getElementById('ordersHistoryTitle').textContent = name;
             const totalSum = orders.reduce((s, o) => s + o.total, 0);
-            document.getElementById('ordersHistorySub').textContent = phone + (orders.length ? '  ·  ' + orders.length + ' заказ(ов)  ·  ' + totalSum.toLocaleString('ru-RU') + ' ₽' : '');
+            document.getElementById('ordersHistorySub').textContent = email + (orders.length ? '  ·  ' + orders.length + ' заказ(ов)  ·  ' + totalSum.toLocaleString('ru-RU') + ' ₽' : '');
             const content = document.getElementById('ordersHistoryContent');
             if (!orders.length) {
                 content.innerHTML = '<div style="text-align:center;padding:40px 0;"><div style="font-size:2.2rem;margin-bottom:10px;opacity:.3;">📋</div><p style="color:#444;font-size:.92rem;">Нет заказов</p></div>';
@@ -1858,8 +1858,8 @@
             // Group orders by customer
             const grouped = {};
             dateOrders.forEach(o => {
-                const key = o.customerPhone || 'unknown';
-                if (!grouped[key]) grouped[key] = { name: o.customerName || '—', phone: key, orders: [] };
+                const key = o.customerEmail || 'unknown';
+                if (!grouped[key]) grouped[key] = { name: o.customerName || '—', email: key, orders: [] };
                 grouped[key].orders.push(o);
             });
 
@@ -1867,7 +1867,7 @@
             Object.values(grouped).forEach(g => {
                 const totalSum = g.orders.reduce((s, o) => s + o.total, 0);
                 html += `<div class="settings-card" style="margin-bottom:16px;">
-                    <h3 style="margin-bottom:12px;">${g.name !== '—' ? escH(g.name) + ' — ' : ''}${escH(g.phone)} <span style="color:#888;font-size:.85rem;font-weight:400;margin-left:12px;">Итого: ${totalSum.toLocaleString('ru-RU')} ₽</span></h3>
+                    <h3 style="margin-bottom:12px;">${g.name !== '—' ? escH(g.name) + ' — ' : ''}${escH(g.email)} <span style="color:#888;font-size:.85rem;font-weight:400;margin-left:12px;">Итого: ${totalSum.toLocaleString('ru-RU')} ₽</span></h3>
                     <div class="table-wrap"><table>
                         <thead><tr>
                             <th>Заказ #</th><th>Время</th><th>Состав</th><th>Сумма</th><th>Комментарий</th>
