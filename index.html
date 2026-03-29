@@ -910,17 +910,14 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(0,0,0,.5);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,.2);
+            background: var(--brown-dark);
+            border: 1px solid var(--beige-dark);
             padding: 9px 22px;
             border-radius: 50px;
             font-size: .88rem;
             font-weight: 500;
             color: #fff;
             letter-spacing: .3px;
-            text-shadow: 0 1px 4px rgba(0,0,0,.6);
         }
         .hero-loc-chip svg {
             flex-shrink: 0;
@@ -2068,11 +2065,12 @@
 <!-- HERO -->
 <section class="hero">
     <h1 id="siteHeroTitle"></h1>
-    <p id="siteHeroSub"></p>
 </section>
 
+<div id="siteHeroSub" style="background:var(--beige);text-align:center;padding:20px 24px 0;"></div>
+
 <!-- HERO-TO-CONTENT DIVIDER -->
-<div class="bottom-divider" style="background:var(--beige);padding:24px 24px 0;">
+<div class="bottom-divider" style="background:var(--beige);padding:16px 24px 0;">
     <span class="divider-line"></span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 010 8h-1"/><path d="M3 8h14v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
     <span class="divider-line"></span>
