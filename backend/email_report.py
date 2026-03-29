@@ -428,12 +428,9 @@ def send_report(force=False):
             raise ValueError("Отчёт не настроен: включите отправку и заполните все поля")
         return
 
-    # Target delivery date: tomorrow (report is sent before 14:00)
+    # Target delivery date: today (report covers orders to be delivered today)
     now_vlad = datetime.now(VLAD_TZ)
-    if now_vlad.hour >= 14:
-        delivery_date = (now_vlad + timedelta(days=2)).date()
-    else:
-        delivery_date = (now_vlad + timedelta(days=1)).date()
+    delivery_date = now_vlad.date()
 
     date_str_ru = format_date_ru(delivery_date)
     date_str_file = delivery_date.strftime("%d.%m.%Y")
