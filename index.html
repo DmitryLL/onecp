@@ -2178,7 +2178,7 @@
                     <div style="font-size:.8rem;color:var(--text-light);" id="orderAuthEmail"></div>
                     <div style="font-size:.8rem;color:var(--text-light);" id="orderAuthPhone"></div>
                 </div>
-                <button class="btn-checkout" onclick="submitAuthOrder()">Сделать заказ</button>
+                <button class="btn-checkout" onclick="showConsentModal()">Сделать заказ</button>
             </div>
             <!-- Not logged in: prompt to login -->
             <div id="orderGuest">
@@ -2477,7 +2477,18 @@
         document.getElementById('authOverlay').classList.add('open');
         document.body.style.overflow = 'hidden';
     }
-    function closeAuthModal() { document.getElementById('authOverlay').classList.remove('open'); document.body.style.overflow = ''; }
+    function clearAuthFields() {
+        ['authLoginEmail','authLoginPass','authRegEmail','authRegName','authRegPhone','authRegPass1','authRegPass2','authForgotEmail','authForgotPass1','authForgotPass2'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        document.querySelectorAll('.auth-digit,.forgot-digit').forEach(function(d) { d.value = ''; d.classList.remove('filled'); });
+    }
+    function closeAuthModal() {
+        document.getElementById('authOverlay').classList.remove('open');
+        document.body.style.overflow = '';
+        clearAuthFields();
+    }
     function authShowLogin() { hideAllAuthPanels(); document.getElementById('authLogin').style.display = 'block'; }
     function authShowRegister() { hideAllAuthPanels(); document.getElementById('authReg1').style.display = 'block'; }
     function authShowForgot() { hideAllAuthPanels(); document.getElementById('authForgot1').style.display = 'block'; }
