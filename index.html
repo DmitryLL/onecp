@@ -1912,12 +1912,12 @@
 
             header { background: transparent; }
             header.scrolled { background: var(--black); }
-            .header-inner { padding: 0 12px; height: 56px; justify-content: space-between; gap: 0; }
-            .logo img { height: 38px; }
-            nav.desktop { display: none; }
-            .mobile-header-right { display: flex; align-items: center; gap: 8px; }
-            .mobile-header-right .nav-cart { padding: 6px 12px; font-size: .75rem; gap: 4px; }
-            .mobile-header-right .cart-badge { min-width: 16px; height: 16px; font-size: .6rem; padding: 0 3px; }
+            .header-inner { padding: 0 16px; height: 56px; justify-content: space-between; gap: 0; overflow: hidden; }
+            .logo { flex-shrink: 0; }
+            .logo img { height: 36px; }
+            nav.desktop { display: none !important; }
+            .nav-cart, .nav-login, .header-user { display: none !important; }
+            .mobile-header-right { display: flex; align-items: center; }
             .burger { display: flex; }
 
             .mobile-menu {
