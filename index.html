@@ -2235,8 +2235,8 @@
             <h3>Вход</h3>
             <p class="auth-sub">Введите email и пароль</p>
             <div class="auth-error" id="authLoginError"></div>
-            <input type="email" id="authLoginEmail" placeholder="email@example.com" style="width:100%;box-sizing:border-box;">
-            <input type="password" id="authLoginPass" placeholder="Пароль">
+            <input type="email" id="authLoginEmail" placeholder="email@example.com" maxlength="100" style="width:100%;box-sizing:border-box;">
+            <input type="password" id="authLoginPass" placeholder="Пароль" maxlength="100">
             <button class="auth-btn" onclick="authDoLogin()">Войти</button>
             <div class="auth-switch"><a onclick="authShowForgot()" style="color:var(--text-light);font-size:.85rem;">Забыли пароль?</a></div>
             <div class="auth-switch">Нет аккаунта? <a onclick="authShowRegister()">Зарегистрироваться</a></div>
@@ -2247,7 +2247,7 @@
             <h3>Восстановление пароля</h3>
             <p class="auth-sub">Введите email, на который зарегистрирован аккаунт</p>
             <div class="auth-error" id="authForgotError1"></div>
-            <input type="email" id="authForgotEmail" placeholder="email@example.com" style="width:100%;box-sizing:border-box;">
+            <input type="email" id="authForgotEmail" placeholder="email@example.com" maxlength="100" style="width:100%;box-sizing:border-box;">
             <button class="auth-btn" onclick="authForgotSendCode()">Отправить код</button>
             <div class="auth-switch"><a onclick="authShowLogin()">Вернуться ко входу</a></div>
         </div>
@@ -2271,8 +2271,8 @@
             <h3>Новый пароль</h3>
             <p class="auth-sub">Придумайте новый пароль</p>
             <div class="auth-error" id="authForgotError3"></div>
-            <input type="password" id="authForgotPass1" placeholder="Новый пароль (мин. 4 символа)">
-            <input type="password" id="authForgotPass2" placeholder="Повторите пароль">
+            <input type="password" id="authForgotPass1" placeholder="Новый пароль (мин. 4 символа)" maxlength="100">
+            <input type="password" id="authForgotPass2" placeholder="Повторите пароль" maxlength="100">
             <button class="auth-btn" onclick="authForgotReset()">Сохранить пароль</button>
         </div>
 
@@ -2281,7 +2281,7 @@
             <h3>Регистрация</h3>
             <p class="auth-sub">Введите email для получения кода подтверждения</p>
             <div class="auth-error" id="authRegError1"></div>
-            <input type="email" id="authRegEmail" placeholder="email@example.com" style="width:100%;box-sizing:border-box;">
+            <input type="email" id="authRegEmail" placeholder="email@example.com" maxlength="100" style="width:100%;box-sizing:border-box;">
             <button class="auth-btn" onclick="authRegSendCode()">Отправить код</button>
             <div class="auth-switch">Уже есть аккаунт? <a onclick="authShowLogin()">Войти</a></div>
         </div>
@@ -2310,8 +2310,8 @@
                 <span>+7</span>
                 <input type="tel" id="authRegPhone" placeholder="9991234567" maxlength="10" oninput="this.value=this.value.replace(/\D/g,'')">
             </div>
-            <input type="password" id="authRegPass1" placeholder="Пароль (мин. 4 символа)">
-            <input type="password" id="authRegPass2" placeholder="Повторите пароль">
+            <input type="password" id="authRegPass1" placeholder="Пароль (мин. 4 символа)" maxlength="100">
+            <input type="password" id="authRegPass2" placeholder="Повторите пароль" maxlength="100">
             <button class="auth-btn" onclick="authDoRegister()">Зарегистрироваться</button>
         </div>
     </div>
