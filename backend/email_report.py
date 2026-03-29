@@ -419,6 +419,134 @@ def send_email(server, from_email: str, to_emails: list[str], subject: str, body
     logger.info(f"[EMAIL REPORT] Sent '{subject}' to {', '.join(to_emails)}")
 
 
+def _send_html_email(server, from_email: str, to_emails: list[str], subject: str, html_body: str):
+    """Send HTML email."""
+    if not to_emails:
+        return
+    msg = MIMEMultipart("alternative")
+    msg["From"] = from_email
+    msg["To"] = ", ".join(to_emails)
+    msg["Subject"] = subject
+    msg.attach(MIMEText(html_body, "html", "utf-8"))
+    server.sendmail(from_email, to_emails, msg.as_string())
+
+
+def _build_pickup_html(name: str, date_str: str, loc_name: str, loc_address: str, orders) -> str:
+    """Build beautiful coffee-themed HTML email for pickup notification."""
+    # Build order items table rows
+    items_html = ""
+    grand_total = 0
+    for order in orders:
+        for item in order.items:
+            dish_name = item.dish.name if item.dish else "—"
+            qty = item.quantity
+            price = item.price * qty
+            grand_total += price
+            items_html += f'''
+            <tr>
+                <td style="padding:10px 16px;border-bottom:1px solid #f0ebe5;color:#4A3728;font-size:14px;">{dish_name}</td>
+                <td style="padding:10px 16px;border-bottom:1px solid #f0ebe5;color:#888;font-size:14px;text-align:center;">{qty}</td>
+                <td style="padding:10px 16px;border-bottom:1px solid #f0ebe5;color:#4A3728;font-size:14px;text-align:right;font-weight:600;">{price:.0f} ₽</td>
+            </tr>'''
+
+    return f'''<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f5f0eb;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0eb;padding:32px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(74,55,40,0.08);">
+
+    <!-- Header -->
+    <tr>
+        <td style="background:linear-gradient(135deg,#4A3728 0%,#6B4F3E 100%);padding:36px 40px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:8px;">☕</div>
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">One Coffee Place</h1>
+            <p style="margin:6px 0 0;color:rgba(255,255,255,0.7);font-size:13px;letter-spacing:1px;">ГОТОВИМ С ДУШОЙ, ПОДАЁМ С ЛЮБОВЬЮ</p>
+        </td>
+    </tr>
+
+    <!-- Greeting -->
+    <tr>
+        <td style="padding:32px 40px 8px;">
+            <p style="margin:0;color:#4A3728;font-size:16px;">Здравствуйте, <strong>{name}</strong>!</p>
+        </td>
+    </tr>
+
+    <!-- Main message -->
+    <tr>
+        <td style="padding:16px 40px;">
+            <div style="background:#f9f6f2;border-radius:12px;padding:24px;border-left:4px solid #c8956c;">
+                <p style="margin:0 0 4px;color:#4A3728;font-size:18px;font-weight:700;">Ваш заказ готов к выдаче!</p>
+                <p style="margin:0;color:#7a6a5e;font-size:14px;">Заказ на <strong>{date_str}</strong> ждёт вас.</p>
+            </div>
+        </td>
+    </tr>
+
+    <!-- Location -->
+    <tr>
+        <td style="padding:16px 40px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf8f5;border-radius:12px;overflow:hidden;">
+                <tr>
+                    <td style="padding:20px 24px;">
+                        <table cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="vertical-align:top;padding-right:14px;">
+                                    <div style="width:40px;height:40px;background:#4A3728;border-radius:10px;text-align:center;line-height:40px;font-size:18px;">📍</div>
+                                </td>
+                                <td style="vertical-align:top;">
+                                    <p style="margin:0;color:#4A3728;font-size:15px;font-weight:700;">{loc_name}</p>
+                                    <p style="margin:4px 0 0;color:#9a8a7e;font-size:13px;">{loc_address}</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <!-- Order details -->
+    <tr>
+        <td style="padding:16px 40px 8px;">
+            <p style="margin:0 0 12px;color:#4A3728;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Ваш заказ</p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:10px;overflow:hidden;border:1px solid #f0ebe5;">
+                <tr style="background:#faf8f5;">
+                    <td style="padding:10px 16px;color:#9a8a7e;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Блюдо</td>
+                    <td style="padding:10px 16px;color:#9a8a7e;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;text-align:center;">Кол-во</td>
+                    <td style="padding:10px 16px;color:#9a8a7e;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;text-align:right;">Сумма</td>
+                </tr>
+                {items_html}
+                <tr style="background:#4A3728;">
+                    <td colspan="2" style="padding:12px 16px;color:rgba(255,255,255,0.8);font-size:14px;font-weight:600;">Итого</td>
+                    <td style="padding:12px 16px;color:#ffffff;font-size:16px;font-weight:700;text-align:right;">{grand_total:.0f} ₽</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <!-- Divider -->
+    <tr>
+        <td style="padding:24px 40px 0;">
+            <div style="border-top:1px dashed #e0d6cc;"></div>
+        </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+        <td style="padding:20px 40px 32px;text-align:center;">
+            <p style="margin:0 0 4px;color:#9a8a7e;font-size:13px;">Приятного аппетита! ☕</p>
+            <p style="margin:0;color:#c8b8a8;font-size:12px;">One Coffee Place</p>
+        </td>
+    </tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>'''
+
+
 def send_pickup_notification(location_id: int):
     """Send pickup-ready notification to all customers with today's orders at given location."""
     settings = get_report_settings()
@@ -451,25 +579,27 @@ def send_pickup_notification(location_id: int):
         if not emails:
             raise ValueError("Нет email-адресов клиентов для отправки")
 
+        # Build customer name map
+        customer_map = {c.id: c for c in customers}
+
         server = get_smtp_connection(settings)
         smtp_email = settings["reportSmtpEmail"]
         try:
             date_str = format_date_ru(delivery_date)
-            subject = f"Ваш заказ готов к выдаче — {location.name}"
-            body = (
-                f"Здравствуйте!\n\n"
-                f"Ваш заказ на {date_str} уже находится на точке выдачи "
-                f"«{location.name}» по адресу: {location.address}.\n\n"
-                f"Можете приехать и забрать его.\n\n"
-                f"С уважением,\nOne Coffee Place"
-            )
+            subject = f"☕ Ваш заказ готов к выдаче — {location.name}"
             sent = 0
-            for email in emails:
+            for customer in customers:
+                if not customer.email or "@" not in customer.email:
+                    continue
+                # Get this customer's orders
+                cust_orders = [o for o in loc_orders if o.customer_id == customer.id]
+                cust_name = customer.name or "Гость"
+                html_body = _build_pickup_html(cust_name, date_str, location.name, location.address, cust_orders)
                 try:
-                    send_email(server, smtp_email, [email], subject, body, [])
+                    _send_html_email(server, smtp_email, [customer.email], subject, html_body)
                     sent += 1
                 except Exception as e:
-                    logger.error(f"[NOTIFY] Failed to send to {email}: {e}")
+                    logger.error(f"[NOTIFY] Failed to send to {customer.email}: {e}")
             logger.info(f"[NOTIFY] Sent pickup notification for '{location.name}' to {sent}/{len(emails)} customers")
             return sent
         finally:
