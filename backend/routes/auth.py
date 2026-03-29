@@ -166,7 +166,7 @@ def send_email_code(recipient: str, code: str, db: Session):
   <!-- Body -->
   <tr><td style="padding:36px 40px 20px;text-align:center;">
     <p style="margin:0 0 24px;color:#5a4a3a;font-size:15px;line-height:1.6;">
-      Вы запросили код для входа или регистрации.<br>Введите его на сайте:
+      Для подтверждения действия введите код на сайте:
     </p>
 
     <!-- Code digits -->
