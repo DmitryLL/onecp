@@ -2277,7 +2277,6 @@
             document.getElementById('locName').value = loc ? loc.name : '';
             document.getElementById('locAddress').value = loc ? loc.address : '';
             document.getElementById('locSlug').value = loc ? loc.slug : '';
-            document.getElementById('locDescription').value = loc ? (loc.description || '') : '';
             document.getElementById('locReportEmail').value = loc ? (loc.reportEmail || '') : '';
             _locFormSlug = loc ? loc.slug : '';
             document.getElementById('locImage').value = '';
@@ -2310,7 +2309,6 @@
                 name: document.getElementById('locName').value,
                 address: document.getElementById('locAddress').value,
                 slug: document.getElementById('locSlug').value,
-                description: document.getElementById('locDescription').value,
                 report_email: document.getElementById('locReportEmail').value,
                 active: true,
             };
