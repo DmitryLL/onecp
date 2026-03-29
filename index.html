@@ -2238,7 +2238,42 @@
             <input type="email" id="authLoginEmail" placeholder="email@example.com" style="width:100%;box-sizing:border-box;">
             <input type="password" id="authLoginPass" placeholder="Пароль">
             <button class="auth-btn" onclick="authDoLogin()">Войти</button>
+            <div class="auth-switch"><a onclick="authShowForgot()" style="color:var(--text-light);font-size:.85rem;">Забыли пароль?</a></div>
             <div class="auth-switch">Нет аккаунта? <a onclick="authShowRegister()">Зарегистрироваться</a></div>
+        </div>
+
+        <!-- Forgot Step 1: email -->
+        <div id="authForgot1" style="display:none;">
+            <h3>Восстановление пароля</h3>
+            <p class="auth-sub">Введите email, на который зарегистрирован аккаунт</p>
+            <div class="auth-error" id="authForgotError1"></div>
+            <input type="email" id="authForgotEmail" placeholder="email@example.com" style="width:100%;box-sizing:border-box;">
+            <button class="auth-btn" onclick="authForgotSendCode()">Отправить код</button>
+            <div class="auth-switch"><a onclick="authShowLogin()">Вернуться ко входу</a></div>
+        </div>
+
+        <!-- Forgot Step 2: code -->
+        <div id="authForgot2" style="display:none;">
+            <h3>Введите код</h3>
+            <p class="auth-sub">Код отправлен на <span id="authForgotEmailDisplay"></span></p>
+            <div class="auth-error" id="authForgotError2"></div>
+            <div class="auth-sms-digits">
+                <input type="text" inputmode="numeric" maxlength="1" class="forgot-digit" data-fidx="0">
+                <input type="text" inputmode="numeric" maxlength="1" class="forgot-digit" data-fidx="1">
+                <input type="text" inputmode="numeric" maxlength="1" class="forgot-digit" data-fidx="2">
+                <input type="text" inputmode="numeric" maxlength="1" class="forgot-digit" data-fidx="3">
+            </div>
+            <button class="auth-btn" onclick="authForgotCheckCode()">Далее</button>
+        </div>
+
+        <!-- Forgot Step 3: new password -->
+        <div id="authForgot3" style="display:none;">
+            <h3>Новый пароль</h3>
+            <p class="auth-sub">Придумайте новый пароль</p>
+            <div class="auth-error" id="authForgotError3"></div>
+            <input type="password" id="authForgotPass1" placeholder="Новый пароль (мин. 4 символа)">
+            <input type="password" id="authForgotPass2" placeholder="Повторите пароль">
+            <button class="auth-btn" onclick="authForgotReset()">Сохранить пароль</button>
         </div>
 
         <!-- Register Step 1: email -->
@@ -2430,26 +2465,22 @@
     }
 
     // ===== AUTH MODAL =====
-    function openAuthModal(mode) {
-        document.getElementById('authLogin').style.display = mode === 'login' ? 'block' : 'none';
-        document.getElementById('authReg1').style.display = mode === 'register' ? 'block' : 'none';
-        document.getElementById('authReg2').style.display = 'none';
-        document.getElementById('authReg3').style.display = 'none';
+    function hideAllAuthPanels() {
+        ['authLogin','authReg1','authReg2','authReg3','authForgot1','authForgot2','authForgot3'].forEach(function(id) {
+            document.getElementById(id).style.display = 'none';
+        });
         document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
+    }
+    function openAuthModal(mode) {
+        hideAllAuthPanels();
+        document.getElementById(mode === 'register' ? 'authReg1' : 'authLogin').style.display = 'block';
         document.getElementById('authOverlay').classList.add('open');
         document.body.style.overflow = 'hidden';
     }
     function closeAuthModal() { document.getElementById('authOverlay').classList.remove('open'); document.body.style.overflow = ''; }
-    function authShowLogin() {
-        document.getElementById('authLogin').style.display = 'block';
-        document.getElementById('authReg1').style.display = 'none';
-        document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
-    }
-    function authShowRegister() {
-        document.getElementById('authLogin').style.display = 'none';
-        document.getElementById('authReg1').style.display = 'block';
-        document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
-    }
+    function authShowLogin() { hideAllAuthPanels(); document.getElementById('authLogin').style.display = 'block'; }
+    function authShowRegister() { hideAllAuthPanels(); document.getElementById('authReg1').style.display = 'block'; }
+    function authShowForgot() { hideAllAuthPanels(); document.getElementById('authForgot1').style.display = 'block'; }
 
     async function authDoLogin() {
         var email = document.getElementById('authLoginEmail').value.trim();
@@ -2518,7 +2549,7 @@
         } catch (e) { errEl.textContent = e.message; }
     }
 
-    // Auth digit inputs
+    // Auth digit inputs (register)
     (function initAuthDigits() {
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.auth-digit').forEach(function(input, idx) {
@@ -2536,6 +2567,85 @@
                         digits[idx - 1].classList.remove('filled');
                     }
                     if (e.key === 'Enter') authRegCheckCode();
+                });
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    var paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 4);
+                    paste.split('').forEach(function(ch, i) {
+                        if (digits[i]) { digits[i].value = ch; digits[i].classList.add('filled'); }
+                    });
+                });
+            });
+        });
+    })();
+
+    // ===== FORGOT PASSWORD =====
+    var forgotEmailSaved = '';
+    var forgotCodeSaved = '';
+
+    async function authForgotSendCode() {
+        var email = document.getElementById('authForgotEmail').value.trim();
+        var errEl = document.getElementById('authForgotError1');
+        errEl.textContent = '';
+        if (!email || !email.includes('@')) { errEl.textContent = 'Введите корректный email'; return; }
+        forgotEmailSaved = email;
+        try {
+            await api('/api/auth/send-code', { method: 'POST', body: { email: forgotEmailSaved } });
+            document.getElementById('authForgotEmailDisplay').textContent = forgotEmailSaved;
+            hideAllAuthPanels();
+            document.getElementById('authForgot2').style.display = 'block';
+            document.querySelectorAll('.forgot-digit').forEach(d => { d.value = ''; d.classList.remove('filled'); });
+            var first = document.querySelector('.forgot-digit[data-fidx="0"]');
+            if (first) first.focus();
+            showToast('Код отправлен на email');
+        } catch (e) { errEl.textContent = e.message; }
+    }
+
+    function authForgotCheckCode() {
+        var code = Array.from(document.querySelectorAll('.forgot-digit')).map(d => d.value).join('');
+        var errEl = document.getElementById('authForgotError2');
+        errEl.textContent = '';
+        if (code.length !== 4) { errEl.textContent = 'Введите 4-значный код'; return; }
+        forgotCodeSaved = code;
+        hideAllAuthPanels();
+        document.getElementById('authForgot3').style.display = 'block';
+    }
+
+    async function authForgotReset() {
+        var pass1 = document.getElementById('authForgotPass1').value;
+        var pass2 = document.getElementById('authForgotPass2').value;
+        var errEl = document.getElementById('authForgotError3');
+        errEl.textContent = '';
+        if (pass1.length < 4) { errEl.textContent = 'Пароль минимум 4 символа'; return; }
+        if (pass1 !== pass2) { errEl.textContent = 'Пароли не совпадают'; return; }
+        try {
+            var res = await api('/api/auth/reset-password', { method: 'POST', body: {
+                email: forgotEmailSaved, code: forgotCodeSaved, password: pass1, password_confirm: pass2
+            }});
+            setAuth(res.token, res.customer);
+            closeAuthModal();
+            showToast('Пароль успешно изменён!');
+        } catch (e) { errEl.textContent = e.message; }
+    }
+
+    // Forgot digit inputs
+    (function initForgotDigits() {
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.forgot-digit').forEach(function(input, idx) {
+                var digits = document.querySelectorAll('.forgot-digit');
+                input.addEventListener('input', function(e) {
+                    var val = e.target.value.replace(/\D/g, '');
+                    e.target.value = val.slice(0, 1);
+                    if (val && idx < 3) digits[idx + 1].focus();
+                    e.target.classList.toggle('filled', !!val);
+                });
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                        digits[idx - 1].focus();
+                        digits[idx - 1].value = '';
+                        digits[idx - 1].classList.remove('filled');
+                    }
+                    if (e.key === 'Enter') authForgotCheckCode();
                 });
                 input.addEventListener('paste', function(e) {
                     e.preventDefault();

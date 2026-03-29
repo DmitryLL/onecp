@@ -414,6 +414,58 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
     }
 
 
+class ResetPasswordRequest(BaseModel):
+    email: str
+    code: str
+    password: str
+    password_confirm: str
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return normalize_email(v)
+
+
+@router.post("/reset-password")
+def reset_password(body: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(f"reset:{client_ip}", max_requests=5, window_seconds=300)
+
+    if body.password != body.password_confirm:
+        raise HTTPException(status_code=400, detail="Пароли не совпадают")
+    if len(body.password) < 4:
+        raise HTTPException(status_code=400, detail="Пароль должен быть минимум 4 символа")
+
+    # Verify email code
+    email_code = (
+        db.query(EmailCode)
+        .filter(EmailCode.email == body.email, EmailCode.code == body.code, EmailCode.used == False)
+        .order_by(EmailCode.created_at.desc())
+        .first()
+    )
+    if not email_code:
+        raise HTTPException(status_code=400, detail="Неверный код")
+    age = (datetime.now(timezone.utc) - email_code.created_at.replace(tzinfo=timezone.utc)).total_seconds()
+    if age > 300:
+        raise HTTPException(status_code=400, detail="Код истёк, запросите новый")
+    email_code.used = True
+
+    customer = db.query(Customer).filter(Customer.email == body.email).first()
+    if not customer:
+        raise HTTPException(status_code=400, detail="Аккаунт не найден")
+
+    customer.password_hash = pbkdf2_sha256.hash(body.password)
+    db.commit()
+    db.refresh(customer)
+
+    token = create_token(customer.id, customer.email)
+    return {
+        "ok": True,
+        "token": token,
+        "customer": {"id": customer.id, "email": customer.email, "name": customer.name, "phone": customer.phone},
+    }
+
+
 @router.post("/login")
 def login(body: LoginRequest, request: Request, db: Session = Depends(get_db)):
     client_ip = request.client.host if request.client else "unknown"
