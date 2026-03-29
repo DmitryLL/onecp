@@ -1903,14 +1903,15 @@
             .mobile-menu.open { display: flex !important; }
             .mobile-cart-fab { display: flex; }
             .card:hover { transform: none; box-shadow: var(--shadow-card); }
-            .hero { padding: 80px 16px 20px; margin-top: 56px; }
+            .hero { padding: 76px 16px 20px; }
             .hero h1 { font-size: 1.6rem; }
             .hero p { font-size: .95rem; }
             .hero-loc-chip { font-size: .78rem; padding: 7px 14px; }
             .hero-slogan { font-size: .72rem; padding: 8px 18px; }
             .hero-loc-cta { font-size: .9rem; }
 
-            header { background: var(--black) !important; }
+            header { background: transparent; }
+            header.scrolled { background: var(--black); }
             .header-inner { padding: 0 12px; height: 56px; justify-content: space-between; gap: 0; }
             .logo img { height: 38px; }
             nav.desktop { display: none; }
@@ -2002,7 +2003,7 @@
             /* Location-specific heroes: reduce padding on mobile */
             .hero.hero-sber,
             .hero.hero-ibt,
-            .hero.hero-sky { padding: 40px 16px 60px; }
+            .hero.hero-sky { padding: 76px 16px 60px; }
             .hero.hero-sber h1,
             .hero.hero-ibt h1,
             .hero.hero-sky h1 { font-size: 1.5rem; }
