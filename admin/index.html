@@ -1143,6 +1143,41 @@
     </div>
     <style>@keyframes modalUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}</style>
 
+    <!-- NOTIFY CONFIRM -->
+    <div class="modal-overlay" id="notifyConfirmOverlay" onclick="if(event.target===this)closeNotifyConfirm(false)">
+        <div style="background:#fff;border:1px solid #e0e0e0;border-radius:16px;max-width:420px;width:90%;overflow:hidden;animation:modalUp .3s ease;">
+            <div style="background:linear-gradient(135deg,#4A3728,#6B4F3E);padding:28px 24px;text-align:center;">
+                <div style="font-size:2.2rem;margin-bottom:6px;">📨</div>
+                <h3 style="color:#fff;font-size:1.1rem;font-weight:700;margin:0;">Отправить уведомление?</h3>
+            </div>
+            <div style="padding:24px;">
+                <div style="background:#faf8f5;border-radius:10px;padding:16px;margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                        <div style="width:36px;height:36px;background:#4A3728;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">📍</div>
+                        <span id="ncLocName" style="font-weight:600;color:#1a1a1a;font-size:1rem;"></span>
+                    </div>
+                    <p style="color:#888;font-size:.88rem;margin:0;line-height:1.5;">Все клиенты с заказами на <strong id="ncDate" style="color:#4A3728;"></strong> получат письмо о том, что еда готова к выдаче.</p>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-secondary" onclick="closeNotifyConfirm(false)" style="flex:1;padding:12px;">Отмена</button>
+                    <button class="btn" onclick="closeNotifyConfirm(true)" style="flex:1;padding:12px;background:#4A3728;color:#fff;font-weight:700;">Отправить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFY RESULT -->
+    <div class="modal-overlay" id="notifyResultOverlay" onclick="if(event.target===this)closeNotifyResult()">
+        <div style="background:#fff;border:1px solid #e0e0e0;border-radius:16px;max-width:400px;width:90%;overflow:hidden;animation:modalUp .3s ease;">
+            <div style="padding:32px 24px;text-align:center;">
+                <div id="nrIcon" style="font-size:3rem;margin-bottom:12px;"></div>
+                <h3 id="nrTitle" style="font-size:1.15rem;font-weight:700;margin:0 0 8px;"></h3>
+                <p id="nrMessage" style="color:#888;font-size:.9rem;line-height:1.5;margin:0 0 24px;"></p>
+                <button class="btn btn-primary" onclick="closeNotifyResult()" style="padding:10px 32px;">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST -->
     <div class="toast" id="toast"></div>
 
@@ -2485,19 +2520,58 @@
             }
         }
 
+        let _notifyConfirmResolve = null;
+
+        function showNotifyConfirm(locationName, dateStr) {
+            document.getElementById('ncLocName').textContent = locationName;
+            document.getElementById('ncDate').textContent = dateStr;
+            document.getElementById('notifyConfirmOverlay').classList.add('open');
+            return new Promise(resolve => { _notifyConfirmResolve = resolve; });
+        }
+
+        function closeNotifyConfirm(result) {
+            document.getElementById('notifyConfirmOverlay').classList.remove('open');
+            if (_notifyConfirmResolve) { _notifyConfirmResolve(result); _notifyConfirmResolve = null; }
+        }
+
+        function showNotifyResult(success, message) {
+            const icon = document.getElementById('nrIcon');
+            const title = document.getElementById('nrTitle');
+            const msg = document.getElementById('nrMessage');
+            if (success) {
+                icon.textContent = '✅';
+                title.textContent = 'Уведомления отправлены';
+                title.style.color = '#2e7d32';
+            } else {
+                icon.textContent = '❌';
+                title.textContent = 'Ошибка отправки';
+                title.style.color = '#e74c3c';
+            }
+            msg.textContent = message;
+            document.getElementById('notifyResultOverlay').classList.add('open');
+        }
+
+        function closeNotifyResult() {
+            document.getElementById('notifyResultOverlay').classList.remove('open');
+        }
+
         async function sendPickupNotify(locationId, locationName) {
-            const status = document.getElementById('notifyStatus_' + locationId);
             const dateStr = getNotifyDate();
-            if (!confirm(`Отправить уведомление клиентам точки «${locationName}» на ${dateStr} о готовности заказа?`)) return;
+            const confirmed = await showNotifyConfirm(locationName, dateStr);
+            if (!confirmed) return;
+
+            const status = document.getElementById('notifyStatus_' + locationId);
             status.textContent = 'Отправка...';
             status.style.color = '#888';
             try {
                 const res = await api('/api/admin/notify/' + locationId, { method: 'POST' });
-                status.textContent = '✓ ' + (res.message || 'Отправлено');
+                status.textContent = '✓ Отправлено';
                 status.style.color = '#4ade80';
+                showNotifyResult(true, res.message || `Уведомление отправлено клиентам точки «${locationName}»`);
             } catch (e) {
-                status.textContent = '✗ ' + e.message;
+                status.textContent = '✗ Ошибка';
                 status.style.color = '#e74c3c';
+                showNotifyResult(false, e.message);
             }
         }
 
