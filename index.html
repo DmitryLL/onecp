@@ -2218,7 +2218,11 @@
         </div>
         <div id="offerText" style="max-height:45vh;overflow-y:auto;font-size:.82rem;color:var(--text-light);line-height:1.7;text-align:left;padding:20px 24px;"></div>
         <div style="padding:0 24px 24px;">
-            <button class="btn-checkout" onclick="acceptOffer()" style="width:100%;font-size:.9rem;padding:14px 20px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--brown),var(--gold));box-shadow:0 4px 16px rgba(139,90,43,.3);">Я принимаю условия оферты</button>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:14px;font-size:.84rem;color:var(--text);line-height:1.5;">
+                <input type="checkbox" id="offerCheckbox" onchange="toggleOfferBtn()" style="margin-top:3px;width:18px;height:18px;flex-shrink:0;accent-color:var(--brown);cursor:pointer;">
+                <span>Я ознакомился(-ась) с договором публичной оферты и принимаю его условия в полном объёме</span>
+            </label>
+            <button class="btn-checkout" id="offerAcceptBtn" onclick="acceptOffer()" disabled style="width:100%;font-size:.9rem;padding:14px 20px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--brown),var(--gold));box-shadow:0 4px 16px rgba(139,90,43,.3);opacity:.5;cursor:not-allowed;">Я принимаю условия оферты</button>
         </div>
     </div>
 </div>
@@ -3053,7 +3057,18 @@
         showOfferModal();
     }
 
+    function toggleOfferBtn() {
+        var checked = document.getElementById('offerCheckbox').checked;
+        var btn = document.getElementById('offerAcceptBtn');
+        btn.disabled = !checked;
+        btn.style.opacity = checked ? '1' : '.5';
+        btn.style.cursor = checked ? 'pointer' : 'not-allowed';
+    }
+
     function showOfferModal() {
+        // Reset checkbox and button on each open
+        var cb = document.getElementById('offerCheckbox');
+        if (cb) { cb.checked = false; toggleOfferBtn(); }
         var siteUrl = window.location.origin;
         var offerHtml = `
 <p style="text-align:center;font-weight:700;color:var(--text);font-size:.95rem;margin-bottom:4px;">ДОГОВОР ПУБЛИЧНОЙ ОФЕРТЫ (ДОСТАВКА ОБЕДОВ)</p>
