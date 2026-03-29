@@ -24,7 +24,7 @@ if not JWT_SECRET:
     JWT_SECRET = secrets.token_hex(32)
     logger.critical("JWT_SECRET not set! Generated random secret — tokens will NOT survive restart. Set JWT_SECRET env var!")
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRE_MINUTES = 60 * 24  # 24 hours
+JWT_EXPIRE_MINUTES = 60 * 24 * 365  # 1 year — token lives until explicit logout
 
 # Simple in-memory IP rate limiter
 _rate_limits: dict[str, list[float]] = {}

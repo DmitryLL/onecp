@@ -2612,14 +2612,18 @@
             updateHeaderAuth();
             if (authToken) {
                 fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + authToken } })
-                    .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+                    .then(function(r) {
+                        if (r.status === 401) { logout(); return null; }
+                        return r.ok ? r.json() : null;
+                    })
                     .then(function(data) {
-                        currentCustomer = { id: data.id, phone: data.phone, name: data.name };
+                        if (!data) return;
+                        currentCustomer = { id: data.id, email: data.email, name: data.name, phone: data.phone };
                         localStorage.setItem('currentCustomer', JSON.stringify(currentCustomer));
                         updateHeaderAuth();
                         updateCheckoutAuth();
                     })
-                    .catch(function() { logout(); });
+                    .catch(function() { /* network error — keep session */ });
             }
         });
     })();
