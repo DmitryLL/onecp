@@ -137,20 +137,81 @@ def send_email_code(recipient: str, code: str, db: Session):
     else:
         smtp_port = int(smtp_port) if smtp_port else 465
 
-    msg = MIMEMultipart()
+    msg = MIMEMultipart("alternative")
     msg["From"] = smtp_email
     msg["To"] = recipient
     msg["Subject"] = "One Coffee Place — код подтверждения"
 
-    body = f"""Ваш код подтверждения: {code}
+    # Plain text fallback
+    plain = f"Ваш код подтверждения: {code}\nКод действителен 5 минут.\nЕсли вы не запрашивали код, проигнорируйте это письмо.\n— One Coffee Place"
+    msg.attach(MIMEText(plain, "plain", "utf-8"))
 
-Код действителен в течение 5 минут.
+    d0, d1, d2, d3 = code[0], code[1], code[2], code[3]
+    html = f"""\
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f5f0eb;font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0eb;padding:40px 0;">
+<tr><td align="center">
+<table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(139,90,43,.12);">
 
-Если вы не запрашивали код, просто проигнорируйте это письмо.
+  <!-- Header gradient -->
+  <tr><td style="background:linear-gradient(135deg,#6b4226 0%,#c8a96e 100%);padding:36px 40px 28px;text-align:center;">
+    <div style="font-size:36px;margin-bottom:8px;">&#9749;</div>
+    <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:.5px;">One Coffee Place</h1>
+    <p style="margin:6px 0 0;color:rgba(255,255,255,.8);font-size:13px;letter-spacing:.3px;">&#8212; ваш код подтверждения &#8212;</p>
+  </td></tr>
 
-— One Coffee Place"""
+  <!-- Body -->
+  <tr><td style="padding:36px 40px 20px;text-align:center;">
+    <p style="margin:0 0 24px;color:#5a4a3a;font-size:15px;line-height:1.6;">
+      Вы запросили код для входа или регистрации.<br>Введите его на сайте:
+    </p>
 
-    msg.attach(MIMEText(body, "plain", "utf-8"))
+    <!-- Code digits -->
+    <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+    <tr>
+      <td style="width:56px;height:64px;background:#f9f5f0;border:2px solid #d4c4a8;border-radius:12px;text-align:center;font-size:28px;font-weight:700;color:#6b4226;letter-spacing:2px;font-family:'Courier New',monospace;">{d0}</td>
+      <td style="width:12px;"></td>
+      <td style="width:56px;height:64px;background:#f9f5f0;border:2px solid #d4c4a8;border-radius:12px;text-align:center;font-size:28px;font-weight:700;color:#6b4226;letter-spacing:2px;font-family:'Courier New',monospace;">{d1}</td>
+      <td style="width:12px;"></td>
+      <td style="width:56px;height:64px;background:#f9f5f0;border:2px solid #d4c4a8;border-radius:12px;text-align:center;font-size:28px;font-weight:700;color:#6b4226;letter-spacing:2px;font-family:'Courier New',monospace;">{d2}</td>
+      <td style="width:12px;"></td>
+      <td style="width:56px;height:64px;background:#f9f5f0;border:2px solid #d4c4a8;border-radius:12px;text-align:center;font-size:28px;font-weight:700;color:#6b4226;letter-spacing:2px;font-family:'Courier New',monospace;">{d3}</td>
+    </tr>
+    </table>
+
+    <!-- Timer badge -->
+    <div style="margin:20px auto 0;display:inline-block;background:linear-gradient(135deg,#f9f5f0,#f0e8da);border-radius:20px;padding:8px 20px;">
+      <span style="color:#a08050;font-size:13px;font-weight:600;">&#9200; &nbsp;Код действует 5 минут</span>
+    </div>
+  </td></tr>
+
+  <!-- Divider -->
+  <tr><td style="padding:0 40px;">
+    <div style="border-top:1px solid #ede6da;"></div>
+  </td></tr>
+
+  <!-- Footer note -->
+  <tr><td style="padding:20px 40px 32px;text-align:center;">
+    <p style="margin:0;color:#b0a090;font-size:12px;line-height:1.7;">
+      Если вы не запрашивали этот код, просто<br>проигнорируйте это письмо. Никто не получит<br>доступ к вашему аккаунту без этого кода.
+    </p>
+  </td></tr>
+
+</table>
+
+<!-- Brand footer -->
+<p style="margin:24px 0 0;color:#b0a090;font-size:11px;text-align:center;letter-spacing:.3px;">
+  &copy; One Coffee Place &nbsp;&#183;&nbsp; onecoffeeplace.ru
+</p>
+
+</td></tr>
+</table>
+</body>
+</html>"""
+    msg.attach(MIMEText(html, "html", "utf-8"))
 
     try:
         server = smtplib.SMTP_SSL(smtp_host, int(smtp_port), timeout=15)
