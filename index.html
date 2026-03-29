@@ -478,13 +478,12 @@
 
         header {
             position: fixed;
-            top: 0;
+            top: -1px;
+            padding-top: 1px;
             left: 0;
             right: 0;
             z-index: 1000;
-            background: rgba(26,22,18,.15);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
+            background: transparent;
             border: none;
             outline: none;
             transition: all .4s cubic-bezier(.22,1,.36,1);
