@@ -764,6 +764,7 @@
                 <a href="/clients" onclick="navTo('clients',event)">👥 Клиенты</a>
                 <a href="/locations" onclick="navTo('locations',event)">📍 Точки продаж</a>
                 <a href="/settings" onclick="navTo('settings',event)">📨 Рассылки</a>
+                <a href="/notify" onclick="navTo('notify',event)">📣 Уведомления</a>
             </nav>
             <div class="sidebar-bottom">
                 <a href="/" class="sidebar-nav" style="color:#666;text-decoration:none;padding:10px 14px;font-size:.9rem;">← В каталог</a>
@@ -1018,6 +1019,15 @@
                     <span id="testReportStatus" style="margin-left:12px;font-size:.85rem;color:#888;"></span>
                 </div>
 
+            </div>
+
+            <!-- NOTIFY PANEL -->
+            <div id="notifyPanel" style="display:none;">
+                <div class="page-header">
+                    <h1>Уведомления</h1>
+                </div>
+                <p style="color:#999;margin-bottom:20px;font-size:.9rem;">Отправьте клиентам уведомление о том, что их заказ готов к выдаче на конкретной точке.</p>
+                <div id="notifyLocations" style="display:flex;flex-direction:column;gap:16px;"></div>
             </div>
         </div>
     </div>
@@ -1546,8 +1556,8 @@
         }
 
         // ===== PANELS =====
-        const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, clients:5, locations:6, settings:7};
-        const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', clients:'Клиенты', locations:'Точки продаж', settings:'Рассылки'};
+        const panelMap = {orders:0, questions:1, products:2, sets:3, calendar:4, clients:5, locations:6, settings:7, notify:8};
+        const panelTitles = {orders:'Заказы', questions:'Вопросы', products:'Товары', sets:'Наборы', calendar:'Календарь', clients:'Клиенты', locations:'Точки продаж', settings:'Рассылки', notify:'Уведомления'};
         function navTo(panel, e) {
             if (e) e.preventDefault();
             history.pushState(null, '', '/' + panel);
@@ -1566,6 +1576,7 @@
             document.getElementById('questionsPanel').style.display = 'none';
             document.getElementById('locationsPanel').style.display = 'none';
             document.getElementById('settingsPanel').classList.remove('active');
+            document.getElementById('notifyPanel').style.display = 'none';
 
             if (panel === 'orders') {
                 document.getElementById('ordersPanel').style.display = 'block';
@@ -1589,6 +1600,9 @@
             } else if (panel === 'locations') {
                 document.getElementById('locationsPanel').style.display = 'block';
                 loadLocations();
+            } else if (panel === 'notify') {
+                document.getElementById('notifyPanel').style.display = 'block';
+                loadNotifyPanel();
             } else {
                 document.getElementById('settingsPanel').classList.add('active');
                 loadSettingsForm();
@@ -2428,6 +2442,51 @@
                 el.addEventListener('input', autoSaveSettings);
             });
         });
+
+        // ===== NOTIFY =====
+        async function loadNotifyPanel() {
+            const container = document.getElementById('notifyLocations');
+            container.innerHTML = '<p style="color:#888;">Загрузка точек...</p>';
+            try {
+                const data = await api('/api/admin/locations');
+                const locs = data.locations || data;
+                if (!locs.length) {
+                    container.innerHTML = '<p style="color:#888;">Нет активных точек продаж.</p>';
+                    return;
+                }
+                container.innerHTML = locs.map(loc => `
+                    <div style="background:#2a2a2a;border-radius:12px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                        <div>
+                            <div style="font-size:1.1rem;font-weight:600;color:#fff;">${loc.name}</div>
+                            <div style="color:#999;font-size:.85rem;margin-top:4px;">${loc.address}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <span id="notifyStatus_${loc.id}" style="font-size:.85rem;color:#888;"></span>
+                            <button class="btn btn-primary btn-sm" onclick="sendPickupNotify(${loc.id}, '${loc.name.replace(/'/g, "\\'")}')">
+                                Отправить уведомление
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p style="color:#e74c3c;">Ошибка загрузки: ' + e.message + '</p>';
+            }
+        }
+
+        async function sendPickupNotify(locationId, locationName) {
+            const status = document.getElementById('notifyStatus_' + locationId);
+            if (!confirm(`Отправить уведомление клиентам точки «${locationName}» о готовности заказа?`)) return;
+            status.textContent = 'Отправка...';
+            status.style.color = '#888';
+            try {
+                const res = await api('/api/admin/notify/' + locationId, { method: 'POST' });
+                status.textContent = '✓ ' + (res.message || 'Отправлено');
+                status.style.color = '#4ade80';
+            } catch (e) {
+                status.textContent = '✗ ' + e.message;
+                status.style.color = '#e74c3c';
+            }
+        }
 
         // ===== LOGOUT =====
         function logout() {

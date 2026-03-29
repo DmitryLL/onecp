@@ -419,6 +419,61 @@ def send_email(server, from_email: str, to_emails: list[str], subject: str, body
     logger.info(f"[EMAIL REPORT] Sent '{subject}' to {', '.join(to_emails)}")
 
 
+def send_pickup_notification(location_id: int):
+    """Send pickup-ready notification to all customers with today's orders at given location."""
+    settings = get_report_settings()
+    if not settings:
+        raise ValueError("Рассылка не настроена: включите отправку и заполните SMTP поля")
+
+    db = SessionLocal()
+    try:
+        location = db.query(Location).filter(Location.id == location_id).first()
+        if not location:
+            raise ValueError("Точка не найдена")
+
+        now_vlad = datetime.now(VLAD_TZ)
+        delivery_date = now_vlad.date()
+
+        orders = load_orders_for_delivery_date(delivery_date)
+        loc_orders = [o for o in orders if (o.address or "") == location.address]
+        if not loc_orders:
+            raise ValueError(f"Нет заказов на сегодня для точки «{location.name}»")
+
+        # Collect unique customer emails
+        customer_ids = list(set(o.customer_id for o in loc_orders))
+        from models import Customer
+        customers = db.query(Customer).filter(Customer.id.in_(customer_ids)).all()
+        emails = [c.email for c in customers if c.email and "@" in c.email]
+        if not emails:
+            raise ValueError("Нет email-адресов клиентов для отправки")
+
+        server = get_smtp_connection(settings)
+        smtp_email = settings["reportSmtpEmail"]
+        try:
+            date_str = format_date_ru(delivery_date)
+            subject = f"Ваш заказ готов к выдаче — {location.name}"
+            body = (
+                f"Здравствуйте!\n\n"
+                f"Ваш заказ на {date_str} уже находится на точке выдачи "
+                f"«{location.name}» по адресу: {location.address}.\n\n"
+                f"Можете приехать и забрать его.\n\n"
+                f"С уважением,\nOne Coffee Place"
+            )
+            sent = 0
+            for email in emails:
+                try:
+                    send_email(server, smtp_email, [email], subject, body, [])
+                    sent += 1
+                except Exception as e:
+                    logger.error(f"[NOTIFY] Failed to send to {email}: {e}")
+            logger.info(f"[NOTIFY] Sent pickup notification for '{location.name}' to {sent}/{len(emails)} customers")
+            return sent
+        finally:
+            server.quit()
+    finally:
+        db.close()
+
+
 def send_report(force=False):
     logger.info("[EMAIL REPORT] Checking if report should be sent...")
     settings = get_report_settings()

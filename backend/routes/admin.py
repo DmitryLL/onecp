@@ -1089,3 +1089,16 @@ def export_kitchen_excel(date: str, admin: AdminUser = Depends(get_admin), db: S
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"},
     )
+
+
+@router.post("/notify/{location_id}")
+def send_pickup_notify(location_id: int, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+    """Send pickup-ready notification to customers with orders at given location for today."""
+    from email_report import send_pickup_notification
+    try:
+        sent = send_pickup_notification(location_id)
+        return {"ok": True, "sent": sent, "message": f"Уведомление отправлено {sent} клиентам"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
