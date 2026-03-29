@@ -1688,7 +1688,8 @@
         .bottom-banner {
             width: 100%;
             position: relative;
-            background: var(--beige);
+            height: 146px;
+            background: #000 url('images/bottom-banner.png') center/cover no-repeat;
         }
 
         .bottom-banner::before {
@@ -1732,9 +1733,7 @@
         }
 
         .bottom-banner img {
-            display: block;
-            width: 100%;
-            height: auto;
+            display: none;
         }
 
         /* ===== FOOTER ===== */
@@ -1918,6 +1917,7 @@
             .mobile-cart-fab { display: flex; }
             .card:hover { transform: none; box-shadow: var(--shadow-card); }
             .hero { padding: 80px 20px 60px; }
+            .bottom-banner { height: 70px; }
             .hero h1 { font-size: 1.6rem; }
             .hero p { font-size: .95rem; }
             .hero-loc-chip { font-size: .78rem; padding: 7px 14px; }
@@ -3327,7 +3327,7 @@
                     document.querySelector('.hero').style.backgroundImage = "url('" + locInfo.imageUrl + "')";
                 }
                 if (locInfo.bottomImageUrl) {
-                    document.getElementById('bottomBannerImg').src = locInfo.bottomImageUrl;
+                    document.querySelector('.bottom-banner').style.backgroundImage = "url('" + locInfo.bottomImageUrl + "')";
                 }
                 document.getElementById('siteAddress').textContent = locInfo.name + ', ' + locInfo.address;
                 document.getElementById('orderAddress').value = locInfo.address;
