@@ -812,7 +812,7 @@
         /* ===== HERO ===== */
         .hero {
             margin-top: 0;
-            padding-top: 200px;
+            padding-top: 300px;
             background: var(--black) center/cover no-repeat;
             color: #fff;
             padding-bottom: 0;
@@ -821,6 +821,17 @@
             text-align: center;
             position: relative;
             max-width: none;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to bottom, transparent, var(--beige));
+            pointer-events: none;
         }
 
         .hero h1:empty { display: none; }
@@ -1884,7 +1895,7 @@
             .mobile-menu.open { display: flex !important; }
             .mobile-cart-fab { display: flex; }
             .card:hover { transform: none; box-shadow: var(--shadow-card); }
-            .hero { padding: 100px 16px 0; }
+            .hero { padding: 150px 16px 0; }
             .hero h1 { font-size: 1.6rem; }
             .hero p { font-size: .95rem; }
             .hero-loc-chip { font-size: .78rem; padding: 7px 14px; }
@@ -2051,7 +2062,9 @@
     <h1 id="siteHeroTitle"></h1>
 </section>
 
-<div id="siteHeroSub" style="background:var(--beige);text-align:center;padding:20px 24px 0;"></div>
+<div style="background:var(--beige);text-align:center;padding:20px 24px 0;">
+    <div id="siteHeroSub"></div>
+</div>
 
 <!-- HERO-TO-CONTENT DIVIDER -->
 <div class="bottom-divider" style="background:var(--beige);padding:16px 24px 0;">
