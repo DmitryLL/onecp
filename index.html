@@ -812,31 +812,15 @@
         /* ===== HERO ===== */
         .hero {
             margin-top: 0;
-            padding-top: 180px;
+            padding-top: 200px;
             background: var(--black) center/cover no-repeat;
             color: #fff;
-            padding-bottom: 40px;
+            padding-bottom: 0;
             padding-left: 24px;
             padding-right: 24px;
             text-align: center;
             position: relative;
             max-width: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.25) 15%);
-            pointer-events: none;
-            z-index: 1;
         }
 
         .hero h1:empty { display: none; }
@@ -1900,7 +1884,7 @@
             .mobile-menu.open { display: flex !important; }
             .mobile-cart-fab { display: flex; }
             .card:hover { transform: none; box-shadow: var(--shadow-card); }
-            .hero { padding: 120px 16px 20px; }
+            .hero { padding: 100px 16px 0; }
             .hero h1 { font-size: 1.6rem; }
             .hero p { font-size: .95rem; }
             .hero-loc-chip { font-size: .78rem; padding: 7px 14px; }
