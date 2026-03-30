@@ -637,9 +637,9 @@ def send_report(force=False):
             raise ValueError("Отчёт не настроен: включите отправку и заполните все поля")
         return
 
-    # Target delivery date: today (report covers orders to be delivered today)
+    # Target delivery date: tomorrow (report covers orders to be delivered tomorrow)
     now_vlad = datetime.now(VLAD_TZ)
-    delivery_date = now_vlad.date()
+    delivery_date = (now_vlad + timedelta(days=1)).date()
 
     date_str_ru = format_date_ru(delivery_date)
     date_str_file = delivery_date.strftime("%d.%m.%Y")
