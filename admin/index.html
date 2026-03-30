@@ -2751,7 +2751,7 @@
             const dateStr = getNotifyDate();
             try {
                 const data = await api('/api/admin/locations');
-                let locs = data.locations || data;
+                let locs = (data.locations || data).filter(l => l.active !== false);
                 // Operators: filter to their allowed locations
                 if (_userRole === 'operator' && _userLocationIds.length) {
                     locs = locs.filter(l => _userLocationIds.includes(l.id));
