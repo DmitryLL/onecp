@@ -15,6 +15,16 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H 192.124.171.197 >> ~/.ssh/known_hosts 2>/dev/null
 
+      - name: Write .env on server
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@192.124.171.197 "cat > /onecp/.env << 'ENVEOF'
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          SMS_PROVIDER=mock
+          SMSRU_API_KEY=
+          ENVEOF"
+
       - name: Deploy via SSH
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@192.124.171.197 'cd /onecp && git fetch origin deploy && git reset --hard origin/deploy && docker compose up -d --build && bash /onecp/setup-nginx.sh'
