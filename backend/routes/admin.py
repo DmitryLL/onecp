@@ -1056,8 +1056,10 @@ def export_guests_excel(date: str, location: str = "", admin: AdminUser = Depend
             raise HTTPException(status_code=404, detail="Нет заказов")
         filename = f"Отчет по гостям на {target_date.strftime('%d.%m.%Y')} ({location}).xlsx"
     else:
-        locations_map = get_locations_map(db)
-        data = build_guests_excel_multi(filtered, list(locations_map.keys()), target_date)
+        # Include all locations (active + archived) so no orders are lost
+        all_locs = db.query(Location).order_by(Location.sort_order, Location.id).all()
+        all_addresses = [loc.address for loc in all_locs]
+        data = build_guests_excel_multi(filtered, all_addresses, target_date)
         if not data:
             raise HTTPException(status_code=404, detail="Нет заказов")
         filename = f"Отчет по гостям на {target_date.strftime('%d.%m.%Y')} (все точки).xlsx"

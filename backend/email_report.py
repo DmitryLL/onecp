@@ -235,13 +235,16 @@ def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes
 
 
 def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_type) -> bytes | None:
-    """Build 'Отчёт по гостям' with a sheet per location."""
+    """Build 'Отчёт по гостям' with a sheet per location, including orders from unknown locations."""
     wb = Workbook()
     first = True
+    seen_addresses = set()
+
     for location in locations:
         loc_orders = [o for o in orders if (o.address or "") == location]
         if not loc_orders:
             continue
+        seen_addresses.add(location)
         if first:
             ws = wb.active
             ws.title = location[:31]
@@ -249,6 +252,23 @@ def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_t
         else:
             ws = wb.create_sheet(title=location[:31])
         _build_guests_sheet(ws, loc_orders, location, delivery_date)
+
+    # Include orders from addresses not in the known locations list
+    other_orders = [o for o in orders if (o.address or "") not in seen_addresses]
+    if other_orders:
+        # Group by address
+        addr_groups = {}
+        for o in other_orders:
+            addr = o.address or "Без адреса"
+            addr_groups.setdefault(addr, []).append(o)
+        for addr, addr_orders in addr_groups.items():
+            if first:
+                ws = wb.active
+                ws.title = addr[:31]
+                first = False
+            else:
+                ws = wb.create_sheet(title=addr[:31])
+            _build_guests_sheet(ws, addr_orders, addr, delivery_date)
 
     if first:
         return None  # no sheets were created
