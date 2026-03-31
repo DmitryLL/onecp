@@ -1,15 +1,24 @@
 #!/bin/bash
 set -e
 
+DOMAIN="order.coffeeplace.one"
+
+# Install nginx if missing
 if ! command -v nginx &>/dev/null; then
   apt-get update && apt-get install -y nginx
 fi
 
-cat > /etc/nginx/sites-available/onecp <<'NGINX'
+# Install certbot if missing
+if ! command -v certbot &>/dev/null; then
+  apt-get update && apt-get install -y certbot python3-certbot-nginx
+fi
+
+# --- Step 1: HTTP config (needed for certbot to verify domain) ---
+cat > /etc/nginx/sites-available/onecp <<NGINX
 server {
-    listen 80 default_server;
-    listen [::]:80 default_server;
-    server_name _;
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN};
     root /onecp;
     index index.html;
 
@@ -27,9 +36,9 @@ server {
 
     location /api/ {
         proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         client_max_body_size 10M;
     }
 
@@ -40,26 +49,40 @@ server {
     }
 
     location /login {
-        try_files $uri /login/index.html;
+        try_files \$uri /login/index.html;
     }
 
     # Admin panel routes
     location ~ ^/(orders|questions|products|sets|calendar|clients|locations|settings)(/|$) {
-        try_files $uri /admin/index.html;
+        try_files \$uri /admin/index.html;
     }
 
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files \$uri \$uri/ /index.html;
     }
-
-    # Dynamic location pages — any single-segment path not matched above serves index.html
-    # (covers /Sber, /Skycity, /InternationalBayViewtowers, and any new locations)
 }
 NGINX
 
 ln -sf /etc/nginx/sites-available/onecp /etc/nginx/sites-enabled/onecp
 rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx || systemctl start nginx
+
+# --- Step 2: Obtain SSL certificate (if not already present) ---
+if [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+  certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos --email admin@coffeeplace.one --redirect
+else
+  # Certificate exists — make sure nginx config has SSL (certbot --nginx updates it)
+  certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos --email admin@coffeeplace.one --redirect --keep-until-expiring
+fi
+
+# --- Step 3: Auto-renewal cron (certbot installs a systemd timer, but add cron as fallback) ---
+CRON_CMD="0 3 * * * certbot renew --quiet --deploy-hook 'systemctl reload nginx'"
+( crontab -l 2>/dev/null | grep -v 'certbot renew' ; echo "${CRON_CMD}" ) | crontab -
+
+# Verify final config
+nginx -t && systemctl reload nginx
+
+echo "SSL certificate configured for ${DOMAIN} with auto-renewal."
 
 # Nginx log rotation (keep 7 days, max 50MB each)
 cat > /etc/logrotate.d/nginx-onecp <<'LOGROTATE'
