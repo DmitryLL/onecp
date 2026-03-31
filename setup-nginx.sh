@@ -109,9 +109,27 @@ else
   certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos --email admin@coffeeplace.one --redirect --keep-until-expiring
 fi
 
-# --- Step 3: Auto-renewal cron (certbot installs a systemd timer, but add cron as fallback) ---
-CRON_CMD="0 3 1 * * certbot renew --quiet --deploy-hook 'systemctl reload nginx'"
-( crontab -l 2>/dev/null | grep -v 'certbot renew' ; echo "${CRON_CMD}" ) | crontab -
+# --- Step 3: Auto-renewal via systemd timer (1st of each month) ---
+cat > /etc/systemd/system/certbot-renew.service <<'UNIT'
+[Unit]
+Description=Certbot renewal
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/certbot renew --quiet --deploy-hook "systemctl reload nginx"
+UNIT
+
+cat > /etc/systemd/system/certbot-renew.timer <<'TIMER'
+[Unit]
+Description=Run certbot renewal monthly
+[Timer]
+OnCalendar=*-*-01 03:00:00
+Persistent=true
+[Install]
+WantedBy=timers.target
+TIMER
+
+systemctl daemon-reload
+systemctl enable --now certbot-renew.timer
 
 # Verify final config
 nginx -t && systemctl reload nginx
