@@ -4,6 +4,10 @@ on:
   push:
     branches: [deploy]
 
+env:
+  SERVER: root@192.124.171.197
+  SSH_OPTS: -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,7 +21,7 @@ jobs:
 
       - name: Write .env on server
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@192.124.171.197 "cat > /onecp/.env << 'ENVEOF'
+          ssh $SSH_OPTS $SERVER "cat > /onecp/.env << 'ENVEOF'
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
@@ -25,7 +29,28 @@ jobs:
           SMSRU_API_KEY=
           ENVEOF"
 
+      - name: Backup database
+        run: |
+          ssh $SSH_OPTS $SERVER 'mkdir -p /onecp/backups && docker compose -f /onecp/docker-compose.yml exec -T db pg_dump -U onecp onecp_db | gzip > /onecp/backups/db_$(date +%Y%m%d_%H%M%S).sql.gz && echo "Backup created" && ls -lh /onecp/backups/ && find /onecp/backups -name "db_*.sql.gz" -mtime +7 -delete && echo "Old backups cleaned"'
+        timeout-minutes: 5
+
       - name: Deploy via SSH
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@192.124.171.197 'cd /onecp && git fetch origin deploy && git reset --hard origin/deploy && docker compose up -d --build && bash /onecp/setup-nginx.sh'
+          ssh $SSH_OPTS $SERVER 'cd /onecp && git fetch origin deploy && git reset --hard origin/deploy && docker compose up -d --build && bash /onecp/setup-nginx.sh'
         timeout-minutes: 10
+
+      - name: Health check
+        run: |
+          echo "Waiting 10s for services to start..."
+          sleep 10
+          for i in 1 2 3 4 5; do
+            STATUS=$(ssh $SSH_OPTS $SERVER 'curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8000/api/health')
+            if [ "$STATUS" = "200" ]; then
+              echo "Health check passed (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i: status=$STATUS, retrying in 5s..."
+            sleep 5
+          done
+          echo "Health check FAILED after 5 attempts"
+          exit 1
