@@ -13,13 +13,15 @@ if ! command -v certbot &>/dev/null; then
   apt-get update && apt-get install -y certbot python3-certbot-nginx
 fi
 
-# --- Step 1: HTTP config (needed for certbot to verify domain) ---
-cat > /etc/nginx/sites-available/onecp <<NGINX
-# Rate limiting zones
+# --- Rate limiting zones (must be in http context, not server) ---
+cat > /etc/nginx/conf.d/rate-limit.conf <<RATELIMIT
 limit_req_zone \$binary_remote_addr zone=api_general:10m rate=30r/s;
 limit_req_zone \$binary_remote_addr zone=api_auth:10m rate=5r/m;
 limit_req_zone \$binary_remote_addr zone=api_admin:10m rate=10r/s;
+RATELIMIT
 
+# --- Step 1: HTTP config (needed for certbot to verify domain) ---
+cat > /etc/nginx/sites-available/onecp <<NGINX
 server {
     listen 80;
     listen [::]:80;
