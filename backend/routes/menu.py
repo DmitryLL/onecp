@@ -114,9 +114,14 @@ def get_categories(db: Session = Depends(get_db)):
     return [c[0] for c in cats if c[0]]
 
 
+PUBLIC_SETTINGS = {
+    "heroTitle", "heroSub", "heroBtn", "catalogTitle", "catalogSub",
+    "aboutTitle", "aboutSub", "address", "phone", "email", "schedule", "footer",
+}
+
 @router.get("/settings")
 def get_site_settings(db: Session = Depends(get_db)):
-    settings = db.query(SiteSettings).all()
+    settings = db.query(SiteSettings).filter(SiteSettings.key.in_(PUBLIC_SETTINGS)).all()
     return {s.key: s.value for s in settings}
 
 

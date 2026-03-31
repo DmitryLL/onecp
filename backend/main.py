@@ -229,16 +229,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="OneCp API", lifespan=lifespan)
 
-# CORS: only allow specific origins (same-origin via nginx needs no CORS)
-_cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
-if _cors_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=_cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# CORS: allow only our domain (override via CORS_ORIGINS env var)
+_cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "https://order.coffeeplace.one").split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
 
 # Security headers + request size limit (2MB)
 MAX_BODY_SIZE = 2 * 1024 * 1024

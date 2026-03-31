@@ -15,12 +15,24 @@ fi
 
 # --- Step 1: HTTP config (needed for certbot to verify domain) ---
 cat > /etc/nginx/sites-available/onecp <<NGINX
+# Rate limiting zones
+limit_req_zone \$binary_remote_addr zone=api_general:10m rate=30r/s;
+limit_req_zone \$binary_remote_addr zone=api_auth:10m rate=5r/m;
+limit_req_zone \$binary_remote_addr zone=api_admin:10m rate=10r/s;
+
 server {
     listen 80;
     listen [::]:80;
     server_name ${DOMAIN};
     root /onecp;
     index index.html;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 
     # Gzip compression
     gzip on;
@@ -34,7 +46,29 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
+    # Auth endpoints — strict rate limit (5 req/min)
+    location /api/auth/ {
+        limit_req zone=api_auth burst=3 nodelay;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        client_max_body_size 1M;
+    }
+
+    # Admin endpoints — moderate rate limit
+    location /api/admin/ {
+        limit_req zone=api_admin burst=20 nodelay;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        client_max_body_size 10M;
+    }
+
+    # General API — rate limit
     location /api/ {
+        limit_req zone=api_general burst=50 nodelay;
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;

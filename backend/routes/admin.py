@@ -353,7 +353,7 @@ def update_order_status(order_id: int, body: OrderStatusUpdate, admin: AdminUser
 
 
 @router.delete("/purge-all")
-def purge_all(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+def purge_all(admin: AdminUser = Depends(require_admin_role), db: Session = Depends(get_db)):
     db.query(OrderItem).delete()
     db.query(Order).delete()
     db.query(EmailCode).delete()
@@ -427,7 +427,7 @@ def list_customers(admin: AdminUser = Depends(get_admin), db: Session = Depends(
 
 
 @router.delete("/customers-and-orders")
-def clear_customers_and_orders(admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
+def clear_customers_and_orders(admin: AdminUser = Depends(require_admin_role), db: Session = Depends(get_db)):
     db.query(OrderItem).delete()
     db.query(Order).delete()
     db.query(Customer).delete()
