@@ -76,7 +76,7 @@ else
 fi
 
 # --- Step 3: Auto-renewal cron (certbot installs a systemd timer, but add cron as fallback) ---
-CRON_CMD="0 3 * * * certbot renew --quiet --deploy-hook 'systemctl reload nginx'"
+CRON_CMD="0 3 1 * * certbot renew --quiet --deploy-hook 'systemctl reload nginx'"
 ( crontab -l 2>/dev/null | grep -v 'certbot renew' ; echo "${CRON_CMD}" ) | crontab -
 
 # Verify final config
