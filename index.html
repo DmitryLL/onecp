@@ -809,12 +809,10 @@
         /* ===== HERO ===== */
         .hero {
             margin-top: 72px;
-            padding-top: 100px;
-            background: var(--black) center/contain no-repeat;
+            aspect-ratio: 2500 / 850;
+            background: var(--black) center/cover no-repeat;
             color: #fff;
-            padding-bottom: 20px;
-            padding-left: 24px;
-            padding-right: 24px;
+            padding: 24px;
             text-align: center;
             position: relative;
             max-width: none;
@@ -1901,7 +1899,7 @@
             .mobile-cart-fab { display: none; }
             .mobile-cart-fab.visible { display: flex; }
             .card:hover { transform: none; box-shadow: var(--shadow-card); }
-            .hero { margin-top: 56px; padding: 40px 16px 20px; }
+            .hero { margin-top: 56px; aspect-ratio: auto; padding: 40px 16px 20px; min-height: 180px; }
             .hero h1 { font-size: 1.6rem; }
             .hero p { font-size: .95rem; }
             .hero-loc-chip { font-size: .78rem; padding: 7px 14px; }
