@@ -482,7 +482,7 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            background: rgba(26,22,18,.55);
+            background: rgba(26,22,18,.75);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255,255,255,.06);
@@ -755,23 +755,21 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: linear-gradient(135deg, var(--gold), var(--brown));
-            color: var(--white) !important;
-            padding: 10px 22px !important;
-            border-radius: 50px !important;
-            font-weight: 600 !important;
-            border: none;
+            background: rgba(255,255,255,.08);
+            color: rgba(245,239,230,.8) !important;
+            padding: 10px 18px !important;
+            border-radius: var(--radius-sm) !important;
+            font-weight: 500 !important;
+            border: 1px solid rgba(255,255,255,.1);
             cursor: pointer;
             font-size: .9rem;
             text-decoration: none;
-            transition: all .3s;
-            box-shadow: 0 4px 15px rgba(201,169,110,.3);
+            transition: all .25s;
         }
 
         .nav-cart:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(201,169,110,.4);
-            background: linear-gradient(135deg, var(--gold-light), var(--brown-light)) !important;
+            background: rgba(255,255,255,.15);
+            color: var(--beige) !important;
         }
 
         .cart-badge {
