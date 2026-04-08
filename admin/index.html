@@ -2212,11 +2212,11 @@
         }
 
         // Compute delivery date for an order based on its creation time
-        // Before 14:00 Vladivostok → delivery next day, after 14:00 → day after tomorrow
+        // Before 19:00 Vladivostok → delivery next day, after 19:00 → day after tomorrow
         function getOrderDeliveryDate(createdAtISO) {
             var vladTime = new Date(new Date(createdAtISO).toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
             var delivery = new Date(vladTime);
-            if (vladTime.getHours() >= 14) {
+            if (vladTime.getHours() >= 19) {
                 delivery.setDate(delivery.getDate() + 2);
             } else {
                 delivery.setDate(delivery.getDate() + 1);
@@ -2740,7 +2740,7 @@
         // ===== NOTIFY =====
         function getNotifyDate() {
             const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
-            const d = now.getHours() >= 14 ? new Date(now.getTime() + 86400000) : now;
+            const d = now.getHours() >= 19 ? new Date(now.getTime() + 86400000) : now;
             return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
         }
 

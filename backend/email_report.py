@@ -580,7 +580,7 @@ def send_pickup_notification(location_id: int):
             raise ValueError("Точка не найдена")
 
         now_vlad = datetime.now(VLAD_TZ)
-        if now_vlad.hour >= 14:
+        if now_vlad.hour >= 19:
             delivery_date = (now_vlad + timedelta(days=1)).date()
         else:
             delivery_date = now_vlad.date()
