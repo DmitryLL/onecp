@@ -67,9 +67,9 @@ LEFT_ALIGN = Alignment(horizontal="left", vertical="center")
 
 
 def get_delivery_date(created_at):
-    """Compute delivery date: before 14:00 Vlad → tomorrow, after → day after tomorrow."""
+    """Compute delivery date: before 19:00 Vlad → tomorrow, after → day after tomorrow."""
     vlad_time = created_at.astimezone(VLAD_TZ)
-    if vlad_time.hour >= 14:
+    if vlad_time.hour >= 19:
         return (vlad_time + timedelta(days=2)).date()
     else:
         return (vlad_time + timedelta(days=1)).date()

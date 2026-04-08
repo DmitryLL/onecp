@@ -3379,10 +3379,10 @@
     })();
 
     // ===== INIT =====
-    // Compute menu target date: tomorrow if before 14:00 Vladivostok, day after tomorrow if 14:00+
+    // Compute menu target date: tomorrow if before 19:00 Vladivostok, day after tomorrow if 19:00+
     var vladNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
     var menuTargetDate = new Date(vladNow);
-    if (vladNow.getHours() >= 14) {
+    if (vladNow.getHours() >= 19) {
         menuTargetDate.setDate(menuTargetDate.getDate() + 2);
     } else {
         menuTargetDate.setDate(menuTargetDate.getDate() + 1);
