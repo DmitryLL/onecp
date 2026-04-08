@@ -482,14 +482,15 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            background: linear-gradient(to bottom, var(--black) 0%, transparent 50%);
-            border: none;
-            outline: none;
+            background: rgba(26,22,18,.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,.06);
             transition: all .4s cubic-bezier(.22,1,.36,1);
         }
 
         header.scrolled {
-            background: var(--black);
+            background: rgba(26,22,18,.85);
             box-shadow: 0 4px 30px rgba(0,0,0,.3);
         }
 
