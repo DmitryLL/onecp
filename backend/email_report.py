@@ -67,12 +67,26 @@ LEFT_ALIGN = Alignment(horizontal="left", vertical="center")
 
 
 def get_delivery_date(created_at):
-    """Compute delivery date: before 19:00 Vlad → tomorrow, after → day after tomorrow."""
+    """Compute delivery date, skipping weekends.
+    Thu 19:00 – Sun 19:00 → Monday; Sun 19:00+ → Tuesday.
+    """
     vlad_time = created_at.astimezone(VLAD_TZ)
-    if vlad_time.hour >= 19:
-        return (vlad_time + timedelta(days=2)).date()
+    dow = vlad_time.weekday()  # 0=Mon, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+    hour = vlad_time.hour
+    if dow == 3 and hour >= 19:
+        return (vlad_time + timedelta(days=4)).date()  # Thu 19+ → Mon
+    elif dow == 4:
+        return (vlad_time + timedelta(days=3)).date()  # Fri → Mon
+    elif dow == 5:
+        return (vlad_time + timedelta(days=2)).date()  # Sat → Mon
+    elif dow == 6 and hour < 19:
+        return (vlad_time + timedelta(days=1)).date()  # Sun before 19 → Mon
+    elif dow == 6 and hour >= 19:
+        return (vlad_time + timedelta(days=2)).date()  # Sun 19+ → Tue
+    elif hour >= 19:
+        return (vlad_time + timedelta(days=2)).date()  # Weekday 19+ → +2
     else:
-        return (vlad_time + timedelta(days=1)).date()
+        return (vlad_time + timedelta(days=1)).date()  # Weekday before 19 → +1
 
 
 def get_report_settings() -> dict | None:

@@ -2211,15 +2211,26 @@
             renderOrdersByDate();
         }
 
-        // Compute delivery date for an order based on its creation time
-        // Before 19:00 Vladivostok → delivery next day, after 19:00 → day after tomorrow
+        // Compute delivery date for an order, skipping weekends:
+        // Thu 19:00 – Sun 19:00 → Monday; Sun 19:00+ → Tuesday
         function getOrderDeliveryDate(createdAtISO) {
             var vladTime = new Date(new Date(createdAtISO).toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
             var delivery = new Date(vladTime);
-            if (vladTime.getHours() >= 19) {
-                delivery.setDate(delivery.getDate() + 2);
+            var dow = vladTime.getDay(), h = vladTime.getHours(); // 0=Sun,4=Thu,5=Fri,6=Sat
+            if (dow === 4 && h >= 19) {
+                delivery.setDate(delivery.getDate() + 4); // Thu 19+ → Mon
+            } else if (dow === 5) {
+                delivery.setDate(delivery.getDate() + 3); // Fri → Mon
+            } else if (dow === 6) {
+                delivery.setDate(delivery.getDate() + 2); // Sat → Mon
+            } else if (dow === 0 && h < 19) {
+                delivery.setDate(delivery.getDate() + 1); // Sun before 19 → Mon
+            } else if (dow === 0 && h >= 19) {
+                delivery.setDate(delivery.getDate() + 2); // Sun 19+ → Tue
+            } else if (h >= 19) {
+                delivery.setDate(delivery.getDate() + 2); // Weekday 19+ → +2
             } else {
-                delivery.setDate(delivery.getDate() + 1);
+                delivery.setDate(delivery.getDate() + 1); // Weekday before 19 → +1
             }
             return delivery.getFullYear() + '-' +
                 String(delivery.getMonth() + 1).padStart(2, '0') + '-' +

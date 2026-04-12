@@ -2090,7 +2090,7 @@
 <!-- BEIGE WRAPPER -->
 <div class="beige-wrapper">
 
-<p style="text-align:center;margin:0;padding:16px 24px 0;color:var(--text);font-size:1.5rem;font-weight:800;letter-spacing:-.3px;">Заказ на завтрашний день осуществляется до 19:00</p>
+<p id="orderNotice" style="text-align:center;margin:0;padding:16px 24px 0;color:var(--text);font-size:1.5rem;font-weight:800;letter-spacing:-.3px;">Заказ на завтрашний день осуществляется до 19:00</p>
 
 <!-- CATALOG -->
 <section id="catalog" style="padding-top:40px;padding-bottom:40px;">
@@ -3373,13 +3373,25 @@
     })();
 
     // ===== INIT =====
-    // Compute menu target date: tomorrow if before 19:00 Vladivostok, day after tomorrow if 19:00+
+    // Compute menu target date (delivery day), skipping weekends:
+    // Thu 19:00 – Sun 19:00 → Monday; Sun 19:00+ → Tuesday
     var vladNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
     var menuTargetDate = new Date(vladNow);
-    if (vladNow.getHours() >= 19) {
-        menuTargetDate.setDate(menuTargetDate.getDate() + 2);
+    var _dow = vladNow.getDay(), _h = vladNow.getHours();
+    if (_dow === 4 && _h >= 19) {
+        menuTargetDate.setDate(menuTargetDate.getDate() + 4); // Thu 19+ → Mon
+    } else if (_dow === 5) {
+        menuTargetDate.setDate(menuTargetDate.getDate() + 3); // Fri → Mon
+    } else if (_dow === 6) {
+        menuTargetDate.setDate(menuTargetDate.getDate() + 2); // Sat → Mon
+    } else if (_dow === 0 && _h < 19) {
+        menuTargetDate.setDate(menuTargetDate.getDate() + 1); // Sun before 19 → Mon
+    } else if (_dow === 0 && _h >= 19) {
+        menuTargetDate.setDate(menuTargetDate.getDate() + 2); // Sun 19+ → Tue
+    } else if (_h >= 19) {
+        menuTargetDate.setDate(menuTargetDate.getDate() + 2); // Weekday 19+ → +2
     } else {
-        menuTargetDate.setDate(menuTargetDate.getDate() + 1);
+        menuTargetDate.setDate(menuTargetDate.getDate() + 1); // Weekday before 19 → +1
     }
     var menuDateISO = menuTargetDate.getFullYear() + '-' +
         String(menuTargetDate.getMonth() + 1).padStart(2, '0') + '-' +
@@ -3389,6 +3401,16 @@
         var dayNames = ['воскресенье','понедельник','вторник','среду','четверг','пятницу','субботу'];
         var dateStr = menuTargetDate.getDate() + ' ' + months[menuTargetDate.getMonth()] + ', ' + dayNames[menuTargetDate.getDay()];
         document.getElementById('siteCatalogTitle').textContent = 'Меню на ' + dateStr;
+        // Update order notice for weekend period
+        var isWeekendWindow = (_dow === 4 && _h >= 19) || _dow === 5 || _dow === 6 || (_dow === 0 && _h < 19);
+        var noticeEl = document.getElementById('orderNotice');
+        if (noticeEl) {
+            if (isWeekendWindow) {
+                noticeEl.textContent = 'Приём заказов на понедельник до воскресенья 19:00';
+            } else if (_h >= 19) {
+                noticeEl.textContent = 'Приём заказов на ' + dateStr + ' уже открыт';
+            }
+        }
     })();
 
     if (!isRootPage) { loadMenu(); }
