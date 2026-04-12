@@ -722,6 +722,7 @@
         }
         .cal-day:hover { border-color: #c8956c; }
         .cal-day.today { border-color: #c8956c; background: #fdf6ec; }
+        .cal-day.weekend { background: #f5f5f5; border-color: #e0e0e0; opacity: .6; }
         .cal-day.active-menu { border-color: #2E7D32; background: #e8f5e9; }
         .cal-day.active-menu .cal-date .date { color: #2E7D32; }
         .cal-day.active-menu .cal-date .weekday { color: #4CAF50; }
@@ -3028,9 +3029,19 @@
                 const dt = new Date(d.date + 'T00:00:00');
                 const isToday = d.date === todayStr;
                 const isActiveMenu = d.date === activeMenuStr;
+                const isWeekend = !!d.weekend;
                 const dayNum = dt.getDate();
                 const month = dt.toLocaleDateString('ru-RU', {month:'long'});
                 const wd = weekDays[dt.getDay()];
+                if (isWeekend) {
+                    return `<div class="cal-day weekend">
+                        <div class="cal-date">
+                            <div class="date">${dayNum} ${month}</div>
+                            <div class="weekday">${wd}</div>
+                        </div>
+                        <span style="color:#bbb;font-size:.85rem;font-style:italic;">выходной</span>
+                    </div>`;
+                }
                 const currentSetId = d.sets.length ? d.sets[0].id : '';
                 let badge = '';
                 if (isActiveMenu) badge = ' · сейчас на сайте';

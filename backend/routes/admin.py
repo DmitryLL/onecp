@@ -742,13 +742,15 @@ def generate_calendar_day(db: Session, target_date: date):
 
 
 def ensure_calendar_14_days(db: Session):
-    """Generate calendar days for 14 days ahead if missing."""
+    """Generate calendar days for 14 days ahead if missing. Skip weekends (Sat/Sun)."""
     from datetime import datetime, timezone, timedelta as td
     vlad_tz = timezone(td(hours=10))
     today = datetime.now(vlad_tz).date()
 
     for i in range(14):
         target = today + timedelta(days=i)
+        if target.weekday() in (5, 6):  # Skip Saturday and Sunday
+            continue
         generate_calendar_day(db, target)
     db.commit()
 
@@ -771,18 +773,30 @@ def get_calendar(admin: AdminUser = Depends(get_admin), db: Session = Depends(ge
 
     available = get_available_sets(db)
 
+    # Build list including weekends as empty placeholders
+    all_days = []
+    for i in range(14):
+        target = today + timedelta(days=i)
+        is_weekend = target.weekday() in (5, 6)
+        if is_weekend:
+            all_days.append({"id": None, "date": target.isoformat(), "sets": [], "weekend": True})
+        else:
+            matched = next((d for d in days if d.date == target), None)
+            if matched:
+                all_days.append({
+                    "id": matched.id,
+                    "date": matched.date.isoformat(),
+                    "sets": [
+                        {"id": cs.set_id, "name": cs.dish_set.name if cs.dish_set else "—", "price": cs.dish_set.price if cs.dish_set else 0, "sortOrder": cs.dish_set.sort_order if cs.dish_set else 0}
+                        for cs in matched.sets if cs.dish_set
+                    ],
+                    "weekend": False,
+                })
+            else:
+                all_days.append({"id": None, "date": target.isoformat(), "sets": [], "weekend": False})
+
     return {
-        "days": [
-            {
-                "id": d.id,
-                "date": d.date.isoformat(),
-                "sets": [
-                    {"id": cs.set_id, "name": cs.dish_set.name if cs.dish_set else "—", "price": cs.dish_set.price if cs.dish_set else 0, "sortOrder": cs.dish_set.sort_order if cs.dish_set else 0}
-                    for cs in d.sets if cs.dish_set
-                ],
-            }
-            for d in days
-        ],
+        "days": all_days,
         "availableSets": [
             {"id": s.id, "name": s.name, "price": s.price, "sortOrder": s.sort_order}
             for s in available
@@ -830,6 +844,11 @@ def regenerate_calendar(admin: AdminUser = Depends(get_admin), db: Session = Dep
 
     future_days = db.query(CalendarDay).filter(CalendarDay.date >= today).all()
     for d in future_days:
+        db.query(CalendarDaySet).filter(CalendarDaySet.calendar_day_id == d.id).delete()
+        db.delete(d)
+    # Also clean up past weekend entries
+    all_weekend_days = [d for d in db.query(CalendarDay).all() if d.date.weekday() in (5, 6)]
+    for d in all_weekend_days:
         db.query(CalendarDaySet).filter(CalendarDaySet.calendar_day_id == d.id).delete()
         db.delete(d)
     db.commit()
