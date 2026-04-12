@@ -722,6 +722,9 @@
         }
         .cal-day:hover { border-color: #c8956c; }
         .cal-day.today { border-color: #c8956c; background: #fdf6ec; }
+        .cal-day.active-menu { border-color: #2E7D32; background: #e8f5e9; }
+        .cal-day.active-menu .cal-date .date { color: #2E7D32; }
+        .cal-day.active-menu .cal-date .weekday { color: #4CAF50; }
         .cal-date { min-width: 90px; flex-shrink: 0; }
         .cal-date .date { color: #777; font-weight: 600; font-size: .82rem; }
         .cal-day.today .cal-date .date { color: #c8956c; }
@@ -3000,22 +3003,42 @@
             } catch (e) { showToast('Ошибка: ' + e.message); }
         }
 
+        // Compute which menu date is currently shown to customers
+        function getActiveMenuDate() {
+            var now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Vladivostok' }));
+            var target = new Date(now);
+            var dow = now.getDay(), h = now.getHours();
+            if (dow === 4 && h >= 19) target.setDate(target.getDate() + 4);
+            else if (dow === 5) target.setDate(target.getDate() + 3);
+            else if (dow === 6) target.setDate(target.getDate() + 2);
+            else if (dow === 0 && h < 19) target.setDate(target.getDate() + 1);
+            else if (dow === 0 && h >= 19) target.setDate(target.getDate() + 2);
+            else if (h >= 19) target.setDate(target.getDate() + 2);
+            else target.setDate(target.getDate() + 1);
+            return target.getFullYear() + '-' + String(target.getMonth() + 1).padStart(2, '0') + '-' + String(target.getDate()).padStart(2, '0');
+        }
+
         function renderCalendar() {
             if (!calendarData) return;
             const grid = document.getElementById('calendarGrid');
             const todayStr = new Date().toLocaleDateString('sv-SE');
+            const activeMenuStr = getActiveMenuDate();
             const activeSets = calendarData.availableSets || [];
             grid.innerHTML = calendarData.days.map(d => {
                 const dt = new Date(d.date + 'T00:00:00');
                 const isToday = d.date === todayStr;
+                const isActiveMenu = d.date === activeMenuStr;
                 const dayNum = dt.getDate();
                 const month = dt.toLocaleDateString('ru-RU', {month:'long'});
                 const wd = weekDays[dt.getDay()];
                 const currentSetId = d.sets.length ? d.sets[0].id : '';
-                return `<div class="cal-day${isToday ? ' today' : ''}">
+                let badge = '';
+                if (isActiveMenu) badge = ' · сейчас на сайте';
+                else if (isToday) badge = ' · сегодня';
+                return `<div class="cal-day${isToday ? ' today' : ''}${isActiveMenu ? ' active-menu' : ''}">
                     <div class="cal-date">
                         <div class="date">${dayNum} ${month}</div>
-                        <div class="weekday">${wd}${isToday ? ' · сегодня' : ''}</div>
+                        <div class="weekday">${wd}${badge}</div>
                     </div>
                     <select class="cal-day-select" onchange="calSetDay('${d.date}', this.value)">
                         <option value="">Выберите набор</option>
