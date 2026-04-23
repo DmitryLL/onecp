@@ -205,30 +205,39 @@ def load_orders_for_month(year: int, month: int):
         db.close()
 
 
-def _build_guests_sheet(ws, loc_orders, location: str, delivery_date: date_type):
-    """Fill a worksheet with guest report data for a specific location."""
+def _build_guests_sheet(ws, loc_orders, location: str, delivery_date: date_type, date_label: str = None, show_date_col: bool = False):
+    """Fill a worksheet with guest report data for a specific location.
+
+    date_label: custom subtitle (e.g. 'За март 2026'). If None, uses 'Заказ на: <date>'.
+    show_date_col: if True, adds 'Дата' column with delivery date per order (for monthly reports).
+    """
     # Title block
     ws.append([f"ONE COFFEE PLACE — Отчёт по гостям — {location}"])
-    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=9)
+    ncols = 10 if show_date_col else 9
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=ncols)
     ws["A1"].font = TITLE_FONT
 
-    ws.append([f"Заказ на: {format_date_ru(delivery_date)}"])
-    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=9)
+    sub = date_label or f"Заказ на: {format_date_ru(delivery_date)}"
+    ws.append([sub])
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=ncols)
     ws["A2"].font = SUB_FONT
 
     ws.append([f"Точка выдачи: {location}"])
-    ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=9)
+    ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=ncols)
     ws["A3"].font = Font(bold=True, size=11, color="4A3728")
 
     total_sum = sum(o.total for o in loc_orders)
     ws.append([f"Всего заказов: {len(loc_orders)}   |   Общая сумма: {total_sum:,.0f} ₽"])
-    ws.merge_cells(start_row=4, start_column=1, end_row=4, end_column=9)
+    ws.merge_cells(start_row=4, start_column=1, end_row=4, end_column=ncols)
     ws["A4"].font = STATS_FONT
 
     ws.append([])  # empty row
 
     # Headers
-    headers = ["№", "Время", "Клиент", "Телефон", "Блюдо", "Кол-во", "Цена", "Сумма", "Комментарий"]
+    if show_date_col:
+        headers = ["№", "Дата", "Время", "Клиент", "Телефон", "Блюдо", "Кол-во", "Цена", "Сумма", "Комментарий"]
+    else:
+        headers = ["№", "Время", "Клиент", "Телефон", "Блюдо", "Кол-во", "Цена", "Сумма", "Комментарий"]
     ws.append(headers)
     header_row = 6
     for col in range(1, len(headers) + 1):
@@ -252,46 +261,76 @@ def _build_guests_sheet(ws, loc_orders, location: str, delivery_date: date_type)
         name = o.customer.name if o.customer and o.customer.name else "—"
         created_vlad = o.created_at.astimezone(VLAD_TZ) if o.created_at else None
         time_str = created_vlad.strftime("%H:%M") if created_vlad else "—"
+        delivery_d = get_delivery_date(o.created_at) if o.created_at else None
+        date_str = delivery_d.strftime("%d.%m") if delivery_d else "—"
         row_fill = EVEN_FILL if idx % 2 == 1 else ODD_FILL
         for i, it in enumerate(o.items):
             dish_name = it.dish.name if it.dish else "—"
-            ws.append([
-                o.id if i == 0 else "",
-                time_str if i == 0 else "",
-                name if i == 0 else "",
-                phone if i == 0 else "",
-                dish_name,
-                it.quantity,
-                f"{it.price:.0f} ₽",
-                f"{o.total:.0f} ₽" if i == 0 else "",
-                (o.comment or "") if i == 0 else "",
-            ])
+            if show_date_col:
+                ws.append([
+                    o.id if i == 0 else "",
+                    date_str if i == 0 else "",
+                    time_str if i == 0 else "",
+                    name if i == 0 else "",
+                    phone if i == 0 else "",
+                    dish_name,
+                    it.quantity,
+                    f"{it.price:.0f} ₽",
+                    f"{o.total:.0f} ₽" if i == 0 else "",
+                    (o.comment or "") if i == 0 else "",
+                ])
+            else:
+                ws.append([
+                    o.id if i == 0 else "",
+                    time_str if i == 0 else "",
+                    name if i == 0 else "",
+                    phone if i == 0 else "",
+                    dish_name,
+                    it.quantity,
+                    f"{it.price:.0f} ₽",
+                    f"{o.total:.0f} ₽" if i == 0 else "",
+                    (o.comment or "") if i == 0 else "",
+                ])
             row_num = ws.max_row
             for col in range(1, num_cols + 1):
                 c = ws.cell(row=row_num, column=col)
                 c.fill = row_fill
                 c.border = THIN_BORDER
-                if col in (1, 2, 6):
-                    c.alignment = CENTER_ALIGN
-                elif col in (7, 8):
-                    c.alignment = RIGHT_ALIGN
+                if show_date_col:
+                    if col in (1, 2, 3, 7):
+                        c.alignment = CENTER_ALIGN
+                    elif col in (8, 9):
+                        c.alignment = RIGHT_ALIGN
+                    else:
+                        c.alignment = LEFT_ALIGN
                 else:
-                    c.alignment = LEFT_ALIGN
+                    if col in (1, 2, 6):
+                        c.alignment = CENTER_ALIGN
+                    elif col in (7, 8):
+                        c.alignment = RIGHT_ALIGN
+                    else:
+                        c.alignment = LEFT_ALIGN
 
     # Total row
     ws.append([])
-    total_row_data = ["", "", "", "", "", "", "ИТОГО:", f"{total_sum:,.0f} ₽", ""]
+    if show_date_col:
+        total_row_data = ["", "", "", "", "", "", "", "ИТОГО:", f"{total_sum:,.0f} ₽", ""]
+    else:
+        total_row_data = ["", "", "", "", "", "", "ИТОГО:", f"{total_sum:,.0f} ₽", ""]
     ws.append(total_row_data)
     total_row = ws.max_row
-    for col in range(1, 10):
+    for col in range(1, num_cols + 1):
         cell = ws.cell(row=total_row, column=col)
         cell.font = TOTAL_FONT
         cell.fill = TOTAL_FILL
         cell.border = THIN_BORDER
-        cell.alignment = TOTAL_LABEL_ALIGN if col <= 7 else TOTAL_NUM_ALIGN
+        cell.alignment = TOTAL_LABEL_ALIGN if col <= (num_cols - 2) else TOTAL_NUM_ALIGN
 
     # Column widths
-    widths = [8, 10, 22, 16, 30, 10, 12, 14, 24]
+    if show_date_col:
+        widths = [8, 10, 10, 22, 16, 30, 10, 12, 14, 24]
+    else:
+        widths = [8, 10, 22, 16, 30, 10, 12, 14, 24]
     for i, w in enumerate(widths):
         ws.column_dimensions[chr(65 + i)].width = w
 
@@ -312,7 +351,8 @@ def build_guests_excel(orders, location: str, delivery_date: date_type, display_
     return buf.getvalue()
 
 
-def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_type) -> bytes | None:
+def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_type,
+                             date_label: str = None, show_date_col: bool = False) -> bytes | None:
     """Build 'Отчёт по гостям' with a sheet per location, including orders from unknown locations."""
     wb = Workbook()
     first = True
@@ -329,7 +369,7 @@ def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_t
             first = False
         else:
             ws = wb.create_sheet(title=location[:31])
-        _build_guests_sheet(ws, loc_orders, location, delivery_date)
+        _build_guests_sheet(ws, loc_orders, location, delivery_date, date_label=date_label, show_date_col=show_date_col)
 
     # Include orders from addresses not in the known locations list
     other_orders = [o for o in orders if _norm(o.address) not in seen_addresses]
@@ -346,7 +386,7 @@ def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_t
                 first = False
             else:
                 ws = wb.create_sheet(title=addr[:31])
-            _build_guests_sheet(ws, addr_orders, addr, delivery_date)
+            _build_guests_sheet(ws, addr_orders, addr, delivery_date, date_label=date_label, show_date_col=show_date_col)
 
     if first:
         return None  # no sheets were created
@@ -356,7 +396,7 @@ def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_t
     return buf.getvalue()
 
 
-def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = None, display_map: dict = None) -> bytes | None:
+def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = None, display_map: dict = None, date_label: str = None) -> bytes | None:
     """Build 'Отчёт для кухни' — aggregated across all locations with per-location columns."""
     if not orders:
         return None
@@ -399,7 +439,8 @@ def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = 
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_cols)
     ws["A1"].font = TITLE_FONT
 
-    ws.append([f"Заказ на: {format_date_ru(delivery_date)}"])
+    sub = date_label or f"Заказ на: {format_date_ru(delivery_date)}"
+    ws.append([sub])
     ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=num_cols)
     ws["A2"].font = SUB_FONT
 
@@ -850,15 +891,18 @@ def send_monthly_report(force=False):
     try:
         attachments = []
 
-        # 1. Guests report — multi-sheet (all locations)
-        # Use display addresses for the sheet list
+        # 1. Guests report — multi-sheet (all locations) with date column
         display_addresses = [display_map.get(a, a) for a in loc_addresses]
-        guests_data = build_guests_excel_multi(orders, display_addresses, date_type(target_year, target_month, 1))
+        date_label = f"За {month_name} {target_year}"
+        guests_data = build_guests_excel_multi(
+            orders, display_addresses, date_type(target_year, target_month, 1),
+            date_label=date_label, show_date_col=True,
+        )
         if guests_data:
             attachments.append((f"Отчет по гостям за {month_file} (все точки).xlsx", guests_data))
 
         # 2. Kitchen report
-        kitchen_data = build_kitchen_excel(orders, date_type(target_year, target_month, 1), locations_map, display_map=display_map)
+        kitchen_data = build_kitchen_excel(orders, date_type(target_year, target_month, 1), locations_map, display_map=display_map, date_label=date_label)
         if kitchen_data:
             attachments.append((f"Отчет для кухни за {month_file} (все точки).xlsx", kitchen_data))
 
