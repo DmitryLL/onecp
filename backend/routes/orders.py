@@ -51,7 +51,7 @@ def create_order_authenticated(
         customer_id=customer.id,
         total=total,
         comment=body.comment,
-        address=body.address,
+        address=body.address.strip() if body.address else body.address,
     )
     order.items = order_items
     db.add(order)

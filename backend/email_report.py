@@ -18,15 +18,34 @@ logger = logging.getLogger("onecp")
 
 VLAD_TZ = timezone(timedelta(hours=10))
 
+
+def _norm(addr: str | None) -> str:
+    """Normalize address for comparison: strip + lowercase."""
+    return (addr or "").strip().lower()
+
 def get_locations_map(db=None) -> dict[str, str | None]:
-    """Returns {address: report_email} from DB. Falls back to empty if no DB."""
+    """Returns {normalized_address: report_email} from DB. Falls back to empty if no DB."""
     close = False
     if db is None:
         db = SessionLocal()
         close = True
     try:
         locs = db.query(Location).filter(Location.active == True).order_by(Location.sort_order, Location.id).all()
-        return {loc.address: loc.report_email for loc in locs}
+        return {_norm(loc.address): loc.report_email for loc in locs}
+    finally:
+        if close:
+            db.close()
+
+
+def get_locations_display_map(db=None) -> dict[str, str]:
+    """Returns {normalized_address: original_address} for display purposes."""
+    close = False
+    if db is None:
+        db = SessionLocal()
+        close = True
+    try:
+        locs = db.query(Location).filter(Location.active == True).order_by(Location.sort_order, Location.id).all()
+        return {_norm(loc.address): loc.address for loc in locs}
     finally:
         if close:
             db.close()
@@ -232,16 +251,16 @@ def _build_guests_sheet(ws, loc_orders, location: str, delivery_date: date_type)
         ws.column_dimensions[chr(65 + i)].width = w
 
 
-def build_guests_excel(orders, location: str, delivery_date: date_type) -> bytes | None:
-    """Build 'Отчёт по гостям' for a specific location."""
-    loc_orders = [o for o in orders if (o.address or "") == location]
+def build_guests_excel(orders, location: str, delivery_date: date_type, display_name: str = None) -> bytes | None:
+    """Build 'Отчёт по гостям' for a specific location (address already normalized)."""
+    loc_orders = [o for o in orders if _norm(o.address) == location]
     if not loc_orders:
         return None
 
     wb = Workbook()
     ws = wb.active
     ws.title = "Отчёт по гостям"
-    _build_guests_sheet(ws, loc_orders, location, delivery_date)
+    _build_guests_sheet(ws, loc_orders, display_name or location, delivery_date)
 
     buf = io.BytesIO()
     wb.save(buf)
@@ -255,10 +274,10 @@ def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_t
     seen_addresses = set()
 
     for location in locations:
-        loc_orders = [o for o in orders if (o.address or "") == location]
+        loc_orders = [o for o in orders if _norm(o.address) == _norm(location)]
         if not loc_orders:
             continue
-        seen_addresses.add(location)
+        seen_addresses.add(_norm(location))
         if first:
             ws = wb.active
             ws.title = location[:31]
@@ -268,7 +287,7 @@ def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_t
         _build_guests_sheet(ws, loc_orders, location, delivery_date)
 
     # Include orders from addresses not in the known locations list
-    other_orders = [o for o in orders if (o.address or "") not in seen_addresses]
+    other_orders = [o for o in orders if _norm(o.address) not in seen_addresses]
     if other_orders:
         # Group by address
         addr_groups = {}
@@ -292,7 +311,7 @@ def build_guests_excel_multi(orders, locations: list[str], delivery_date: date_t
     return buf.getvalue()
 
 
-def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = None) -> bytes | None:
+def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = None, display_map: dict = None) -> bytes | None:
     """Build 'Отчёт для кухни' — aggregated across all locations with per-location columns."""
     if not orders:
         return None
@@ -301,21 +320,34 @@ def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = 
     ws = wb.active
     ws.title = "Кухня"
 
-    loc_names = list((locations_map or get_locations_map()).keys())
-    num_cols = 3 + len(loc_names)  # №, Блюдо, loc1, loc2, loc3, Итого
+    lmap = locations_map or get_locations_map()
+    dmap = display_map or get_locations_display_map()
+    loc_names = list(lmap.keys())
 
-    # Aggregate dishes per location and total
+    # Aggregate dishes per location and total; collect unknown addresses
     per_loc = {loc: {} for loc in loc_names}
     totals = {}
     total_portions = 0
+    unknown_loc_key = "Другое"
+    has_unknown = False
     for o in orders:
-        loc = o.address or ""
+        loc = _norm(o.address)
         for it in o.items:
             dish_name = it.dish.name if it.dish else "—"
             totals[dish_name] = totals.get(dish_name, 0) + it.quantity
             total_portions += it.quantity
             if loc in per_loc:
                 per_loc[loc][dish_name] = per_loc[loc].get(dish_name, 0) + it.quantity
+            else:
+                has_unknown = True
+                if unknown_loc_key not in per_loc:
+                    per_loc[unknown_loc_key] = {}
+                per_loc[unknown_loc_key][dish_name] = per_loc[unknown_loc_key].get(dish_name, 0) + it.quantity
+
+    if has_unknown and unknown_loc_key not in loc_names:
+        loc_names.append(unknown_loc_key)
+
+    num_cols = 3 + len(loc_names)  # №, Блюдо, loc1, loc2, ..., Итого
 
     # Title block
     ws.append(["ONE COFFEE PLACE — Отчёт для кухни — все точки"])
@@ -332,8 +364,9 @@ def build_kitchen_excel(orders, delivery_date: date_type, locations_map: dict = 
 
     ws.append([])  # empty row
 
-    # Headers: №, Блюдо, [locations...], Итого
-    headers = ["№", "Блюдо"] + loc_names + ["Итого"]
+    # Headers: №, Блюдо, [locations...], Итого (use display names)
+    display_loc_names = [dmap.get(n, n) for n in loc_names]
+    headers = ["№", "Блюдо"] + display_loc_names + ["Итого"]
     ws.append(headers)
     header_row = 5
     for col in range(1, len(headers) + 1):
@@ -600,7 +633,7 @@ def send_pickup_notification(location_id: int):
             delivery_date = now_vlad.date()
 
         orders = load_orders_for_delivery_date(delivery_date)
-        loc_orders = [o for o in orders if (o.address or "") == location.address]
+        loc_orders = [o for o in orders if _norm(o.address) == _norm(location.address)]
         date_str_short = delivery_date.strftime("%d.%m")
         if not loc_orders:
             raise ValueError(f"Нет заказов на {date_str_short} для точки «{location.name}»")
@@ -669,26 +702,28 @@ def send_report(force=False):
         raise
 
     locations_map = get_locations_map()
+    display_map = get_locations_display_map()
 
     try:
         sent_count = 0
 
         # 1. Отчёт по гостям — per location
-        for location, report_email in locations_map.items():
+        for norm_addr, report_email in locations_map.items():
             loc_emails = parse_emails(report_email or "")
             recipients = list(set(loc_emails + general_emails))
             if not recipients:
                 continue
 
-            excel_data = build_guests_excel(orders, location, delivery_date)
+            display_addr = display_map.get(norm_addr, norm_addr)
+            excel_data = build_guests_excel(orders, norm_addr, delivery_date, display_name=display_addr)
             if excel_data:
-                subject = f"Отчёт по гостям на {date_str_file} — {location}"
-                filename = f"Отчет по гостям на {date_str_file} ({location}).xlsx"
-                body = f"Отчёт по гостям за {location} на {date_str_ru} во вложении."
+                subject = f"Отчёт по гостям на {date_str_file} — {display_addr}"
+                filename = f"Отчет по гостям на {date_str_file} ({display_addr}).xlsx"
+                body = f"Отчёт по гостям за {display_addr} на {date_str_ru} во вложении."
                 send_email(server, smtp_email, recipients, subject, body, [(filename, excel_data)])
                 sent_count += 1
             else:
-                logger.info(f"[EMAIL REPORT] No orders for {location}, skipping")
+                logger.info(f"[EMAIL REPORT] No orders for {display_addr}, skipping")
 
         # 2. Отчёт для кухни — all locations combined
         all_kitchen_emails = set(general_emails)
@@ -697,7 +732,7 @@ def send_report(force=False):
         all_kitchen_emails = list(all_kitchen_emails)
 
         if all_kitchen_emails:
-            kitchen_data = build_kitchen_excel(orders, delivery_date, locations_map)
+            kitchen_data = build_kitchen_excel(orders, delivery_date, locations_map, display_map=display_map)
             if kitchen_data:
                 subject = f"Отчёт для кухни на {date_str_file} — все точки"
                 filename = f"Отчет для кухни на {date_str_file} (все точки).xlsx"

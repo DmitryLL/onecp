@@ -1053,7 +1053,7 @@ def delete_location_bottom_image(loc_id: int, admin: AdminUser = Depends(get_adm
 @router.get("/export/guests")
 def export_guests_excel(date: str, location: str = "", admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
     from datetime import datetime, date as date_type, timedelta, timezone
-    from email_report import build_guests_excel, build_guests_excel_multi, get_delivery_date, get_locations_map
+    from email_report import build_guests_excel, build_guests_excel_multi, get_delivery_date, get_locations_map, _norm
     from urllib.parse import quote
     try:
         target_date = date_type.fromisoformat(date)
@@ -1070,7 +1070,7 @@ def export_guests_excel(date: str, location: str = "", admin: AdminUser = Depend
     filtered = [o for o in orders if o.created_at and get_delivery_date(o.created_at) == target_date]
 
     if location:
-        data = build_guests_excel(filtered, location, target_date)
+        data = build_guests_excel(filtered, _norm(location), target_date, display_name=location)
         if not data:
             raise HTTPException(status_code=404, detail="Нет заказов")
         filename = f"Отчет по гостям на {target_date.strftime('%d.%m.%Y')} ({location}).xlsx"
@@ -1094,7 +1094,7 @@ def export_guests_excel(date: str, location: str = "", admin: AdminUser = Depend
 @router.get("/export/kitchen")
 def export_kitchen_excel(date: str, admin: AdminUser = Depends(get_admin), db: Session = Depends(get_db)):
     from datetime import datetime, date as date_type, timedelta, timezone
-    from email_report import build_kitchen_excel, get_delivery_date, get_locations_map
+    from email_report import build_kitchen_excel, get_delivery_date, get_locations_map, get_locations_display_map
     from urllib.parse import quote
     try:
         target_date = date_type.fromisoformat(date)
@@ -1113,7 +1113,8 @@ def export_kitchen_excel(date: str, admin: AdminUser = Depends(get_admin), db: S
         raise HTTPException(status_code=404, detail="Нет заказов")
 
     locations_map = get_locations_map(db)
-    data = build_kitchen_excel(filtered, target_date, locations_map)
+    display_map = get_locations_display_map(db)
+    data = build_kitchen_excel(filtered, target_date, locations_map, display_map=display_map)
     if not data:
         raise HTTPException(status_code=404, detail="Нет заказов")
 
