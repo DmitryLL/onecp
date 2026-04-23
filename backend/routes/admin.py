@@ -466,6 +466,16 @@ def test_report(admin: AdminUser = Depends(get_admin)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/test-monthly-report")
+def test_monthly_report(admin: AdminUser = Depends(get_admin)):
+    from email_report import send_monthly_report
+    try:
+        send_monthly_report(force=True)
+        return {"ok": True, "message": "Месячный отчёт отправлен"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ===== QUESTIONS =====
 
 @router.get("/questions")

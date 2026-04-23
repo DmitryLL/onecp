@@ -135,6 +135,29 @@ def get_report_settings() -> dict | None:
         db.close()
 
 
+def get_monthly_report_settings() -> dict | None:
+    """Load monthly report settings. Returns dict or None if disabled."""
+    db = SessionLocal()
+    try:
+        settings = db.query(SiteSettings).filter(
+            SiteSettings.key.in_([
+                "monthlyReportEnabled", "monthlyReportRecipient", "monthlyReportTime",
+                "reportSmtpHost", "reportSmtpPort",
+                "reportSmtpEmail", "reportSmtpPassword",
+            ])
+        ).all()
+        s = {row.key: row.value for row in settings}
+        if s.get("monthlyReportEnabled") != "1":
+            return None
+        if not s.get("reportSmtpEmail") or not s.get("reportSmtpPassword"):
+            return None
+        if not s.get("monthlyReportRecipient", "").strip():
+            return None
+        return s
+    finally:
+        db.close()
+
+
 def parse_emails(text: str) -> list[str]:
     """Parse multi-line email field into list of valid emails."""
     if not text:
@@ -156,6 +179,28 @@ def load_orders_for_delivery_date(target_date: date_type):
             .all()
         )
         return [o for o in orders if get_delivery_date(o.created_at) == target_date]
+    finally:
+        db.close()
+
+
+def load_orders_for_month(year: int, month: int):
+    """Load all orders whose delivery date falls in the given month."""
+    from calendar import monthrange
+    db = SessionLocal()
+    try:
+        first_day = date_type(year, month, 1)
+        last_day = date_type(year, month, monthrange(year, month)[1])
+        # Orders created a few days before the month could deliver into it
+        cutoff_start = datetime.combine(first_day - timedelta(days=5), datetime.min.time()).replace(tzinfo=timezone.utc)
+        cutoff_end = datetime.combine(last_day + timedelta(days=1), datetime.min.time()).replace(tzinfo=timezone.utc)
+        orders = (
+            db.query(Order)
+            .options(joinedload(Order.items).joinedload(OrderItem.dish), joinedload(Order.customer))
+            .filter(Order.created_at >= cutoff_start, Order.created_at < cutoff_end)
+            .order_by(Order.created_at)
+            .all()
+        )
+        return [o for o in orders if first_day <= get_delivery_date(o.created_at) <= last_day]
     finally:
         db.close()
 
@@ -752,6 +797,85 @@ def send_report(force=False):
                 logger.info(f"[EMAIL REPORT] Sent 'no orders' notification to {', '.join(general_emails)}")
 
         logger.info(f"[EMAIL REPORT] Done, sent {sent_count} report(s)")
+
+    finally:
+        server.quit()
+
+
+MONTHS_RU_NOM = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+                 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
+
+
+def send_monthly_report(force=False):
+    """Send monthly summary report (guests + kitchen) for the previous month."""
+    logger.info("[MONTHLY REPORT] Checking if monthly report should be sent...")
+    settings = get_monthly_report_settings()
+    if not settings:
+        logger.info("[MONTHLY REPORT] Disabled or not configured")
+        if force:
+            raise ValueError("Месячный отчёт не настроен: включите и заполните все поля")
+        return
+
+    now_vlad = datetime.now(VLAD_TZ)
+    # Previous month
+    if now_vlad.month == 1:
+        target_year, target_month = now_vlad.year - 1, 12
+    else:
+        target_year, target_month = now_vlad.year, now_vlad.month - 1
+
+    month_name = MONTHS_RU_NOM[target_month - 1]
+    month_label = f"{month_name} {target_year}"
+    month_file = f"{target_month:02d}.{target_year}"
+
+    orders = load_orders_for_month(target_year, target_month)
+    smtp_email = settings["reportSmtpEmail"]
+    recipients = parse_emails(settings.get("monthlyReportRecipient", ""))
+
+    if not recipients:
+        logger.info("[MONTHLY REPORT] No recipients configured")
+        if force:
+            raise ValueError("Не указаны получатели месячного отчёта")
+        return
+
+    try:
+        server = get_smtp_connection(settings)
+    except Exception as e:
+        logger.error(f"[MONTHLY REPORT] SMTP connection failed: {e}")
+        raise
+
+    locations_map = get_locations_map()
+    display_map = get_locations_display_map()
+    loc_addresses = list(locations_map.keys())
+
+    try:
+        attachments = []
+
+        # 1. Guests report — multi-sheet (all locations)
+        # Use display addresses for the sheet list
+        display_addresses = [display_map.get(a, a) for a in loc_addresses]
+        guests_data = build_guests_excel_multi(orders, display_addresses, date_type(target_year, target_month, 1))
+        if guests_data:
+            attachments.append((f"Отчет по гостям за {month_file} (все точки).xlsx", guests_data))
+
+        # 2. Kitchen report
+        kitchen_data = build_kitchen_excel(orders, date_type(target_year, target_month, 1), locations_map, display_map=display_map)
+        if kitchen_data:
+            attachments.append((f"Отчет для кухни за {month_file} (все точки).xlsx", kitchen_data))
+
+        if attachments:
+            subject = f"Месячный отчёт за {month_label} — все точки"
+            body = f"Сводный отчёт за {month_label} во вложении.\n\nВсего заказов: {len(orders)}"
+            send_email(server, smtp_email, recipients, subject, body, attachments)
+            logger.info(f"[MONTHLY REPORT] Sent monthly report for {month_label} to {', '.join(recipients)}")
+        else:
+            # No orders — notify
+            msg = MIMEMultipart()
+            msg["From"] = smtp_email
+            msg["To"] = ", ".join(recipients)
+            msg["Subject"] = f"Месячный отчёт за {month_label} — нет заказов"
+            msg.attach(MIMEText(f"За {month_label} заказов не поступило.", "plain", "utf-8"))
+            server.sendmail(smtp_email, recipients, msg.as_string())
+            logger.info(f"[MONTHLY REPORT] No orders for {month_label}, sent notification")
 
     finally:
         server.quit()

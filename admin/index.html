@@ -1220,6 +1220,27 @@
                     <span id="testReportStatus" style="margin-left:12px;font-size:.85rem;color:#888;"></span>
                 </div>
 
+                <div class="settings-card" style="margin-top:24px;">
+                    <h3>📊 Месячный отчёт</h3>
+                    <p style="font-size:.85rem;color:#999;margin-bottom:16px;">Сводный отчёт за прошлый месяц (по гостям + кухня). Отправляется 1-го числа каждого месяца.</p>
+                    <div class="form-group">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="setMonthlyReportEnabled" class="setting-field" style="width:auto;margin:0;accent-color:#4ade80;width:18px;height:18px;">
+                            <span style="color:#e0e0e0;font-size:.95rem;">Включить месячный отчёт</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Получатели</label>
+                        <textarea id="setMonthlyReportRecipient" class="setting-field" rows="3" placeholder="owner@mail.ru&#10;manager@mail.ru" style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Время отправки (1-го числа)</label>
+                        <input type="time" id="setMonthlyReportTime" class="setting-field" value="09:00" style="max-width:160px;">
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="testMonthlyReport()" style="margin-top:8px;">Тестовая отправка</button>
+                    <span id="testMonthlyReportStatus" style="margin-left:12px;font-size:.85rem;color:#888;"></span>
+                </div>
+
             </div>
 
             <!-- NOTIFY PANEL -->
@@ -2701,6 +2722,10 @@
                 document.getElementById('setReportSmtpPassword').value = s.reportSmtpPassword || '';
                 document.getElementById('setReportRecipient').value = s.reportRecipient || '';
                 document.getElementById('setReportTime').value = s.reportTime || '13:00';
+                // Monthly report
+                document.getElementById('setMonthlyReportEnabled').checked = s.monthlyReportEnabled === '1';
+                document.getElementById('setMonthlyReportRecipient').value = s.monthlyReportRecipient || '';
+                document.getElementById('setMonthlyReportTime').value = s.monthlyReportTime || '09:00';
             } catch (e) { /* first time, fields stay empty */ }
         }
 
@@ -2708,9 +2733,11 @@
 
         async function saveSettings() {
             const fields = ['heroTitle','heroSub','catalogTitle','catalogSub','aboutTitle','aboutSub','address','phone','email','schedule','footer',
-                'reportEnabled','reportSmtpHost','reportSmtpPort','reportSmtpEmail','reportSmtpPassword','reportRecipient','reportTime'];
+                'reportEnabled','reportSmtpHost','reportSmtpPort','reportSmtpEmail','reportSmtpPassword','reportRecipient','reportTime',
+                'monthlyReportEnabled','monthlyReportRecipient','monthlyReportTime'];
             const ids = ['setHeroTitle','setHeroSub','setCatalogTitle','setCatalogSub','setAboutTitle','setAboutSub','setAddress','setPhone','setEmail','setSchedule','setFooter',
-                'setReportEnabled','setReportSmtpHost','setReportSmtpPort','setReportSmtpEmail','setReportSmtpPassword','setReportRecipient','setReportTime'];
+                'setReportEnabled','setReportSmtpHost','setReportSmtpPort','setReportSmtpEmail','setReportSmtpPassword','setReportRecipient','setReportTime',
+                'setMonthlyReportEnabled','setMonthlyReportRecipient','setMonthlyReportTime'];
             const body = fields.map((key, i) => {
                 const el = document.getElementById(ids[i]);
                 const value = el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
@@ -2732,6 +2759,21 @@
             try {
                 await saveSettings();
                 const res = await api('/api/admin/test-report', { method: 'POST' });
+                status.textContent = '✓ ' + (res.message || 'Отправлено');
+                status.style.color = '#4ade80';
+            } catch (e) {
+                status.textContent = '✗ ' + e.message;
+                status.style.color = '#e74c3c';
+            }
+        }
+
+        async function testMonthlyReport() {
+            const status = document.getElementById('testMonthlyReportStatus');
+            status.textContent = 'Отправка...';
+            status.style.color = '#888';
+            try {
+                await saveSettings();
+                const res = await api('/api/admin/test-monthly-report', { method: 'POST' });
                 status.textContent = '✓ ' + (res.message || 'Отправлено');
                 status.style.color = '#4ade80';
             } catch (e) {

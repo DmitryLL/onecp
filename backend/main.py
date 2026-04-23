@@ -13,7 +13,7 @@ from routes.auth import router as auth_router
 from routes.menu import router as menu_router
 from routes.orders import router as orders_router
 from routes.admin import router as admin_router
-from email_report import send_report
+from email_report import send_report, send_monthly_report
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("onecp")
@@ -216,10 +216,29 @@ def check_report_schedule():
         db.close()
 
 
+def check_monthly_report_schedule():
+    """Called every minute — on the 1st of the month, sends monthly report at configured time."""
+    from datetime import datetime, timezone, timedelta
+    now = datetime.now(timezone(timedelta(hours=10)))  # Vladivostok
+    if now.day != 1:
+        return
+    current_hm = now.strftime("%H:%M")
+    db = SessionLocal()
+    try:
+        row = db.query(SiteSettings).filter(SiteSettings.key == "monthlyReportTime").first()
+        if row and row.value and row.value.strip() == current_hm:
+            send_monthly_report()
+    except Exception as e:
+        logger.error(f"[SCHEDULER] Monthly report error: {e}")
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     scheduler.add_job(check_report_schedule, "interval", minutes=1, id="email_report_check")
+    scheduler.add_job(check_monthly_report_schedule, "interval", minutes=1, id="monthly_report_check")
     scheduler.add_job(generate_calendar_daily, "cron", hour=3, minute=0, timezone="Asia/Vladivostok", id="calendar_daily")
     scheduler.start()
     logger.info("Scheduler started")
